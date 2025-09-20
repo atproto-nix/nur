@@ -8,36 +8,77 @@ let
     sha256 = "sha256-swdAcsjRWnj9abmnrce5LzeKRK+LHm8RubCEIuk+53c=";
   };
 
-  commonArgs = {
-    inherit src;
-    pname = "microcosm-rs-deps";
-    version = "0.1";
-    buildInputs = with pkgs; [
-      openssl
-      zlib
+  commonEnv = {
+    LIBCLANG_PATH = pkgs.lib.makeLibraryPath [ pkgs.llvmPackages.libclang.lib ];
+    OPENSSL_NO_VENDOR = "1";
+    OPENSSL_LIB_DIR = "${pkgs.lib.getLib pkgs.openssl}/lib";
+    OPENSSL_INCLUDE_DIR = "${pkgs.lib.getDev pkgs.openssl}/include";
+    BINDGEN_EXTRA_CLANG_ARGS = pkgs.lib.concatStringsSep " " [
+        "-I${pkgs.llvmPackages.libclang.lib}/lib/clang/${pkgs.lib.versions.major pkgs.llvmPackages.libclang.version}/include"
+        "-I${pkgs.glibc.dev}"
     ];
-    nativeBuildInputs = with pkgs; [
-      pkg-config
-    ];
+    ZSTD_SYS_USE_PKG_CONFIG = "1";
+    CC = "${pkgs.llvmPackages.clang}/bin/clang";
+    CXX = "${pkgs.llvmPackages.clang}/bin/clang++";
+    PKG_CONFIG_PATH = "${pkgs.zstd.dev}/lib/pkgconfig:${pkgs.lz4.dev}/lib/pkgconfig";
   };
 
-  cargoArtifacts = craneLib.buildDepsOnly commonArgs;
+  nativeInputs = with pkgs; [
+    pkg-config
+    perl
+  ];
 
-  buildPackage = pname: craneLib.buildPackage (commonArgs // {
-    inherit pname;
-    cargoArtifacts = cargoArtifacts;
-  });
+  buildInputs = with pkgs; [
+    zstd
+    lz4
+    rocksdb
+    openssl
+  ];
+
+  cargoArtifacts = craneLib.buildDepsOnly {
+    inherit src;
+    pname = "microcosm-rs-deps";
+    nativeBuildInputs = nativeInputs;
+    buildInputs = buildInputs;
+    env = commonEnv;
+  };
+
+  members = [
+    "links"
+    "constellation"
+    "jetstream"
+    "ufos"
+    "ufos/fuzz"
+    "spacedust"
+    "who-am-i"
+    "slingshot"
+    "quasar"
+    "pocket"
+    "reflector"
+  ];
+
+  buildPackage = member:
+    let
+      packageName = if member == "ufos/fuzz" then "ufos-fuzz" else member;
+    in
+    craneLib.buildPackage {
+      inherit src cargoArtifacts;
+      pname = packageName;
+      version = "0.1.0";
+      cargoExtraArgs = "--package ${packageName}";
+      nativeBuildInputs = nativeInputs;
+      buildInputs = buildInputs ++ (pkgs.lib.optional (member == "pocket") pkgs.sqlite);
+      env = commonEnv;
+    };
+
+  packages = pkgs.lib.genAttrs members (member: buildPackage member);
 
 in
-{
-  constellation = buildPackage "constellation";
-  jetstream = buildPackage "jetstream";
-  links = buildPackage "links";
-  pocket = buildPackage "pocket";
-  quasar = buildPackage "quasar";
-  reflector = buildPackage "reflector";
-  slingshot = buildPackage "slingshot";
-  spacedust = buildPackage "spacedust";
-  ufos = buildPackage "ufos";
-  "who-am-i" = buildPackage "who-am-i";
+packages // {
+  default = pkgs.linkFarm "microcosm-rs" (pkgs.lib.mapAttrsToList (name: value:
+    let
+      linkName = if name == "ufos/fuzz" then "ufos-fuzz" else name;
+    in
+    { name = linkName; path = value; }
+  ) packages);
 }

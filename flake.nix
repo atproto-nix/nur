@@ -1,26 +1,40 @@
 {
-  description = "My personal NUR repository";
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-  inputs.rust-overlay.url = "github:oxalica/rust-overlay";
-  inputs.crane.url = "github:ipetkov/crane";
+  description = "ATproto NUR repository";
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    flake-utils.url = "github:numtide/flake-utils";
+    crane.url = "github:ipetkov/crane";
+    rust-overlay.url = "github:oxalica/rust-overlay";
+    search.url = "github:NuschtOS/search"; 
+  };
 
-  outputs = { self, nixpkgs, rust-overlay, crane }@inputs:
-    let
-      forAllSystems = nixpkgs.lib.genAttrs nixpkgs.lib.systems.flakeExposed;
-    in
-    {
-      legacyPackages = forAllSystems (system:
-        let
-          overlays = [ (import rust-overlay) ];
-          pkgs = import nixpkgs { inherit system overlays; };
-          rustToolchain = pkgs.rust-bin.stable.latest.default.override {
-            extensions = [ "rust-src" ];
-          };
-          craneLib = (crane.mkLib pkgs).overrideToolchain rustToolchain;
-        in
-        import ./default.nix {
+  outputs = { self, nixpkgs, flake-utils, crane, rust-overlay, search }:
+    flake-utils.lib.eachDefaultSystem (system:
+      let
+        overlays = [ (import rust-overlay) ];
+        pkgs = import nixpkgs {
+          inherit system overlays;
+        };
+        rustVersion = pkgs.rust-bin.stable.latest.default;
+        craneLib = (crane.mkLib pkgs).overrideToolchain rustVersion;
+
+        nurPackages = import ./default.nix {
           inherit pkgs craneLib;
-        });
-      packages = forAllSystems (system: nixpkgs.lib.filterAttrs (_: v: nixpkgs.lib.isDerivation v) self.legacyPackages.${system});
-    };
+        };
+      in
+      {
+        packages = nurPackages // {
+          default = nurPackages.microcosm.default;
+          search = search.packages.${system}.default; 
+        };
+        legacyPackages = nurPackages;
+        nixosModules = {
+          microcosm = import ./modules/microcosm;
+          search = search.nixosModules.default; 
+        };
+        devShells.default = pkgs.mkShell {
+          # todo? 
+        };
+      }
+    );
 }
