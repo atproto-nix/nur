@@ -1,0 +1,12 @@
+when:
+  - event: ["push", "pull_request"]
+    branch: ["main"]
+
+dependencies:
+  nixpkgs:
+    - nix
+
+steps:
+  - name: Build Nix packages
+    command: |
+      nix build .#default
