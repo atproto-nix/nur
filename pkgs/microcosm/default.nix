@@ -41,6 +41,7 @@ let
     nativeBuildInputs = nativeInputs;
     buildInputs = buildInputs;
     env = commonEnv;
+    tarFlags = "--no-same-owner";
   };
 
   members = [
@@ -68,6 +69,7 @@ let
       cargoExtraArgs = "--package ${packageName}";
       nativeBuildInputs = nativeInputs;
       buildInputs = buildInputs ++ (pkgs.lib.optional (member == "pocket") pkgs.sqlite);
+      tarFlags = "--no-same-owner";
       env = commonEnv;
     };
 
