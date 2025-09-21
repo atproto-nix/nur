@@ -1,3 +1,3 @@
 { pkgs, craneLib, buildYarnPackage, ... }:
 
-pkgs.callPackage ./rsky { inherit craneLib buildYarnPackage; }
+import ./rsky { inherit pkgs craneLib buildYarnPackage; }
