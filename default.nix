@@ -6,7 +6,7 @@
 # commands such as:
 #     nix-build -A mypackage
 
-{ pkgs ? import <nixpkgs> { }, craneLib ? null }:
+{ pkgs ? import <nixpkgs> { }, craneLib ? null, buildYarnPackage ? pkgs.buildYarnPackage }:
 
 {
   # The `lib`, `modules`, and `overlays` names are special
@@ -15,4 +15,5 @@
   overlays = import ./overlays; # nixpkgs overlays
 
   microcosm = pkgs.callPackage ./pkgs/microcosm { inherit craneLib; };
+  blacksky = pkgs.callPackage ./pkgs/blacksky { inherit craneLib buildYarnPackage; };
 }

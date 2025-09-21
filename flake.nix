@@ -5,11 +5,21 @@
     flake-utils.url = "github:numtide/flake-utils";
     crane.url = "github:ipetkov/crane";
     rust-overlay.url = "github:oxalica/rust-overlay";
-    search.url = "github:NuschtOS/search"; 
+    search.url = "github:NuschtOS/search";
   };
 
-  outputs = { self, nixpkgs, flake-utils, crane, rust-overlay, search }:
-    flake-utils.lib.eachDefaultSystem (system:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      flake-utils,
+      crane,
+      rust-overlay,
+      search,
+      ...
+    }:
+    flake-utils.lib.eachDefaultSystem (
+      system:
       let
         overlays = [ (import rust-overlay) ];
         pkgs = import nixpkgs {
@@ -25,15 +35,16 @@
       {
         packages = nurPackages // {
           default = nurPackages.microcosm.default;
-          search = search.packages.${system}.default; 
+          search = search.packages.${system}.default;
         };
         legacyPackages = nurPackages;
         nixosModules = {
           microcosm = import ./modules/microcosm;
-          search = search.nixosModules.default; 
+          blacksky = import ./modules/blacksky;
+          search = search.nixosModules.default;
         };
         devShells.default = pkgs.mkShell {
-          # todo? 
+          # todo?
         };
       }
     );
