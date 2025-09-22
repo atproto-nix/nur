@@ -44,7 +44,7 @@
           search = search.nixosModules.default;
         };
         devShells.default = pkgs.mkShell {
-          # todo?
+          # todo
         };
       }
     );
