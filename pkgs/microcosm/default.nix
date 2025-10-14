@@ -40,6 +40,7 @@ let
   cargoArtifacts = craneLib.buildDepsOnly {
     inherit src;
     pname = "microcosm-rs-deps";
+    version = "0.1.0";
     nativeBuildInputs = nativeInputs;
     buildInputs = buildInputs;
     env = commonEnv;
