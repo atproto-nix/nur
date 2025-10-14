@@ -23,18 +23,20 @@ let
     PKG_CONFIG_PATH = "${pkgs.zstd.dev}/lib/pkgconfig:${pkgs.lz4.dev}/lib/pkgconfig";
   };
 
-  nativeInputs = with pkgs; [
+  nativeInputs = with pkgs;
+[
     pkg-config
     perl
   ];
 
-  buildInputs = with pkgs; [
+  buildInputs = with pkgs;
+[
     zstd
     lz4
     rocksdb
     openssl
+    sqlite
   ];
-
   cargoArtifacts = craneLib.buildDepsOnly {
     inherit src;
     pname = "microcosm-rs-deps";
@@ -57,7 +59,6 @@ let
     "pocket"
     "reflector"
   ];
-
   buildPackage = member:
     let
       packageName = if member == "ufos/fuzz" then "ufos-fuzz" else member;
@@ -68,7 +69,7 @@ let
       version = "0.1.0";
       cargoExtraArgs = "--package ${packageName}";
       nativeBuildInputs = nativeInputs;
-      buildInputs = buildInputs ++ (pkgs.lib.optional (member == "pocket") pkgs.sqlite);
+      buildInputs = buildInputs;
       tarFlags = "--no-same-owner";
       env = commonEnv;
     };
@@ -77,3 +78,4 @@ let
 
 in
 packages
+}
