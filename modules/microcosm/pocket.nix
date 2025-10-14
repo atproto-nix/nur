@@ -1,39 +1,59 @@
+# Defines the NixOS module for the Pocket service
 { config, lib, pkgs, ... }:
 
 with lib;
 
 let
   cfg = config.services.microcosm-pocket;
-  microcosmPkgs = pkgs.microcosm;
 in
 {
   options.services.microcosm-pocket = {
-    enable = mkEnableOption "Microcosm Pocket service";
+    enable = mkEnableOption "Pocket service";
+
     package = mkOption {
       type = types.package;
-      default = microcosmPkgs.pocket;
-      description = "The Microcosm Pocket package to use.";
+      default = pkgs.nur.pocket;
+      description = "The Pocket package to use.";
     };
-    # Add other service-specific options here
+
+    dbDir = mkOption {
+      type = types.str;
+      default = "microcosm-pocket";
+      description = "The directory to store the database in, relative to /var/lib.";
+    };
+
+    domain = mkOption {
+      type = types.str;
+      description = "The domain for serving a did doc.";
+    };
   };
 
   config = mkIf cfg.enable {
     systemd.services.microcosm-pocket = {
-      description = "Microcosm Pocket Service";
+      description = "Pocket Service";
       after = [ "network.target" ];
       wantedBy = [ "multi-user.target" ];
+
       serviceConfig = {
-        ExecStart = "${cfg.package}/bin/pocket"; # This command likely needs adjustment
+        ExecStart = "${cfg.package}/bin/pocket --db /var/lib/${cfg.dbDir}/prefs.sqlite3 --domain ${cfg.domain}";
         Restart = "always";
-        User = "microcosm-pocket";
-        Group = "microcosm-pocket";
-      };
-      users.users.microcosm-pocket = {
-        isSystem = true;
-        group = "microcosm-pocket";
-      };
-      users.groups.microcosm-pocket = {
-        isSystem = true;
+        RestartSec = "10s";
+        DynamicUser = true;
+        StateDirectory = cfg.dbDir;
+        ReadWritePaths = [ "/var/lib/${cfg.dbDir}" ];
+
+        # Security settings
+        NoNewPrivileges = true;
+        ProtectSystem = "strict";
+        ProtectHome = true;
+        PrivateTmp = true;
+        ProtectKernelTunables = true;
+        ProtectKernelModules = true;
+        ProtectControlGroups = true;
+        RestrictRealtime = true;
+        RestrictSUIDSGID = true;
+        RemoveIPC = true;
+        PrivateMounts = true;
       };
     };
   };

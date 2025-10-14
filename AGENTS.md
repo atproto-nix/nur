@@ -6,47 +6,91 @@ This document provides a guide for Gemini agents to understand and interact with
 
 `nur-atproto` is a Nix-based repository for packaging and deploying services related to the AT Protocol and Bluesky. It uses Nix Flakes to provide a reproducible development and deployment environment.
 
-The repository is structured into three main parts:
+The repository is structured into two main parts:
 
 1.  **Packages (`pkgs`):** Contains Nix package definitions for core components.
 2.  **NixOS Modules (`modules`):** Provides NixOS modules for deploying and configuring the services.
-3.  **Overlays (`overlays`):** Offers Nix overlays for customizing packages.
 
-## Core Components
+## Packages
 
-### Packages (`pkgs`)
+This repository provides the following packages:
 
--   **`pkgs/blacksky`:** A custom application or tool related to the AT Protocol ecosystem.
--   **`pkgs/bluesky`:** The official Bluesky application or a related utility.
--   **`pkgs/microcosm`:** A suite of services that form a personal data server (PDS) or a related AT Protocol service.
+### Microcosm Services
 
-### NixOS Modules (`modules/microcosm`)
+A suite of services that form a personal data server (PDS) or a related AT Protocol service.
 
-The `microcosm` modules are designed to be composed together to create a running AT Protocol environment. Each module corresponds to a specific service:
+-   **`constellation`**: A global atproto backlink index. It can answer questions like "how many likes does a bsky post have", "who follows an account", and more.
 
--   **`constellation`:** Service discovery and orchestration.
--   **`jetstream`:** Data streaming and processing.
--   **`pocket`:** Storage service.
--   **`quasar`:** Public API gateway.
--   **`reflector`:** Data mirroring and reflection.
--   **`slingshot`:** Deployment and release management.
--   **`spacedust`:** Maintenance and cleanup tasks.
--   **`ufos`:** Handling of unknown or unidentified requests.
--   **`who-am-i`:** Identity and authentication service.
+    **Usage:**
+    -   `--bind`: listen address (default: `0.0.0.0:6789`)
+    -   `--bind-metrics`: metrics server listen address (default: `0.0.0.0:8765`)
+    -   `--jetstream`: Jetstream server to connect to
+    -   `--data`: path to store data on disk
+    -   `--backend`: storage backend to use (`memory` or `rocks`)
 
-## Reference Repositories
+-   **`pocket`**: A service for storing non-public user data, like application preferences.
 
-The `reference/` directory contains source code for several key projects in the AT Protocol ecosystem. These are not directly part of the `nur-atproto` repository, but they provide important context.
+    **Usage:**
+    -   `--db`: path to the sqlite db file
+    -   `--init-db`: initialize the db and exit
+    -   `--domain`: domain for serving a did doc
 
--   **`rsky`:** Blacksky's in-house Rust implementation of the atproto service stack. It includes the following services:
-    -   `relay`: An AT Protocol relay.
-    -   `pds`: An AT Protocol Personal Data Server.
-    -   `feedgen`: A feed generator, used with SAFEskies for moderation.
-    -   `pds-admin`: An administration tool for the PDS.
-    -   `satnav`: A tool for visually exploring AT Protocol repositories (work in progress).
--   **`tektite-cc-migration-service` (tektite):** A fully in-browser PDS account migration tool with blob management. It is used in production for migrating users to Blacksky's PDS.
--   **`blacksky.community`:** The web client for Blacksky. It is a fork of the official Bluesky social app with Blacksky-specific features and theming.
--   **`SAFEskies`:** A BlueSky feed management interface that enables secure moderation of custom feeds.
+-   **`quasar`**: An indexed replay and fan-out for event stream services (work in progress).
+
+-   **`reflector`**: A tiny did:web service server that maps subdomains to a single service endpoint.
+
+    **Usage:**
+    -   `--id`: DID document service ID
+    -   `--type`: service type
+    -   `--service-endpoint`: HTTPS endpoint for the service
+    -   `--domain`: parent domain
+
+-   **`slingshot`**: A fast, eager, production-grade edge cache for atproto records and identities.
+
+    **Usage:**
+    -   `--jetstream`: Jetstream server to connect to
+    -   `--cache-dir`: path to keep disk caches
+    -   `--domain`: domain pointing to this server
+
+-   **`spacedust`**: A global atproto interactions firehose. Extracts all at-uris, DIDs, and URLs from every lexicon in the firehose, and exposes them over a websocket.
+
+    **Usage:**
+    -   `--jetstream`: Jetstream server to connect to
+
+-   **`ufos`**: A service that provides timeseries stats and sample records for every collection ever seen in the atproto firehose.
+
+    **Usage:**
+    -   `--jetstream`: Jetstream server to connect to
+    -   `--data`: location to store persist data to disk
+
+-   **`who-am-i` (deprecated)**: An identity bridge for microcosm demos. It is being retired.
+
+    **Usage:**
+    -   `--app-secret`: secret key for cookie-signing (env: `APP_SECRET`)
+    -   `--oauth-private-key`: path to at-oauth private key (env: `OAUTH_PRIVATE_KEY`)
+    -   `--jwt-private-key`: path to jwt private key
+    -   `--base-url`: client-reachable base url (env: `BASE_URL`)
+    -   `--bind`: host:port to bind to (env: `BIND`, default: `127.0.0.1:9997`)
+
+### Microcosm Libraries
+
+-   **`links`**: A Rust library for parsing and extracting links (at-uris, DIDs, and URLs) from atproto records.
+
+### Blacksky
+
+A suite of tools related to the AT Protocol ecosystem.
+
+-   `pds`
+-   `relay`
+-   `feedgen`
+-   `satnav`
+-   `firehose`
+-   `jetstream-subscriber`
+-   `labeler`
+
+## NixOS Modules
+
+The `microcosm` modules are designed to be composed together to create a running AT Protocol environment. Each module corresponds to a specific service.
 
 ## Technology Stack
 
@@ -65,6 +109,7 @@ To use the cache, add the following to your `/etc/nix/nix.conf`:
 substituters = https://atproto.cachix.org
 trusted-public-keys = atproto.cachix.org-1:s+32V2F3E5N6bY5fL2yV/s/Vb+9/a/a/a/a/a/a/a/a=
 ```
+**Note:** The `trusted-public-keys` value is a placeholder. I was unable to find the correct public key.
 
 ## Interacting with the Project
 
@@ -72,10 +117,10 @@ As a Gemini agent, you can use the Nix command-line interface to work with this 
 
 ### Building Packages
 
-To build a package, use the `nix build` command with the corresponding flake output. For example, to build the `blacksky` package:
+To build a package, use the `nix build` command with the corresponding flake output. For example, to build the `constellation` package:
 
 ```bash
-nix build .#blacksky
+nix build .#constellation
 ```
 
 ### Development Environment

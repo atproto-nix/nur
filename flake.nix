@@ -5,7 +5,6 @@
     flake-utils.url = "github:numtide/flake-utils";
     crane.url = "github:ipetkov/crane";
     rust-overlay.url = "github:oxalica/rust-overlay";
-    search.url = "github:NuschtOS/search";
   };
 
   outputs =
@@ -15,37 +14,45 @@
       flake-utils,
       crane,
       rust-overlay,
-      search,
       ...
     }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
-        overlays = [ (import rust-overlay) ];
+        nurOverlay = final: prev: {
+          nur = import ./default.nix {
+            pkgs = final;
+            craneLib = (crane.mkLib final).overrideToolchain rustVersion;
+          };
+        };
+        overlays = [
+          (import rust-overlay)
+          nurOverlay
+        ];
         pkgs = import nixpkgs {
           inherit system overlays;
         };
         rustVersion = pkgs.rust-bin.stable.latest.default;
-        craneLib = (crane.mkLib pkgs).overrideToolchain rustVersion;
-
-        nurPackages = import ./default.nix {
-          inherit pkgs craneLib;
-        };
+        allPackages = 
+          let
+            isDerivation = pkg: pkg.type or "" == "derivation";
+          in
+          pkgs.lib.filterAttrs (n: v: isDerivation v) (pkgs.nur.microcosm // pkgs.nur.blacksky);
       in
       {
-        packages = nurPackages // {
-          default = nurPackages.microcosm.default;
-          search = search.packages.${system}.default;
-        };
-        legacyPackages = nurPackages;
+        packages = allPackages;
         nixosModules = {
           microcosm = import ./modules/microcosm;
           blacksky = import ./modules/blacksky;
-          search = search.nixosModules.default;
+        };
+        homeManagerModules = {
+          microcosm = import ./modules/microcosm;
+          blacksky = import ./modules/blacksky;
         };
         devShells.default = pkgs.mkShell {
-          # todo?
+          packages = with pkgs; [ deadnix nixpkgs-fmt ];
         };
+        tests = import ./tests { inherit pkgs; };
       }
     );
 }

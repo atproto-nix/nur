@@ -1,4 +1,4 @@
-{ pkgs, craneLib, buildYarnPackage }:
+{ pkgs, craneLib, ... }:
 
 {
   pds = craneLib.buildPackage rec {
@@ -157,40 +157,38 @@
     };
   };
 
-  community = pkgs.buildYarnPackage rec {
-    pname = "blacksky.community";
-    version = "1.109.0"; # Version from package.json
-
-    src = pkgs.fetchFromGitHub {
-      owner = "blacksky-algorithms";
-      repo = "blacksky.community";
-      # TODO: Update 'rev' to a specific commit hash or release tag for reproducible builds.
-      rev = "main";
-      # TODO: Update 'hash' to the correct SHA256 hash of the fetched source.
-      # You can obtain the correct hash by setting it to an empty string, running nix-build,
-      # and then copying the hash from the error message.
-      hash = "sha256-W0mXqED9geNKJSPGJhUdJZ2voMOMDCXX1T4zn3GZKlY=";
-    };
-
-    yarnLock = "yarn.lock"; # Specify the yarn.lock file
-
-    buildPhase = ''
-      yarn build-web
-    '';
-
-    installPhase = ''
-      mkdir -p $out/share/nginx/html
-      cp -r web-build/* $out/share/nginx/html
-    '';
-
-    meta = with pkgs.lib; {
-      description = "Blacksky Community Web Client";
-      # Placeholder, update with actual homepage if available.
-      homepage = "https://github.com/blacksky-algorithms/blacksky.community";
-      # Placeholder, update with actual license if available. Assuming MIT for now.
-      license = licenses.mit;
-      # Placeholder, add actual maintainers.
-      maintainers = with maintainers; [ ];
-    };
-  };
+  # community = pkgs.buildYarnPackage rec {
+  #   pname = "blacksky.community";
+  #   version = "1.109.0"; # Version from package.json
+  #
+  #   src = pkgs.fetchFromGitHub {
+  #     owner = "blacksky-algorithms";
+  #     repo = "blacksky.community";
+  #     # TODO: Update 'rev' to a specific commit hash or release tag for reproducible builds.
+  #     rev = "main";
+  #     # TODO: Update 'hash' to the correct SHA256 hash of the fetched source.
+  #     # You can obtain the correct hash by setting it to an empty string, running nix-build,
+  #     # and then copying the hash from the error message.
+  #     hash = "sha256-W0mXqED9geNKJSPGJhUdJZ2voMOMDCXX1T4zn3GZKlY=";
+  #   };
+  #
+  #   yarnLock = "yarn.lock"; # Specify the yarn.lock file
+  #
+  #   buildPhase = ''
+  #     yarn build-web
+  #   '';
+  #
+  #   installPhase = ''
+  #     mkdir -p $out/share/nginx/html
+  #     cp -r web-build/* $out/share/nginx/html
+  #   '';
+  #
+  #   meta = with pkgs.lib; {
+  #     description = "Blacksky Community Web Client";
+  #     # Placeholder, update with actual homepage if available.
+  #     homepage = "https://github.com/blacksky-algorithms/blacksky.community";
+  #     # Placeholder, add actual maintainers.
+  #     maintainers = with maintainers; [ ];
+  #   };
+  # };
 }

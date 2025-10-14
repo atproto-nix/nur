@@ -76,11 +76,4 @@ let
   packages = pkgs.lib.genAttrs members (member: buildPackage member);
 
 in
-packages // {
-  default = pkgs.linkFarm "microcosm-rs" (pkgs.lib.mapAttrsToList (name: value:
-    let
-      linkName = if name == "ufos/fuzz" then "ufos-fuzz" else name;
-    in
-    { name = linkName; path = value; }
-  ) packages);
-}
+packages
