@@ -1,5 +1,10 @@
 # Defines the NixOS module for the Spacedust service
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 with lib;
 
@@ -12,13 +17,14 @@ in
 
     package = mkOption {
       type = types.package;
-      default = pkgs.nur.spacedust;
+      default = pkgs.nur.microcosm-rs.spacedust;
       description = "The Spacedust package to use.";
     };
 
     jetstream = mkOption {
       type = types.str;
       description = "The Jetstream server to connect to.";
+      example = "wss://jetstream1.us-east.bsky.network/subscribe";
     };
 
     jetstreamNoZstd = mkOption {
@@ -29,22 +35,36 @@ in
   };
 
   config = mkIf cfg.enable {
+    # Create a static user and group for the service
+    users.users.microcosm-spacedust = {
+      isSystemUser = true;
+      group = "microcosm-spacedust";
+      home = "/var/lib/microcosm-spacedust"; # Placeholder home directory
+    };
+    users.groups.microcosm-spacedust = {};
+
     systemd.services.microcosm-spacedust = {
-      description = "Spacedust Service";
-      after = [ "network.target" ];
+      description = "Spacedust Service - Realtime link event processing for AT Protocol";
       wantedBy = [ "multi-user.target" ];
+      after = [ "network.target" ];
+      wants = [ "network.target" ];
 
       serviceConfig = {
-        ExecStart = "${cfg.package}/bin/spacedust --jetstream ${escapeShellArg cfg.jetstream} ${optionalString cfg.jetstreamNoZstd "--jetstream-no-zstd"}";
         Restart = "always";
         RestartSec = "10s";
-        DynamicUser = true;
-        StateDirectory = "spacedust";
+
+        # Use the static user and group
+        User = "microcosm-spacedust";
+        Group = "microcosm-spacedust";
+
+        # Spacedust doesn't seem to use a data directory in the same way constellation does
+        # WorkingDirectory = "/var/lib/microcosm-spacedust";
 
         # Security settings
         NoNewPrivileges = true;
-        ProtectSystem = "strict";
+        ProtectSystem = "full";
         ProtectHome = true;
+        # ReadWritePaths = [ ]; # No specific data directory to write to
         PrivateTmp = true;
         ProtectKernelTunables = true;
         ProtectKernelModules = true;
@@ -54,6 +74,22 @@ in
         RemoveIPC = true;
         PrivateMounts = true;
       };
+
+      script =
+        let
+          args = flatten [
+            [
+              "--jetstream"
+              (escapeShellArg cfg.jetstream)
+            ]
+            (optional cfg.jetstreamNoZstd [
+              "--jetstream-no-zstd"
+            ])
+          ];
+        in
+        ''
+          exec ${cfg.package}/bin/main ${concatStringsSep " " args}
+        '';
     };
   };
 }

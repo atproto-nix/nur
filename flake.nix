@@ -23,6 +23,7 @@
           nur = import ./default.nix {
             pkgs = final;
             craneLib = (crane.mkLib final).overrideToolchain rustVersion;
+            rustPlatform = final.rustPlatform;
           };
         };
         overlays = [
@@ -33,12 +34,11 @@
           inherit system overlays;
         };
         rustVersion = pkgs.rust-bin.stable.latest.default;
-        allPackages = 
-          let
-            isDerivation = pkg: pkg.type or "" == "derivation";
-          in
-          pkgs.lib.filterAttrs (n: v: isDerivation v) (pkgs.nur.microcosm // pkgs.nur.blacksky);
-      in
+                allPackages =
+                  let
+                    isDerivation = pkg: pkg.type or "" == "derivation";
+                  in
+                  pkgs.lib.filterAttrs (n: v: isDerivation v) (pkgs.nur.microcosm // pkgs.nur.blacksky // pkgs.nur.microcosm-rs);      in
       {
         packages = allPackages;
         nixosModules = {
