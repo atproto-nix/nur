@@ -150,7 +150,7 @@ in
           ];
         in
         ''
-          exec ${cfg.package}/bin/main ${concatStringsSep " " args}
+          exec "${cfg.package}/bin/main" ${concatStringsSep " " args}
         '';
     };
   };
