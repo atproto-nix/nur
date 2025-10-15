@@ -83,9 +83,8 @@ in
     # Use tmpfiles to declaratively manage the data directory's existence and ownership.
     systemd.tmpfiles.rules = [
       "d ${cfg.dataDir} 0755 microcosm-constellation microcosm-constellation - -"
-    ] ++ lib.optional (cfg.backup.enable) [
-      "d ${cfg.backup.directory} 0755 microcosm-constellation microcosm-constellation - -"
-    ];
+    ] ++ optional cfg.backup.enable
+      "d ${cfg.backup.directory} 0755 microcosm-constellation microcosm-constellation - -";
 
     # Define the systemd service for Constellation.
     systemd.services.microcosm-constellation = {
@@ -107,7 +106,7 @@ in
         NoNewPrivileges = true;
         ProtectSystem = "full";
         ProtectHome = true;
-        ReadWritePaths = [ cfg.dataDir ] ++ optional (cfg.backup.enable) cfg.backup.directory;
+        ReadWritePaths = [ cfg.dataDir ] ++ optional cfg.backup.enable cfg.backup.directory;
         PrivateTmp = true;
         ProtectKernelTunables = true;
         ProtectKernelModules = true;
