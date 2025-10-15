@@ -8,7 +8,7 @@ let
 in
 {
   options.services.microcosm-pocket = {
-    enable = mkEnableOption "Pocket service";
+    enable = mkEnableOption "Pocket server";
 
     package = mkOption {
       type = types.package;
@@ -16,36 +16,44 @@ in
       description = "The Pocket package to use.";
     };
 
-    dbDir = mkOption {
+    dataDir = mkOption {
       type = types.str;
-      default = "microcosm-pocket";
-      description = "The directory to store the database in, relative to /var/lib.";
-    };
-
-    domain = mkOption {
-      type = types.str;
-      description = "The domain for serving a did doc.";
+      default = "/var/lib/microcosm-pocket";
+      description = "The absolute path to the directory to store data in.";
     };
   };
 
   config = mkIf cfg.enable {
+    users.users.microcosm-pocket = {
+      isSystemUser = true;
+      group = "microcosm-pocket";
+      home = cfg.dataDir;
+    };
+    users.groups.microcosm-pocket = {};
+
+    systemd.tmpfiles.rules = [
+      "d ${cfg.dataDir} 0755 microcosm-pocket microcosm-pocket - -"
+    ];
+
     systemd.services.microcosm-pocket = {
-      description = "Pocket Service";
-      after = [ "network.target" ];
+      description = "Pocket Server";
       wantedBy = [ "multi-user.target" ];
+      after = [ "network.target" ];
+      wants = [ "network.target" ];
 
       serviceConfig = {
-        ExecStart = "${cfg.package}/bin/pocket --db /var/lib/${cfg.dbDir}/prefs.sqlite3 --domain ${cfg.domain}";
         Restart = "always";
         RestartSec = "10s";
-        DynamicUser = true;
-        StateDirectory = cfg.dbDir;
-        ReadWritePaths = [ "/var/lib/${cfg.dbDir}" ];
 
-        # Security settings
+        User = "microcosm-pocket";
+        Group = "microcosm-pocket";
+
+        WorkingDirectory = cfg.dataDir;
+
         NoNewPrivileges = true;
-        ProtectSystem = "strict";
+        ProtectSystem = "full";
         ProtectHome = true;
+        ReadWritePaths = [ cfg.dataDir ];
         PrivateTmp = true;
         ProtectKernelTunables = true;
         ProtectKernelModules = true;
@@ -55,6 +63,10 @@ in
         RemoveIPC = true;
         PrivateMounts = true;
       };
+
+      script = ''
+        exec ${cfg.package}/bin/pocket
+      '';
     };
   };
 }

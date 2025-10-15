@@ -1,4 +1,4 @@
-# Defines the NixOS module for the UFOs service
+# Defines the NixOS module for the Ufos service
 { config, lib, pkgs, ... }:
 
 with lib;
@@ -8,68 +8,52 @@ let
 in
 {
   options.services.microcosm-ufos = {
-    enable = mkEnableOption "UFOs service";
+    enable = mkEnableOption "Ufos server";
 
     package = mkOption {
       type = types.package;
       default = pkgs.nur.ufos;
-      description = "The UFOs package to use.";
-    };
-
-    jetstream = mkOption {
-      type = types.str;
-      description = "The Jetstream server to connect to.";
-    };
-
-    jetstreamForce = mkOption {
-      type = types.bool;
-      default = false;
-      description = "Allow changing jetstream endpoints.";
-    };
-
-    jetstreamNoZstd = mkOption {
-      type = types.bool;
-      default = false;
-      description = "Don't request zstd-compressed jetstream events.";
+      description = "The Ufos package to use.";
     };
 
     dataDir = mkOption {
       type = types.str;
-      default = "microcosm-ufos";
-      description = "The directory to store data in, relative to /var/lib.";
-    };
-
-    backfill = mkOption {
-      type = types.bool;
-      default = false;
-      description = "Adjust runtime settings for efficient backfill.";
-    };
-
-    reroll = mkOption {
-      type = types.bool;
-      default = false;
-      description = "Reset the rollup cursor and backfill.";
+      default = "/var/lib/microcosm-ufos";
+      description = "The absolute path to the directory to store data in.";
     };
   };
 
   config = mkIf cfg.enable {
+    users.users.microcosm-ufos = {
+      isSystemUser = true;
+      group = "microcosm-ufos";
+      home = cfg.dataDir;
+    };
+    users.groups.microcosm-ufos = {};
+
+    systemd.tmpfiles.rules = [
+      "d ${cfg.dataDir} 0755 microcosm-ufos microcosm-ufos - -"
+    ];
+
     systemd.services.microcosm-ufos = {
-      description = "UFOs Service";
-      after = [ "network.target" ];
+      description = "Ufos Server";
       wantedBy = [ "multi-user.target" ];
+      after = [ "network.target" ];
+      wants = [ "network.target" ];
 
       serviceConfig = {
-        ExecStart = "${cfg.package}/bin/ufos --jetstream ${escapeShellArg cfg.jetstream} ${optionalString cfg.jetstreamForce "--jetstream-force"} ${optionalString cfg.jetstreamNoZstd "--jetstream-no-zstd"} --data /var/lib/${cfg.dataDir} ${optionalString cfg.backfill "--backfill"} ${optionalString cfg.reroll "--reroll"}";
         Restart = "always";
         RestartSec = "10s";
-        DynamicUser = true;
-        StateDirectory = cfg.dataDir;
-        ReadWritePaths = [ "/var/lib/${cfg.dataDir}" ];
 
-        # Security settings
+        User = "microcosm-ufos";
+        Group = "microcosm-ufos";
+
+        WorkingDirectory = cfg.dataDir;
+
         NoNewPrivileges = true;
-        ProtectSystem = "strict";
+        ProtectSystem = "full";
         ProtectHome = true;
+        ReadWritePaths = [ cfg.dataDir ];
         PrivateTmp = true;
         ProtectKernelTunables = true;
         ProtectKernelModules = true;
@@ -79,6 +63,10 @@ in
         RemoveIPC = true;
         PrivateMounts = true;
       };
+
+      script = ''
+        exec ${cfg.package}/bin/ufos
+      '';
     };
   };
 }

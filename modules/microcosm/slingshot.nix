@@ -8,7 +8,7 @@ let
 in
 {
   options.services.microcosm-slingshot = {
-    enable = mkEnableOption "Slingshot service";
+    enable = mkEnableOption "Slingshot server";
 
     package = mkOption {
       type = types.package;
@@ -16,69 +16,44 @@ in
       description = "The Slingshot package to use.";
     };
 
-    jetstream = mkOption {
-      type = types.str;
-      description = "The Jetstream server to connect to.";
-    };
-
-    jetstreamNoZstd = mkOption {
-      type = types.bool;
-      default = false;
-      description = "Don't request zstd-compressed jetstream events.";
-    };
-
     dataDir = mkOption {
       type = types.str;
-      default = "microcosm-slingshot";
-      description = "The directory to store data in, relative to /var/lib.";
-    };
-
-    domain = mkOption {
-      type = types.nullOr types.str;
-      default = null;
-      description = "The domain pointing to this server.";
-    };
-
-    acmeContact = mkOption {
-      type = types.nullOr types.str;
-      default = null;
-      description = "The email address for letsencrypt contact.";
-    };
-
-    healthcheckUrl = mkOption {
-      type = types.nullOr types.str;
-      default = null;
-      description = "The web address to send healtcheck pings to.";
+      default = "/var/lib/microcosm-slingshot";
+      description = "The absolute path to the directory to store data in.";
     };
   };
 
   config = mkIf cfg.enable {
+    users.users.microcosm-slingshot = {
+      isSystemUser = true;
+      group = "microcosm-slingshot";
+      home = cfg.dataDir;
+    };
+    users.groups.microcosm-slingshot = {};
+
+    systemd.tmpfiles.rules = [
+      "d ${cfg.dataDir} 0755 microcosm-slingshot microcosm-slingshot - -"
+    ];
+
     systemd.services.microcosm-slingshot = {
-      description = "Slingshot Service";
-      after = [ "network.target" ];
+      description = "Slingshot Server";
       wantedBy = [ "multi-user.target" ];
+      after = [ "network.target" ];
+      wants = [ "network.target" ];
 
       serviceConfig = {
-        ExecStart = ''
-          ${cfg.package}/bin/slingshot \
-            --jetstream ${escapeShellArg cfg.jetstream} \
-            ${optionalString cfg.jetstreamNoZstd "--jetstream-no-zstd"} \
-            --cache-dir /var/lib/${cfg.dataDir}/cache \
-            ${optionalString (cfg.domain != null) "--domain ${escapeShellArg cfg.domain}"} \
-            ${optionalString (cfg.acmeContact != null) "--acme-contact ${escapeShellArg cfg.acmeContact}"} \
-            --certs /var/lib/${cfg.dataDir}/certs \
-            ${optionalString (cfg.healthcheckUrl != null) "--healthcheck ${escapeShellArg cfg.healthcheckUrl}"}
-        '';
         Restart = "always";
         RestartSec = "10s";
-        DynamicUser = true;
-        StateDirectory = cfg.dataDir;
-        ReadWritePaths = [ "/var/lib/${cfg.dataDir}" ];
 
-        # Security settings
+        User = "microcosm-slingshot";
+        Group = "microcosm-slingshot";
+
+        WorkingDirectory = cfg.dataDir;
+
         NoNewPrivileges = true;
-        ProtectSystem = "strict";
+        ProtectSystem = "full";
         ProtectHome = true;
+        ReadWritePaths = [ cfg.dataDir ];
         PrivateTmp = true;
         ProtectKernelTunables = true;
         ProtectKernelModules = true;
@@ -88,6 +63,10 @@ in
         RemoveIPC = true;
         PrivateMounts = true;
       };
+
+      script = ''
+        exec ${cfg.package}/bin/slingshot
+      '';
     };
   };
 }

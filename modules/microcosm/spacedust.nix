@@ -1,10 +1,5 @@
 # Defines the NixOS module for the Spacedust service
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}:
+{ config, lib, pkgs, ... }:
 
 with lib;
 
@@ -13,38 +8,35 @@ let
 in
 {
   options.services.microcosm-spacedust = {
-    enable = mkEnableOption "Spacedust service";
+    enable = mkEnableOption "Spacedust server";
 
     package = mkOption {
       type = types.package;
-      default = pkgs.nur.microcosm.spacedust;
+      default = pkgs.nur.spacedust;
       description = "The Spacedust package to use.";
     };
 
-    jetstream = mkOption {
+    dataDir = mkOption {
       type = types.str;
-      description = "The Jetstream server to connect to.";
-      example = "wss://jetstream1.us-east.bsky.network/subscribe";
-    };
-
-    jetstreamNoZstd = mkOption {
-      type = types.bool;
-      default = false;
-      description = "Don't request zstd-compressed jetstream events.";
+      default = "/var/lib/microcosm-spacedust";
+      description = "The absolute path to the directory to store data in.";
     };
   };
 
   config = mkIf cfg.enable {
-    # Create a static user and group for the service
     users.users.microcosm-spacedust = {
       isSystemUser = true;
       group = "microcosm-spacedust";
-      home = "/var/lib/microcosm-spacedust"; # Placeholder home directory
+      home = cfg.dataDir;
     };
     users.groups.microcosm-spacedust = {};
 
+    systemd.tmpfiles.rules = [
+      "d ${cfg.dataDir} 0755 microcosm-spacedust microcosm-spacedust - -"
+    ];
+
     systemd.services.microcosm-spacedust = {
-      description = "Spacedust Service - Realtime link event processing for AT Protocol";
+      description = "Spacedust Server";
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" ];
       wants = [ "network.target" ];
@@ -53,18 +45,15 @@ in
         Restart = "always";
         RestartSec = "10s";
 
-        # Use the static user and group
         User = "microcosm-spacedust";
         Group = "microcosm-spacedust";
 
-        # Spacedust doesn't seem to use a data directory in the same way constellation does
-        # WorkingDirectory = "/var/lib/microcosm-spacedust";
+        WorkingDirectory = cfg.dataDir;
 
-        # Security settings
         NoNewPrivileges = true;
         ProtectSystem = "full";
         ProtectHome = true;
-        # ReadWritePaths = [ ]; # No specific data directory to write to
+        ReadWritePaths = [ cfg.dataDir ];
         PrivateTmp = true;
         ProtectKernelTunables = true;
         ProtectKernelModules = true;
@@ -75,21 +64,9 @@ in
         PrivateMounts = true;
       };
 
-      script =
-        let
-          args = flatten [
-            [
-              "--jetstream"
-              (escapeShellArg cfg.jetstream)
-            ]
-            (optional cfg.jetstreamNoZstd [
-              "--jetstream-no-zstd"
-            ])
-          ];
-        in
-        ''
-          exec ${cfg.package}/bin/main ${concatStringsSep " " args}
-        '';
+      script = ''
+        exec ${cfg.package}/bin/spacedust
+      '';
     };
   };
 }

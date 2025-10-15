@@ -8,7 +8,7 @@ let
 in
 {
   options.services.microcosm-reflector = {
-    enable = mkEnableOption "Reflector service";
+    enable = mkEnableOption "Reflector server";
 
     package = mkOption {
       type = types.package;
@@ -16,44 +16,44 @@ in
       description = "The Reflector package to use.";
     };
 
-    serviceId = mkOption {
+    dataDir = mkOption {
       type = types.str;
-      description = "The DID document service ID.";
-    };
-
-    serviceType = mkOption {
-      type = types.str;
-      description = "The service type.";
-    };
-
-    serviceEndpoint = mkOption {
-      type = types.str;
-      description = "The HTTPS endpoint for the service.";
-    };
-
-    domain = mkOption {
-      type = types.str;
-      description = "The parent domain.";
+      default = "/var/lib/microcosm-reflector";
+      description = "The absolute path to the directory to store data in.";
     };
   };
 
   config = mkIf cfg.enable {
+    users.users.microcosm-reflector = {
+      isSystemUser = true;
+      group = "microcosm-reflector";
+      home = cfg.dataDir;
+    };
+    users.groups.microcosm-reflector = {};
+
+    systemd.tmpfiles.rules = [
+      "d ${cfg.dataDir} 0755 microcosm-reflector microcosm-reflector - -"
+    ];
+
     systemd.services.microcosm-reflector = {
-      description = "Reflector Service";
-      after = [ "network.target" ];
+      description = "Reflector Server";
       wantedBy = [ "multi-user.target" ];
+      after = [ "network.target" ];
+      wants = [ "network.target" ];
 
       serviceConfig = {
-        ExecStart = "${cfg.package}/bin/reflector --id ${cfg.serviceId} --type ${cfg.serviceType} --service-endpoint ${cfg.serviceEndpoint} --domain ${cfg.domain}";
         Restart = "always";
         RestartSec = "10s";
-        DynamicUser = true;
-        StateDirectory = "reflector";
 
-        # Security settings
+        User = "microcosm-reflector";
+        Group = "microcosm-reflector";
+
+        WorkingDirectory = cfg.dataDir;
+
         NoNewPrivileges = true;
-        ProtectSystem = "strict";
+        ProtectSystem = "full";
         ProtectHome = true;
+        ReadWritePaths = [ cfg.dataDir ];
         PrivateTmp = true;
         ProtectKernelTunables = true;
         ProtectKernelModules = true;
@@ -63,6 +63,10 @@ in
         RemoveIPC = true;
         PrivateMounts = true;
       };
+
+      script = ''
+        exec ${cfg.package}/bin/reflector
+      '';
     };
   };
 }
