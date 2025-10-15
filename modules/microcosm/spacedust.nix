@@ -17,7 +17,7 @@ in
 
     package = mkOption {
       type = types.package;
-      default = pkgs.nur.microcosm-rs.spacedust;
+      default = pkgs.nur.microcosm.spacedust;
       description = "The Spacedust package to use.";
     };
 
