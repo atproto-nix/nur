@@ -4,12 +4,28 @@
 
 self: super:
 let
-  isReserved = n: n == "lib" || n == "overlays" || n == "modules";
-  nameValuePair = n: v: { name = n; value = v; };
-  nurAttrs = import ./default.nix { pkgs = super; };
+  craneLib = (import (builtins.fetchTarball "https://github.com/ipetkov/crane/archive/master.tar.gz")).mkLib super;
+  nurAttrs = import ./default.nix { pkgs = super; inherit craneLib; };
+  
+  # ATProto namespace with all packages and utilities
+  atproto = nurAttrs // {
+    # Make lib utilities available at top level for convenience
+    inherit (nurAttrs) lib;
+    
+    # Expose individual package collections for easier access
+    inherit (nurAttrs) microcosm blacksky bluesky;
+    
+    # Also provide flattened access to all packages with prefixes
+    packages = 
+      let
+        microcosm = super.lib.mapAttrs' (n: v: super.lib.nameValuePair "microcosm-${n}" v) nurAttrs.microcosm;
+        blacksky = super.lib.mapAttrs' (n: v: super.lib.nameValuePair "blacksky-${n}" v) nurAttrs.blacksky;
+        bluesky = super.lib.mapAttrs' (n: v: super.lib.nameValuePair "bluesky-${n}" v) nurAttrs.bluesky;
+      in
+      microcosm // blacksky // bluesky;
+  };
 
 in
-builtins.listToAttrs
-  (map (n: nameValuePair n nurAttrs.${n})
-    (builtins.filter (n: !isReserved n)
-      (builtins.attrNames nurAttrs)))
+{
+  inherit atproto;
+}

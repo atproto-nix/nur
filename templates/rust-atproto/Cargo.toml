@@ -1,0 +1,36 @@
+[package]
+name = "my-atproto-service"
+version = "0.1.0"
+edition = "2021"
+description = "My ATProto Rust service"
+license = "MIT"
+repository = "https://github.com/your-org/your-repo"
+
+[dependencies]
+# Common ATProto dependencies
+tokio = { version = "1.0", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+anyhow = "1.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# HTTP server (choose one)
+axum = "0.7"
+# or warp = "0.3"
+# or actix-web = "4.0"
+
+# Database (choose based on your needs)
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "sqlite", "chrono", "uuid"] }
+# or diesel = { version = "2.0", features = ["sqlite", "chrono"] }
+
+# Cryptography
+sha2 = "0.10"
+ed25519-dalek = "2.0"
+
+# Configuration
+config = "0.14"
+clap = { version = "4.0", features = ["derive"] }
+
+[dev-dependencies]
+tempfile = "3.0"

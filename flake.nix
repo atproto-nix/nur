@@ -16,7 +16,7 @@
       rust-overlay,
       ...
     }:
-    flake-utils.lib.eachDefaultSystem (
+    flake-utils.lib.eachSystem [ "x86_64-linux" "aarch64-linux" ] (
       system:
       let
         nurOverlay = final: prev: {
@@ -36,11 +36,19 @@
         allPackages = 
           let
             isDerivation = pkg: pkg.type or "" == "derivation";
+            # Combine all package collections with proper namespacing
+            microcosm = pkgs.lib.mapAttrs' (n: v: pkgs.lib.nameValuePair "microcosm-${n}" v) pkgs.nur.microcosm;
+            blacksky = pkgs.lib.mapAttrs' (n: v: pkgs.lib.nameValuePair "blacksky-${n}" v) pkgs.nur.blacksky;
+            bluesky = pkgs.lib.mapAttrs' (n: v: pkgs.lib.nameValuePair "bluesky-${n}" v) pkgs.nur.bluesky;
           in
-          pkgs.lib.filterAttrs (n: v: isDerivation v) (pkgs.nur.microcosm // pkgs.nur.blacksky);
+          pkgs.lib.filterAttrs (n: v: isDerivation v) (microcosm // blacksky // bluesky);
       in
       {
         packages = allPackages;
+        
+        # ATProto packaging utilities library
+        lib = pkgs.nur.lib;
+        
         nixosModules = {
           microcosm = import ./modules/microcosm;
           blacksky = import ./modules/blacksky;
