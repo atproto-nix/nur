@@ -5,56 +5,48 @@ with lib;
 
 let
   cfg = config.services.microcosm-pocket;
+  microcosmLib = import ../../lib/microcosm.nix { inherit lib; };
 in
 {
-  options.services.microcosm-pocket = {
-    enable = mkEnableOption "Pocket service";
-
+  options.services.microcosm-pocket = microcosmLib.mkMicrocosmServiceOptions "Pocket" {
     package = mkOption {
       type = types.package;
-      default = pkgs.nur.pocket;
+      default = pkgs.microcosm.pocket;
       description = "The Pocket package to use.";
-    };
-
-    dbDir = mkOption {
-      type = types.str;
-      default = "microcosm-pocket";
-      description = "The directory to store the database in, relative to /var/lib.";
     };
 
     domain = mkOption {
       type = types.str;
-      description = "The domain for serving a did doc.";
+      description = "The domain for serving a DID document.";
+      example = "pocket.example.com";
     };
   };
 
-  config = mkIf cfg.enable {
-    systemd.services.microcosm-pocket = {
-      description = "Pocket Service";
-      after = [ "network.target" ];
-      wantedBy = [ "multi-user.target" ];
+  config = mkIf cfg.enable (mkMerge [
+    # Configuration validation
+    (microcosmLib.mkConfigValidation cfg "Pocket" [
+      {
+        assertion = cfg.domain != "";
+        message = "Domain cannot be empty.";
+      }
+      {
+        assertion = builtins.match "^[a-zA-Z0-9.-]+$" cfg.domain != null;
+        message = "Domain must be a valid hostname.";
+      }
+    ])
 
+    # User and group management
+    (microcosmLib.mkUserConfig cfg)
+
+    # Directory management
+    (microcosmLib.mkDirectoryConfig cfg [])
+
+    # systemd service
+    (microcosmLib.mkSystemdService cfg "Pocket" {
+      description = "DID document service";
       serviceConfig = {
-        ExecStart = "${cfg.package}/bin/pocket --db /var/lib/${cfg.dbDir}/prefs.sqlite3 --domain ${cfg.domain}";
-        Restart = "always";
-        RestartSec = "10s";
-        DynamicUser = true;
-        StateDirectory = cfg.dbDir;
-        ReadWritePaths = [ "/var/lib/${cfg.dbDir}" ];
-
-        # Security settings
-        NoNewPrivileges = true;
-        ProtectSystem = "strict";
-        ProtectHome = true;
-        PrivateTmp = true;
-        ProtectKernelTunables = true;
-        ProtectKernelModules = true;
-        ProtectControlGroups = true;
-        RestrictRealtime = true;
-        RestrictSUIDSGID = true;
-        RemoveIPC = true;
-        PrivateMounts = true;
+        ExecStart = "${cfg.package}/bin/pocket --db ${cfg.dataDir}/prefs.sqlite3 --domain ${cfg.domain}";
       };
-    };
-  };
+    })
+  ]);
 }

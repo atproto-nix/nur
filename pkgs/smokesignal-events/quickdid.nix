@@ -21,19 +21,45 @@ atprotoLib.mkRustAtprotoService {
   # Build the main quickdid binary
   cargoExtraArgs = "--bin quickdid";
   
-  passthru.atproto = {
-    type = "application";
-    services = [ "quickdid" ];
-    protocols = [ "com.atproto" ];
-    schemaVersion = "1.0";
-    description = "Fast and scalable identity resolution service";
+  passthru = {
+    atproto = {
+      type = "application";
+      services = [ "quickdid" ];
+      protocols = [ "com.atproto" ];
+      schemaVersion = "1.0";
+      description = "Fast and scalable identity resolution service";
+    };
+    
+    organization = {
+      name = "smokesignal-events";
+      displayName = "Smokesignal Events";
+      website = null;
+      contact = null;
+      maintainer = "Smokesignal Events";
+      repository = "https://tangled.org/@smokesignal.events/quickdid";
+      packageCount = 1;
+      atprotoFocus = [ "infrastructure" "identity" ];
+    };
   };
   
   meta = with pkgs.lib; {
     description = "A fast and scalable com.atproto.identity.resolveHandle service";
+    longDescription = ''
+      A fast and scalable com.atproto.identity.resolveHandle service for ATProto identity resolution.
+      Provides efficient DID resolution for ATProto applications.
+      
+      Maintained by Smokesignal Events
+    '';
     homepage = "https://tangled.org/@smokesignal.events/quickdid";
     license = licenses.mit;
     platforms = platforms.unix;
     maintainers = [ ];
+    
+    organizationalContext = {
+      organization = "smokesignal-events";
+      displayName = "Smokesignal Events";
+      needsMigration = false;
+      migrationPriority = "medium";
+    };
   };
 }

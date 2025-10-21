@@ -1,9 +1,7 @@
 {
-  # Import all Bluesky service modules
+  # Legacy Bluesky modules - most have been moved to organizational directories
+  # This directory is kept for backward compatibility
   imports = [
-    ./frontpage.nix
-    ./drainpipe.nix
-    ./pds-dash.nix
-    ./pds-gatekeeper.nix
+    # All modules have been moved to their respective organizational directories
   ];
 }

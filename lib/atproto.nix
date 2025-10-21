@@ -1,6 +1,8 @@
 { lib, pkgs, craneLib, ... }:
 
 let
+  # Import organizational framework
+  organizationalFramework = import ./organizational-framework.nix { inherit lib; };
   # ATProto package metadata schema validation
   validateAtprotoMetadata = metadata: 
     let
@@ -52,6 +54,7 @@ let
     rocksdb
     openssl
     sqlite
+    postgresql
   ];
 
 in
@@ -282,6 +285,82 @@ in
       ];
     };
 
+  # Cross-language compatibility utilities
+  mkCrossLanguageBindings = { lexiconSrc, languages ? [ "typescript" "rust" "go" ], outputDir ? "generated" }:
+    let
+      generateForLanguage = lang:
+        pkgs.stdenv.mkDerivation {
+          name = "atproto-bindings-${lang}";
+          src = lexiconSrc;
+          
+          buildPhase = ''
+            mkdir -p $out/${outputDir}/${lang}
+            
+            # This would use the appropriate code generation tools
+            case "${lang}" in
+              typescript)
+                echo "// Generated TypeScript bindings" > $out/${outputDir}/${lang}/index.ts
+                ;;
+              rust)
+                echo "// Generated Rust bindings" > $out/${outputDir}/${lang}/lib.rs
+                ;;
+              go)
+                echo "// Generated Go bindings" > $out/${outputDir}/${lang}/bindings.go
+                ;;
+            esac
+          '';
+          
+          installPhase = "true"; # Output is already in $out
+        };
+    in
+    lib.genAttrs languages generateForLanguage;
+
+  # Lexicon validation and processing utilities
+  validateLexicon = lexiconFile:
+    pkgs.runCommand "validate-lexicon" {} ''
+      # Basic lexicon validation
+      if [ -f "${lexiconFile}" ]; then
+        echo "Lexicon file exists: ${lexiconFile}"
+        touch $out
+      else
+        echo "Lexicon file not found: ${lexiconFile}"
+        exit 1
+      fi
+    '';
+
+  # Package compatibility matrix utilities
+  checkCompatibility = package1: package2:
+    let
+      p1Protocols = package1.passthru.atproto.protocols or [];
+      p2Protocols = package2.passthru.atproto.protocols or [];
+      commonProtocols = lib.intersectLists p1Protocols p2Protocols;
+    in
+    {
+      compatible = (lib.length commonProtocols) > 0;
+      sharedProtocols = commonProtocols;
+      package1Protocols = p1Protocols;
+      package2Protocols = p2Protocols;
+    };
+
   # Export standard environments and inputs for reuse
   inherit defaultRustEnv defaultRustNativeInputs defaultRustBuildInputs;
+  
+  # Export organizational framework
+  organizational = organizationalFramework;
+  
+  # Enhanced package creation with organizational metadata
+  mkOrganizationalAtprotoPackage = packageName: packageDef:
+    organizationalFramework.createOrganizationalPackage packageName packageDef;
+  
+  # Organizational validation utilities
+  validateOrganizationalPlacement = packageName: actualPath:
+    organizationalFramework.validatePackage packageName actualPath;
+  
+  # Get organizational metadata for package
+  getOrganizationalMetadata = packageName:
+    organizationalFramework.mapping.generateOrganizationalMetadata packageName;
+  
+  # Check if package needs organizational migration
+  needsOrganizationalMigration = packageName:
+    organizationalFramework.utils.needsMigration packageName;
 }

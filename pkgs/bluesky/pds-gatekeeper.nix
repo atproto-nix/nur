@@ -54,45 +54,77 @@ craneLib.buildPackage rec {
   '';
 
   # ATProto metadata
-  passthru.atproto = {
-    type = "application";
-    services = [ "pds-gatekeeper" "pds-security" ];
-    protocols = [ "com.atproto" ];
-    schemaVersion = "1.0";
-    
-    # Dependencies on other ATProto packages
-    atprotoDependencies = {
-      # Requires a PDS to work with
+  passthru = {
+    atproto = {
+      type = "application";
+      services = [ "pds-gatekeeper" "pds-security" ];
+      protocols = [ "com.atproto" ];
+      schemaVersion = "1.0";
+      
+      # Dependencies on other ATProto packages
+      atprotoDependencies = {
+        # Requires a PDS to work with
+      };
+      
+      # Configuration requirements
+      configuration = {
+        required = [ "PDS_DATA_DIRECTORY" ];
+        optional = [ 
+          "PDS_ENV_LOCATION"
+          "GATEKEEPER_EMAIL_TEMPLATES_DIRECTORY"
+          "GATEKEEPER_TWO_FACTOR_EMAIL_SUBJECT"
+          "PDS_BASE_URL"
+          "GATEKEEPER_HOST"
+          "GATEKEEPER_PORT"
+          "GATEKEEPER_CREATE_ACCOUNT_PER_SECOND"
+          "GATEKEEPER_CREATE_ACCOUNT_BURST"
+        ];
+      };
     };
     
-    # Configuration requirements
-    configuration = {
-      required = [ "PDS_DATA_DIRECTORY" ];
-      optional = [ 
-        "PDS_ENV_LOCATION"
-        "GATEKEEPER_EMAIL_TEMPLATES_DIRECTORY"
-        "GATEKEEPER_TWO_FACTOR_EMAIL_SUBJECT"
-        "PDS_BASE_URL"
-        "GATEKEEPER_HOST"
-        "GATEKEEPER_PORT"
-        "GATEKEEPER_CREATE_ACCOUNT_PER_SECOND"
-        "GATEKEEPER_CREATE_ACCOUNT_BURST"
-      ];
+    organization = {
+      name = "individual";
+      displayName = "Individual Developers";
+      website = null;
+      contact = null;
+      maintainer = "fatfingers23";
+      repository = "https://github.com/fatfingers23/pds_gatekeeper";
+      packageCount = 1;
+      atprotoFocus = [ "infrastructure" "tools" ];
+    };
+    
+    # Deprecation notice
+    deprecated = {
+      reason = "Package moved to pkgs/individual/pds-gatekeeper.nix";
+      replacement = "individual.pds-gatekeeper";
+      since = "2024-10-21";
     };
   };
 
   meta = with lib; {
-    description = "Security microservice for ATProto PDS with 2FA and rate limiting";
+    description = "Security microservice for ATProto PDS with 2FA and rate limiting (DEPRECATED)";
     longDescription = ''
       PDS Gatekeeper is a microservice that adds security features to ATProto PDS
       installations, including two-factor authentication, rate limiting, and
       enhanced account creation controls. It works by intercepting specific PDS
       endpoints through a reverse proxy configuration.
+      
+      DEPRECATED: This package has been moved to pkgs/individual/pds-gatekeeper.nix
+      Please use individual.pds-gatekeeper instead.
+      
+      Maintained by fatfingers23
     '';
     homepage = "https://github.com/fatfingers23/pds_gatekeeper";
     license = licenses.mit;
     platforms = platforms.linux;
     maintainers = [ ];
     mainProgram = "pds_gatekeeper";
+    
+    organizationalContext = {
+      organization = "individual";
+      displayName = "Individual Developers";
+      needsMigration = true;
+      migrationPriority = "high";
+    };
   };
 }

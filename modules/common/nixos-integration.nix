@@ -301,7 +301,6 @@ in
       postgresql = mkIf config.atproto.integration.database.postgresql.enable {
         enable = mkDefault true;
         package = config.atproto.integration.database.postgresql.package;
-        settings = config.atproto.integration.database.postgresql.settings;
         
         # Performance tuning for ATProto workloads
         settings = {

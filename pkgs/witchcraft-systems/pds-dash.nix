@@ -88,25 +88,51 @@ buildNpmPackage rec {
   '';
 
   # ATProto metadata
-  passthru.atproto = {
-    type = "application";
-    services = [ "pds-dashboard" ];
-    protocols = [ "com.atproto" ];
-    schemaVersion = "1.0";
+  passthru = {
+    atproto = {
+      type = "application";
+      services = [ "pds-dashboard" ];
+      protocols = [ "com.atproto" ];
+      schemaVersion = "1.0";
+      
+      # Configuration requirements
+      configuration = {
+        required = [ "PDS_URL" ];
+        optional = [ "THEME" "FRONTEND_URL" "MAX_POSTS" "FOOTER_TEXT" "SHOW_FUTURE_POSTS" ];
+      };
+    };
     
-    # Configuration requirements
-    configuration = {
-      required = [ "PDS_URL" ];
-      optional = [ "THEME" "FRONTEND_URL" "MAX_POSTS" "FOOTER_TEXT" "SHOW_FUTURE_POSTS" ];
+    organization = {
+      name = "witchcraft-systems";
+      displayName = "Witchcraft Systems";
+      website = null;
+      contact = null;
+      maintainer = "Witchcraft Systems";
+      repository = "https://github.com/witchcraft-systems/pds-dash";
+      packageCount = 1;
+      atprotoFocus = [ "applications" "tools" ];
     };
   };
 
   meta = with lib; {
     description = "Frontend dashboard with stats for ATProto PDS";
+    longDescription = ''
+      Frontend dashboard with statistics and management interface for ATProto PDS.
+      Built with Deno and provides a web interface for PDS monitoring.
+      
+      Maintained by Witchcraft Systems
+    '';
     homepage = "https://github.com/witchcraft-systems/pds-dash";
     license = licenses.mit;
     platforms = platforms.all;
     maintainers = [ ];
     mainProgram = "pds-dash";
+    
+    organizationalContext = {
+      organization = "witchcraft-systems";
+      displayName = "Witchcraft Systems";
+      needsMigration = false;
+      migrationPriority = "medium";
+    };
   };
 }

@@ -45,20 +45,45 @@ buildGoModule rec {
   # Skip tests due to complex multimedia dependencies
   doCheck = false;
   
-  passthru.atproto = {
-    type = "application";
-    services = [ "streamplace-server" ];
-    protocols = [ "com.atproto" "app.bsky" ];
-    schemaVersion = "1.0";
-    complexity = "high"; # Complex multimedia dependencies
+  passthru = {
+    atproto = {
+      type = "application";
+      services = [ "streamplace-server" ];
+      protocols = [ "com.atproto" "app.bsky" ];
+      schemaVersion = "1.0";
+      complexity = "high"; # Complex multimedia dependencies
+    };
+    
+    organization = {
+      name = "stream-place";
+      displayName = "Stream.place";
+      website = "https://stream.place";
+      contact = null;
+      maintainer = "Stream.place";
+      repository = "https://tangled.org/@stream.place/streamplace";
+      packageCount = 1;
+      atprotoFocus = [ "applications" ];
+    };
   };
   
   meta = with pkgs.lib; {
     description = "Video infrastructure platform with ATProto integration";
+    longDescription = ''
+      Video infrastructure platform with ATProto integration for multimedia streaming.
+      Note: Complex multimedia dependencies may require additional system setup.
+      
+      Maintained by Stream.place (https://stream.place)
+    '';
     homepage = "https://stream.place";
     license = licenses.mit;
     platforms = platforms.unix;
     maintainers = [ ];
-    # Note: Complex multimedia dependencies may require additional system setup
+    
+    organizationalContext = {
+      organization = "stream-place";
+      displayName = "Stream.place";
+      needsMigration = false;
+      migrationPriority = "medium";
+    };
   };
 }

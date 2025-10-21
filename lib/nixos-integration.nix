@@ -87,24 +87,23 @@ rec {
       enable = mkDefault true;
       
       virtualHosts.${nginxConfig.serverName} = {
-        locations."/" = {
-          proxyPass = "http://127.0.0.1:${toString nginxConfig.port}";
-          proxyWebsockets = nginxConfig.websockets or false;
-          extraConfig = ''
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-            ${nginxConfig.extraConfig or ""}
-          '';
-        };
+        locations = {
+          "/" = {
+            proxyPass = "http://127.0.0.1:${toString nginxConfig.port}";
+            proxyWebsockets = nginxConfig.websockets or false;
+            extraConfig = ''
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+              ${nginxConfig.extraConfig or ""}
+            '';
+          };
+        } // (nginxConfig.locations or {});
         
         # SSL configuration if enabled
         enableACME = nginxConfig.ssl.enable or false;
         forceSSL = nginxConfig.ssl.force or false;
-        
-        # Additional locations for API endpoints, metrics, etc.
-        locations = nginxConfig.locations or {};
       };
     };
 

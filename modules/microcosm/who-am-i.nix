@@ -5,21 +5,14 @@ with lib;
 
 let
   cfg = config.services.microcosm-who-am-i;
+  microcosmLib = import ../../lib/microcosm.nix { inherit lib; };
 in
 {
-  options.services.microcosm-who-am-i = {
-    enable = mkEnableOption "Microcosm Who-Am-I service (deprecated)";
-
+  options.services.microcosm-who-am-i = microcosmLib.mkMicrocosmServiceOptions "Who-Am-I" {
     package = mkOption {
       type = types.package;
-      default = microcosmPkgs."who-am-i";
+      default = pkgs.microcosm."who-am-i";
       description = "The Who-Am-I package to use.";
-    };
-
-    openFirewall = mkOption {
-      type = types.bool;
-      default = false;
-      description = "Whether to open the firewall for the Who-Am-I API port.";
     };
 
     appSecret = mkOption {
@@ -41,6 +34,7 @@ in
     baseUrl = mkOption {
       type = types.str;
       description = "The client-reachable base url.";
+      example = "https://who-am-i.example.com";
     };
 
     bind = mkOption {
@@ -57,18 +51,52 @@ in
 
     allowedHosts = mkOption {
       type = types.listOf types.str;
+      default = [];
       description = "The hosts who are allowed to one-click auth.";
     };
   };
 
-  config = mkIf cfg.enable {
-    systemd.services.microcosm-who-am-i = {
-      description = "Microcosm Who-Am-I Service (deprecated)";
-      after = [ "network.target" ];
-      wantedBy = [ "multi-user.target" ];
+  config = mkIf cfg.enable (mkMerge [
+    # Configuration validation
+    (microcosmLib.mkConfigValidation cfg "Who-Am-I" (
+      let
+        bindPort = microcosmLib.extractPortFromBind cfg.bind;
+      in
+      microcosmLib.mkPortValidation bindPort "bind port" ++
+      [
+        {
+          assertion = cfg.appSecret != "";
+          message = "App secret cannot be empty.";
+        }
+        {
+          assertion = pathExists cfg.jwtPrivateKey;
+          message = "JWT private key file must exist at ${cfg.jwtPrivateKey}.";
+        }
+        {
+          assertion = cfg.oauthPrivateKey != null -> pathExists cfg.oauthPrivateKey;
+          message = "OAuth private key file must exist when specified.";
+        }
+        {
+          assertion = hasPrefix "http://" cfg.baseUrl || hasPrefix "https://" cfg.baseUrl;
+          message = "Base URL must start with http:// or https://.";
+        }
+        {
+          assertion = length cfg.allowedHosts > 0;
+          message = "At least one allowed host must be specified for security.";
+        }
+      ]
+    ))
 
+    # User and group management
+    (microcosmLib.mkUserConfig cfg)
+
+    # Directory management
+    (microcosmLib.mkDirectoryConfig cfg [])
+
+    # systemd service
+    (microcosmLib.mkSystemdService cfg "Who-Am-I" {
+      description = "Identity service for ATProto (deprecated)";
       serviceConfig = {
-        # Execution settings from the feature branch
         ExecStart = ''
           ${cfg.package}/bin/who-am-i \
             --app-secret ${escapeShellArg cfg.appSecret} \
@@ -79,29 +107,21 @@ in
             ${optionalString cfg.dev "--dev"} \
             ${concatStringsSep " " (map (host: "--allow-host ${escapeShellArg host}") cfg.allowedHosts)}
         '';
-        Restart = "always";
-        RestartSec = "10s";
-        DynamicUser = true;
-        StateDirectory = "who-am-i";
-
-        # Security settings from the main branch
-        NoNewPrivileges = true;
-        ProtectSystem = "strict";
-        ProtectHome = true;
-        PrivateTmp = true;
-        ProtectKernelTunables = true;
-        ProtectKernelModules = true;
-        ProtectControlGroups = true;
-        RestrictRealtime = true;
-        RestrictSUIDSGID = true;
-        RemoveIPC = true;
-        PrivateMounts = true;
       };
-    };
+    })
 
-    # Updated firewall rule to parse the port from the new 'bind' option
-    networking.firewall = mkIf cfg.openFirewall {
-      allowedTCPPorts = [ (toInt (last (splitString ":" cfg.bind))) ];
-    };
-  };
+    # Firewall configuration
+    (microcosmLib.mkFirewallConfig cfg [ (microcosmLib.extractPortFromBind cfg.bind) ])
+
+    # Deprecation and security warnings
+    {
+      warnings = [
+        "The Who-Am-I service is deprecated and should not be used in production environments"
+      ] ++ lib.optionals cfg.dev [
+        "Who-Am-I development mode is enabled - this should not be used in production"
+      ] ++ lib.optionals (cfg.oauthPrivateKey == null) [
+        "OAuth private key is not configured - some functionality may be limited"
+      ];
+    }
+  ]);
 }

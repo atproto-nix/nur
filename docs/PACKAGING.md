@@ -31,41 +31,110 @@ The ATProto NUR provides a standardized way to package and deploy ATProto applic
 
 ```
 pkgs/
-├── atproto/           # Core ATProto libraries and tools
-├── bluesky/           # Official Bluesky applications
-├── microcosm/         # Microcosm service collection
-├── blacksky/          # Community ATProto tools
-└── your-collection/   # Your service collection
+├── hyperlink-academy/     # Hyperlink Academy projects
+├── slices-network/        # Slices Network projects  
+├── teal-fm/              # Teal.fm projects
+├── parakeet-social/      # Parakeet Social projects
+├── stream-place/         # Stream.place projects
+├── yoten-app/            # Yoten App projects
+├── red-dwarf-client/     # Red Dwarf Client projects
+├── tangled-dev/          # Tangled Development projects
+├── smokesignal-events/   # Smokesignal Events projects
+├── microcosm-blue/       # Microcosm projects
+├── witchcraft-systems/   # Witchcraft Systems projects
+├── atbackup-pages-dev/   # ATBackup projects
+├── bluesky-social/       # Official Bluesky projects
+├── individual/           # Individual developer projects
+├── microcosm/            # Microcosm service collection (existing)
+├── blacksky/             # Community ATProto tools (existing)
+└── your-organization/    # Your organizational collection
 ```
+
+### Organizational Placement Guidelines
+
+When adding new packages, follow these placement rules:
+
+1. **Identify the Organization**: Determine the actual organizational owner of the project
+2. **Use Canonical Names**: Use the most recognizable organizational identifier
+3. **Create Organization Directory**: If the organization is new, create the appropriate directory
+4. **Individual Fallback**: Use `individual/` for projects without clear organizational ownership
+5. **Maintain Consistency**: Follow existing patterns within each organization
 
 ### Package Organization
 
-Each service collection should be organized as:
+Each organizational collection should be organized as:
 
 ```
-pkgs/your-collection/
-├── default.nix        # Collection entry point
-├── service-a/         # Individual service packages
+pkgs/your-organization/
+├── default.nix        # Organization entry point
+├── project-a/         # Individual project packages
 │   └── default.nix
-├── service-b/
+├── project-b/
 │   └── default.nix
 └── lib.nix           # Shared utilities (optional)
 ```
 
-### Collection Entry Point
+### Organizational Metadata
+
+Each organization should include metadata in their `default.nix`:
 
 ```nix
-# pkgs/your-collection/default.nix
+# pkgs/your-organization/default.nix
 { lib, callPackage, ... }:
 
+let
+  organizationMeta = {
+    name = "your-organization";
+    displayName = "Your Organization Name";
+    website = "https://your-org.com";
+    description = "Brief description of the organization";
+    maintainers = [ "maintainer-handle" ];
+  };
+in
 {
-  service-a = callPackage ./service-a { };
-  service-b = callPackage ./service-b { };
+  # Export organization metadata
+  passthru.organization = organizationMeta;
   
-  # Export the collection as a single derivation if needed
+  # Package exports
+  project-a = callPackage ./project-a { 
+    inherit organizationMeta;
+  };
+  project-b = callPackage ./project-b { 
+    inherit organizationMeta;
+  };
+}
+```
+
+### Organization Entry Point
+
+```nix
+# pkgs/your-organization/default.nix
+{ lib, callPackage, ... }:
+
+let
+  organizationMeta = {
+    name = "your-organization";
+    displayName = "Your Organization";
+    website = "https://your-org.com";
+    description = "ATProto projects by Your Organization";
+  };
+in
+{
+  # Export organization metadata
+  passthru.organization = organizationMeta;
+  
+  # Package exports with organizational context
+  project-a = callPackage ./project-a { 
+    inherit organizationMeta;
+  };
+  project-b = callPackage ./project-b { 
+    inherit organizationMeta;
+  };
+  
+  # Export the organization as a single derivation if needed
   all = lib.buildEnv {
-    name = "your-collection";
-    paths = [ service-a service-b ];
+    name = "your-organization-all";
+    paths = [ project-a project-b ];
   };
 }
 ```

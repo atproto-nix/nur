@@ -1,0 +1,7 @@
+{ ... }:
+
+{
+  imports = [
+    ./red-dwarf.nix
+  ];
+}

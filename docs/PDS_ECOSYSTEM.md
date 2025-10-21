@@ -16,17 +16,27 @@ The PDS ecosystem consists of several components that work together to provide a
 
 ### PDS Dashboard (`pds-dash`)
 
-A Svelte-based web application that provides:
-- Real-time PDS statistics and monitoring
-- User activity visualization
-- Post analytics and trends
-- System health indicators
+A Svelte-based web application that provides comprehensive PDS monitoring and management capabilities.
+
+**Package**: `bluesky-pds-dash`  
+**Module**: `services.bluesky.pds-dash`
 
 **Key Features:**
-- Configurable themes
-- Customizable post limits and filtering
-- Integration with external frontend services
-- Responsive design for mobile and desktop
+- Real-time PDS statistics and monitoring
+- User activity visualization and analytics
+- Post analytics and trends with configurable limits
+- System health indicators and diagnostics
+- Configurable themes and customization options
+- Integration with external frontend services (Bluesky, custom clients)
+- Responsive design optimized for mobile and desktop
+- Deno-based runtime for modern TypeScript support
+
+**Configuration Options:**
+- **PDS Integration**: Direct connection to PDS for real-time data
+- **Theme Customization**: Multiple built-in themes with custom CSS support
+- **Post Filtering**: Configurable limits, future post handling, content filtering
+- **Frontend Integration**: Configurable links to Bluesky or custom frontends
+- **Security**: Content Security Policy, input sanitization, secure headers
 
 ### PDS Gatekeeper (`pds-gatekeeper`)
 

@@ -5,21 +5,14 @@ with lib;
 
 let
   cfg = config.services.microcosm-constellation;
+  microcosmLib = import ../../lib/microcosm.nix { inherit lib; };
 in
 {
-  options.services.microcosm-constellation = {
-    enable = mkEnableOption "Constellation server";
-
+  options.services.microcosm-constellation = microcosmLib.mkMicrocosmServiceOptions "Constellation" {
     package = mkOption {
       type = types.package;
-      default = pkgs.nur.constellation;
+      default = pkgs.microcosm.constellation;
       description = "The Constellation package to use.";
-    };
-
-    dataDir = mkOption {
-      type = types.str;
-      default = "/var/lib/microcosm-constellation";
-      description = "The absolute path to the directory to store data in.";
     };
 
     backend = mkOption {
@@ -58,83 +51,66 @@ in
     };
   };
 
-  config = mkIf cfg.enable {
-    # Create a static user and group for the service
-    users.users.microcosm-constellation = {
-      isSystemUser = true;
-      group = "microcosm-constellation";
-      home = cfg.dataDir;
-    };
-    users.groups.microcosm-constellation = {};
+  config = mkIf cfg.enable (mkMerge [
+    # Configuration validation
+    (microcosmLib.mkConfigValidation cfg "Constellation" (
+      microcosmLib.mkJetstreamValidation cfg.jetstream ++
+      [
+        {
+          assertion = cfg.backup.enable -> cfg.backup.directory != "";
+          message = "Backup directory cannot be empty when backups are enabled.";
+        }
+        {
+          assertion = cfg.backup.enable && cfg.backup.interval != null -> cfg.backup.interval > 0;
+          message = "Backup interval must be greater than 0 when specified.";
+        }
+        {
+          assertion = cfg.backup.enable && cfg.backup.maxOldBackups != null -> cfg.backup.maxOldBackups > 0;
+          message = "Maximum old backups must be greater than 0 when specified.";
+        }
+      ]
+    ))
 
-    # Use tmpfiles to declaratively manage the data directory's existence and ownership
-    systemd.tmpfiles.rules = [
-      "d ${cfg.dataDir} 0755 microcosm-constellation microcosm-constellation - -"
-    ] ++ lib.optional (cfg.backup.enable) [
-      "d ${cfg.backup.directory} 0755 microcosm-constellation microcosm-constellation - -"
-    ];
+    # User and group management
+    (microcosmLib.mkUserConfig cfg)
 
-    systemd.services.microcosm-constellation = {
-      description = "Constellation Server - Global backlink index for AT Protocol";
-      wantedBy = [ "multi-user.target" ];
-      after = [ "network.target" ];
-      wants = [ "network.target" ];
+    # Directory management
+    (microcosmLib.mkDirectoryConfig cfg (optional cfg.backup.enable cfg.backup.directory))
 
+    # systemd service
+    (microcosmLib.mkSystemdService cfg "Constellation" {
+      description = "Global backlink index for AT Protocol";
+      extraReadWritePaths = optional cfg.backup.enable cfg.backup.directory;
       serviceConfig = {
-        Restart = "always";
-        RestartSec = "10s";
-
-        # Use the static user and group
-        User = "microcosm-constellation";
-        Group = "microcosm-constellation";
-
-        WorkingDirectory = cfg.dataDir;
-
-        # Security settings
-        NoNewPrivileges = true;
-        ProtectSystem = "full";
-        ProtectHome = true;
-        ReadWritePaths = [ cfg.dataDir ] ++ optional (cfg.backup.enable) cfg.backup.directory;
-        PrivateTmp = true;
-        ProtectKernelTunables = true;
-        ProtectKernelModules = true;
-        ProtectControlGroups = true;
-        RestrictRealtime = true;
-        RestrictSUIDSGID = true;
-        RemoveIPC = true;
-        PrivateMounts = true;
+        ExecStart = 
+          let
+            args = flatten [
+              [
+                "--jetstream"
+                (escapeShellArg cfg.jetstream)
+                "--backend"
+                (escapeShellArg cfg.backend)
+              ]
+              (optional (cfg.backend == "rocks") [
+                "--data"
+                (escapeShellArg "${cfg.dataDir}/db")
+              ])
+              (optional cfg.backup.enable [
+                "--backup"
+                (escapeShellArg cfg.backup.directory)
+              ])
+              (optional (cfg.backup.enable && cfg.backup.interval != null) [
+                "--backup-interval"
+                (escapeShellArg (toString cfg.backup.interval))
+              ])
+              (optional (cfg.backup.enable && cfg.backup.interval != null && cfg.backup.maxOldBackups != null) [
+                "--max-old-backups"
+                (escapeShellArg (toString cfg.backup.maxOldBackups))
+              ])
+            ];
+          in
+          "${cfg.package}/bin/main ${concatStringsSep " " args}";
       };
-
-      script =
-        let
-          args = flatten [
-            [
-              "--jetstream"
-              (escapeShellArg cfg.jetstream)
-              "--backend"
-              (escapeShellArg cfg.backend)
-            ]
-            (optional (cfg.backend == "rocks") [
-              "--data"
-              (escapeShellArg "${cfg.dataDir}/db")
-            ])
-            (optional cfg.backup.enable [
-              "--backup"
-              (escapeShellArg cfg.backup.directory)
-            ])
-            (optional (cfg.backup.enable && cfg.backup.interval != null) [
-              "--backup-interval"
-              (escapeShellArg (toString cfg.backup.interval))
-            ])
-            (optional (cfg.backup.enable && cfg.backup.interval != null && cfg.backup.maxOldBackups != null) [
-              "--max-old-backups"
-              (escapeShellArg (toString cfg.backup.maxOldBackups))
-            ])
-          ];
-        in
-        ''
-          exec ${cfg.package}/bin/main ${concatStringsSep " " args}
-        '';
-    };
-  };
+    })
+  ]);
 }

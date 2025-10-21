@@ -1,4 +1,4 @@
-{ pkgs, lib, ... }:
+{ pkgs, lib, buildGoModule ? pkgs.buildGoModule, ... }:
 
 # Tangled Development ATProto packages
 # Organization: tangled-dev
@@ -19,9 +19,9 @@ let
 
   # Package naming pattern: use simple names within organization
   packages = {
-    appview = pkgs.callPackage ./appview.nix { };
-    knot = pkgs.callPackage ./knot.nix { };
-    spindle = pkgs.callPackage ./spindle.nix { };
+    appview = pkgs.callPackage ./appview.nix { inherit buildGoModule; };
+    knot = pkgs.callPackage ./knot.nix { inherit buildGoModule; };
+    spindle = pkgs.callPackage ./spindle.nix { inherit buildGoModule; };
     genjwks = pkgs.callPackage ./genjwks.nix { };
     lexgen = pkgs.callPackage ./lexgen.nix { };
   };

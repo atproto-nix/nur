@@ -1,10 +1,11 @@
 # NixOS ecosystem integration test for ATProto services
-import <nixpkgs/nixos/tests/make-test-python.nix> ({ pkgs, ... }: {
+{ pkgs }:
+
+pkgs.nixosTest {
   name = "atproto-nixos-ecosystem-integration";
   
   meta = with pkgs.lib.maintainers; {
     maintainers = [ ];
-    description = "Test ATProto services integration with NixOS ecosystem";
   };
 
   nodes = {
@@ -282,4 +283,4 @@ import <nixpkgs/nixos/tests/make-test-python.nix> ({ pkgs, ... }: {
 
     print("=== All Integration Tests Passed ===")
   '';
-})
+}

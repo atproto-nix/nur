@@ -1,0 +1,7 @@
+{ ... }:
+
+{
+  imports = [
+    ./pds-dash.nix
+  ];
+}

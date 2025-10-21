@@ -5,64 +5,78 @@ with lib;
 
 let
   cfg = config.services.microcosm-reflector;
+  microcosmLib = import ../../lib/microcosm.nix { inherit lib; };
 in
 {
-  options.services.microcosm-reflector = {
-    enable = mkEnableOption "Reflector service";
-
+  options.services.microcosm-reflector = microcosmLib.mkMicrocosmServiceOptions "Reflector" {
     package = mkOption {
       type = types.package;
-      default = pkgs.nur.reflector;
+      default = pkgs.microcosm.reflector;
       description = "The Reflector package to use.";
     };
 
     serviceId = mkOption {
       type = types.str;
       description = "The DID document service ID.";
+      example = "atproto_pds";
     };
 
     serviceType = mkOption {
       type = types.str;
       description = "The service type.";
+      example = "AtprotoPersonalDataServer";
     };
 
     serviceEndpoint = mkOption {
       type = types.str;
       description = "The HTTPS endpoint for the service.";
+      example = "https://pds.example.com";
     };
 
     domain = mkOption {
       type = types.str;
       description = "The parent domain.";
+      example = "example.com";
     };
   };
 
-  config = mkIf cfg.enable {
-    systemd.services.microcosm-reflector = {
-      description = "Reflector Service";
-      after = [ "network.target" ];
-      wantedBy = [ "multi-user.target" ];
+  config = mkIf cfg.enable (mkMerge [
+    # Configuration validation
+    (microcosmLib.mkConfigValidation cfg "Reflector" [
+      {
+        assertion = cfg.serviceId != "";
+        message = "Service ID cannot be empty.";
+      }
+      {
+        assertion = cfg.serviceType != "";
+        message = "Service type cannot be empty.";
+      }
+      {
+        assertion = hasPrefix "https://" cfg.serviceEndpoint;
+        message = "Service endpoint must use HTTPS.";
+      }
+      {
+        assertion = cfg.domain != "";
+        message = "Domain cannot be empty.";
+      }
+      {
+        assertion = builtins.match "^[a-zA-Z0-9.-]+$" cfg.domain != null;
+        message = "Domain must be a valid hostname.";
+      }
+    ])
 
+    # User and group management
+    (microcosmLib.mkUserConfig cfg)
+
+    # Directory management
+    (microcosmLib.mkDirectoryConfig cfg [])
+
+    # systemd service
+    (microcosmLib.mkSystemdService cfg "Reflector" {
+      description = "DID document reflection service";
       serviceConfig = {
         ExecStart = "${cfg.package}/bin/reflector --id ${cfg.serviceId} --type ${cfg.serviceType} --service-endpoint ${cfg.serviceEndpoint} --domain ${cfg.domain}";
-        Restart = "always";
-        RestartSec = "10s";
-        DynamicUser = true;
-        StateDirectory = "reflector";
-
-        # Security settings
-        NoNewPrivileges = true;
-        ProtectSystem = "strict";
-        ProtectHome = true;
-        PrivateTmp = true;
-        ProtectKernelTunables = true;
-        ProtectKernelModules = true;
-        ProtectControlGroups = true;
-        RestrictRealtime = true;
-        RestrictSUIDSGID = true;
-        RemoveIPC = true;
-        PrivateMounts = true;
       };
-    };
-  };
+    })
+  ]);
 }

@@ -1,7 +1,7 @@
 # @atproto/lexicon - ATproto lexicon schema validation and utilities
-{ lib, buildNpmPackage, fetchFromGitHub, ... }:
+{ lib, stdenv, fetchFromGitHub, ... }:
 
-buildNpmPackage rec {
+stdenv.mkDerivation rec {
   pname = "atproto-lexicon";
   version = "0.4.12";
 
@@ -9,33 +9,23 @@ buildNpmPackage rec {
     owner = "bluesky-social";
     repo = "atproto";
     rev = "c518cf4f62659d9cf585da6f29b67f8a77d0fbc0";
-    sha256 = "sha256-0w4l0klh2r91ipdajpq6y6h50vzjkw2zr89hcd6rpgmxs4m42vvx";
+    sha256 = "sha256-fW9BKtG9vptNYzCh/AWf8m9QoPEGX6najSFlAekElHA=";
   };
 
   sourceRoot = "${src.name}/packages/lexicon";
 
-  npmDepsHash = lib.fakeHash;
+  # No build phase needed - this is a source package
+  dontBuild = true;
 
-  # Don't run build during npm install phase
-  dontNpmBuild = true;
-
-  # Build the package
-  buildPhase = ''
-    runHook preBuild
-    npm run build
-    runHook postBuild
-  '';
-
-  # Install the built package
+  # Install the source package
   installPhase = ''
     runHook preInstall
     
     # Create output directory structure
     mkdir -p $out/lib/node_modules/@atproto/lexicon
     
-    # Copy package files
-    cp -r dist/* $out/lib/node_modules/@atproto/lexicon/
-    cp package.json $out/lib/node_modules/@atproto/lexicon/
+    # Copy all source files
+    cp -r . $out/lib/node_modules/@atproto/lexicon/
     
     runHook postInstall
   '';

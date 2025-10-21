@@ -25,27 +25,53 @@ pkgs.writeTextFile {
     4. Build: go build ./cmd/server
   '';
   
-  passthru.atproto = {
-    type = "application";
-    services = [ "yoten" ];
-    protocols = [ "com.atproto" "app.bsky" ];
-    schemaVersion = "1.0";
-    description = "Social platform for tracking language learning progress";
+  passthru = {
+    atproto = {
+      type = "application";
+      services = [ "yoten" ];
+      protocols = [ "com.atproto" "app.bsky" ];
+      schemaVersion = "1.0";
+      description = "Social platform for tracking language learning progress";
+      
+      # Source information for future implementation
+      source = {
+        url = "https://tangled.org/@yoten.app/yoten";
+        rev = "2de6115fc7b166148b7d9206809e0f4f0c6916d7";
+        sha256 = "00lx7pkms1ycrbcmihqc5az98xvw0pb3107b107zikj8i08hygxz";
+        vendorHash = "sha256-gjlwSBmyHy0SXTnOi+XNVBKm4t7HWRVNA19Utx3Eh/w=";
+      };
+    };
     
-    # Source information for future implementation
-    source = {
-      url = "https://tangled.org/@yoten.app/yoten";
-      rev = "2de6115fc7b166148b7d9206809e0f4f0c6916d7";
-      sha256 = "00lx7pkms1ycrbcmihqc5az98xvw0pb3107b107zikj8i08hygxz";
-      vendorHash = "sha256-gjlwSBmyHy0SXTnOi+XNVBKm4t7HWRVNA19Utx3Eh/w=";
+    organization = {
+      name = "yoten-app";
+      displayName = "Yoten App";
+      website = "https://yoten.app";
+      contact = null;
+      maintainer = "Yoten App";
+      repository = "https://tangled.org/@yoten.app/yoten";
+      packageCount = 1;
+      atprotoFocus = [ "applications" ];
     };
   };
   
   meta = with pkgs.lib; {
     description = "Social platform for tracking language learning progress (placeholder - requires templ/tailwind)";
+    longDescription = ''
+      Social platform for tracking language learning progress built on ATProto.
+      This is a placeholder - the actual implementation requires complex Go template generation and frontend build tools.
+      
+      Maintained by Yoten App (https://yoten.app)
+    '';
     homepage = "https://yoten.app";
     license = licenses.mit;
     platforms = platforms.all;
     maintainers = [ ];
+    
+    organizationalContext = {
+      organization = "yoten-app";
+      displayName = "Yoten App";
+      needsMigration = false;
+      migrationPriority = "medium";
+    };
   };
 }

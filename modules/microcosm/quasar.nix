@@ -5,26 +5,44 @@ with lib;
 
 let
   cfg = config.services.microcosm-quasar;
-  microcosmPkgs = pkgs.nur.microcosm;
+  microcosmLib = import ../../lib/microcosm.nix { inherit lib; };
 in
 {
-  options.services.microcosm-quasar = {
-    enable = mkEnableOption "Quasar service";
-
+  options.services.microcosm-quasar = microcosmLib.mkMicrocosmServiceOptions "Quasar" {
     package = mkOption {
       type = types.package;
-      default = microcosmPkgs.quasar;
+      default = pkgs.microcosm.quasar;
       description = "The Quasar package to use.";
     };
   };
 
-  config = mkIf cfg.enable {
-    # The quasar service is not yet implemented.
-    # This module is a placeholder.
-    # See: https://github.com/at-microcosm/microcosm-rs/issues/1
-    systemd.services.microcosm-quasar = {
-      description = "Microcosm Quasar Service (Not Implemented)";
-      serviceConfig.ExecStart = "${pkgs.coreutils}/bin/false";
-    };
-  };
+  config = mkIf cfg.enable (mkMerge [
+    # Configuration validation
+    (microcosmLib.mkConfigValidation cfg "Quasar" [])
+
+    # User and group management
+    (microcosmLib.mkUserConfig cfg)
+
+    # Directory management
+    (microcosmLib.mkDirectoryConfig cfg [])
+
+    # systemd service (placeholder implementation)
+    {
+      systemd.services.microcosm-quasar = {
+        description = "Microcosm Quasar Service (Not Implemented)";
+        wantedBy = [ "multi-user.target" ];
+        after = [ "network.target" ];
+        
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = "${pkgs.coreutils}/bin/false";
+          RemainAfterExit = false;
+        };
+      };
+
+      warnings = [
+        "The Quasar service is not yet implemented - see https://github.com/at-microcosm/microcosm-rs/issues/1"
+      ];
+    }
+  ]);
 }

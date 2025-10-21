@@ -36,19 +36,45 @@ buildNpmPackage rec {
     runHook postInstall
   '';
   
-  passthru.atproto = {
-    type = "application";
-    services = [ "red-dwarf" ];
-    protocols = [ "com.atproto" "app.bsky" ];
-    schemaVersion = "1.0";
-    dependencies = [ "constellation" ]; # Requires Microcosm Constellation
+  passthru = {
+    atproto = {
+      type = "application";
+      services = [ "red-dwarf" ];
+      protocols = [ "com.atproto" "app.bsky" ];
+      schemaVersion = "1.0";
+      dependencies = [ "constellation" ]; # Requires Microcosm Constellation
+    };
+    
+    organization = {
+      name = "red-dwarf-client";
+      displayName = "Red Dwarf Client";
+      website = null;
+      contact = null;
+      maintainer = "Red Dwarf Client";
+      repository = "https://tangled.org/@whey.party/red-dwarf";
+      packageCount = 1;
+      atprotoFocus = [ "applications" "clients" ];
+    };
   };
   
   meta = with pkgs.lib; {
     description = "Bluesky client that uses Constellation instead of AppView servers";
-    homepage = "https://github.com/red-dwarf-client/red-dwarf";
+    longDescription = ''
+      Bluesky client that uses Constellation instead of AppView servers.
+      Provides an alternative client interface for ATProto/Bluesky networks.
+      
+      Maintained by Red Dwarf Client
+    '';
+    homepage = "https://tangled.org/@whey.party/red-dwarf";
     license = licenses.mit;
     platforms = platforms.all;
     maintainers = [ ];
+    
+    organizationalContext = {
+      organization = "red-dwarf-client";
+      displayName = "Red Dwarf Client";
+      needsMigration = false;
+      migrationPriority = "medium";
+    };
   };
 }

@@ -41,12 +41,20 @@ let
     # Individual developer packages
     individual = pkgs.callPackage ./individual { inherit lib craneLib; };
     
+    # New organizational framework packages
+    atproto = pkgs.callPackage ./atproto { inherit lib craneLib buildGoModule buildNpmPackage; };
+    
     # Legacy package collections (for backward compatibility)
     microcosm = pkgs.callPackage ./microcosm { inherit craneLib; };
     blacksky = pkgs.callPackage ./blacksky { inherit craneLib; };
     bluesky = pkgs.callPackage ./bluesky { inherit craneLib; };
-    atproto = pkgs.callPackage ./atproto { inherit craneLib; };
   };
+
+  # Helper function to check if something is a derivation
+  isDerivation = pkg: 
+    (pkg.type or "") == "derivation" ||
+    (builtins.isAttrs pkg && pkg ? outPath) ||
+    (builtins.isAttrs pkg && pkg ? drvPath);
 
   # Flatten organizational packages into a single namespace with prefixes
   flattenedPackages = 
@@ -55,16 +63,16 @@ let
       addOrgPrefix = orgName: packages:
         lib.mapAttrs' (pkgName: pkg: 
           lib.nameValuePair "${orgName}-${pkgName}" pkg
-        ) (lib.filterAttrs (n: v: n != "_organizationMeta") packages);
+        ) (lib.filterAttrs (n: v: n != "_organizationMeta" && isDerivation v) packages);
       
       # Process each organizational collection
       orgCollections = lib.mapAttrsToList (orgName: packages:
-        if lib.hasPrefix "legacy-" orgName || orgName == "microcosm" || orgName == "blacksky" || orgName == "bluesky" || orgName == "atproto"
+        if orgName == "microcosm" || orgName == "blacksky" || orgName == "bluesky"
         then 
           # Legacy collections keep their existing prefixes
           lib.mapAttrs' (pkgName: pkg: 
             lib.nameValuePair "${orgName}-${pkgName}" pkg
-          ) (lib.filterAttrs (n: v: n != "_organizationMeta") packages)
+          ) (lib.filterAttrs (n: v: n != "_organizationMeta" && isDerivation v) packages)
         else
           # New organizational collections use org-package naming
           addOrgPrefix orgName packages
@@ -103,13 +111,12 @@ let
   validAliases = lib.filterAttrs (n: v: v != null) backwardCompatibilityAliases;
 
 in
-# Export flattened packages with organizational prefixes plus backward compatibility aliases
 flattenedPackages // validAliases // {
-  # Export organizational collections for direct access
+  # Export organizational collections for direct access (not in flake packages)
   organizations = organizationalPackages;
   
-  # Export organizational metadata for tooling
+  # Export organizational metadata for tooling (not in flake packages)
   _organizationalMetadata = lib.mapAttrs (orgName: packages: 
     packages._organizationMeta or null
-  ) (lib.filterAttrs (n: v: !(lib.hasPrefix "legacy-" n) && n != "microcosm" && n != "blacksky" && n != "bluesky" && n != "atproto") organizationalPackages);
+  ) (lib.filterAttrs (n: v: n != "microcosm" && n != "blacksky" && n != "bluesky") organizationalPackages);
 }

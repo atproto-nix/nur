@@ -16,7 +16,7 @@ craneLib.buildPackage rec {
     owner = "fatfingers23";
     repo = "pds_gatekeeper";
     rev = "v${version}"; # TODO: Pin to specific commit hash
-    hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="; # Placeholder
+    hash = lib.fakeHash; # Placeholder - needs real hash
   };
 
   # Standard Rust environment for ATProto services
@@ -54,30 +54,43 @@ craneLib.buildPackage rec {
   '';
 
   # ATProto metadata
-  passthru.atproto = {
-    type = "application";
-    services = [ "pds-gatekeeper" "pds-security" ];
-    protocols = [ "com.atproto" ];
-    schemaVersion = "1.0";
-    
-    # Dependencies on other ATProto packages
-    atprotoDependencies = {
-      # Requires a PDS to work with
+  passthru = {
+    atproto = {
+      type = "application";
+      services = [ "pds-gatekeeper" "pds-security" ];
+      protocols = [ "com.atproto" ];
+      schemaVersion = "1.0";
+      
+      # Dependencies on other ATProto packages
+      atprotoDependencies = {
+        # Requires a PDS to work with
+      };
+      
+      # Configuration requirements
+      configuration = {
+        required = [ "PDS_DATA_DIRECTORY" ];
+        optional = [ 
+          "PDS_ENV_LOCATION"
+          "GATEKEEPER_EMAIL_TEMPLATES_DIRECTORY"
+          "GATEKEEPER_TWO_FACTOR_EMAIL_SUBJECT"
+          "PDS_BASE_URL"
+          "GATEKEEPER_HOST"
+          "GATEKEEPER_PORT"
+          "GATEKEEPER_CREATE_ACCOUNT_PER_SECOND"
+          "GATEKEEPER_CREATE_ACCOUNT_BURST"
+        ];
+      };
     };
     
-    # Configuration requirements
-    configuration = {
-      required = [ "PDS_DATA_DIRECTORY" ];
-      optional = [ 
-        "PDS_ENV_LOCATION"
-        "GATEKEEPER_EMAIL_TEMPLATES_DIRECTORY"
-        "GATEKEEPER_TWO_FACTOR_EMAIL_SUBJECT"
-        "PDS_BASE_URL"
-        "GATEKEEPER_HOST"
-        "GATEKEEPER_PORT"
-        "GATEKEEPER_CREATE_ACCOUNT_PER_SECOND"
-        "GATEKEEPER_CREATE_ACCOUNT_BURST"
-      ];
+    organization = {
+      name = "individual";
+      displayName = "Individual Developers";
+      website = null;
+      contact = null;
+      maintainer = "fatfingers23";
+      repository = "https://github.com/fatfingers23/pds_gatekeeper";
+      packageCount = 1;
+      atprotoFocus = [ "infrastructure" "tools" ];
     };
   };
 
@@ -88,11 +101,20 @@ craneLib.buildPackage rec {
       installations, including two-factor authentication, rate limiting, and
       enhanced account creation controls. It works by intercepting specific PDS
       endpoints through a reverse proxy configuration.
+      
+      Maintained by fatfingers23
     '';
     homepage = "https://github.com/fatfingers23/pds_gatekeeper";
     license = licenses.mit;
     platforms = platforms.linux;
     maintainers = [ ];
     mainProgram = "pds_gatekeeper";
+    
+    organizationalContext = {
+      organization = "individual";
+      displayName = "Individual Developers";
+      needsMigration = false;
+      migrationPriority = "medium";
+    };
   };
 }

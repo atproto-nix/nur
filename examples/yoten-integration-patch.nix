@@ -21,7 +21,7 @@ in
 
     package = mkOption {
       type = types.package;
-      default = pkgs.nur.atproto.yoten;
+      default = pkgs.yoten-app-yoten or pkgs.yoten;
       description = "The Yoten package to use.";
     };
 

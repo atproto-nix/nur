@@ -1,58 +1,37 @@
-{ pkgs, craneLib, fetchFromGitHub, buildNpmPackage, ... }:
+# Official AT Protocol implementations
+{ lib, pkgs, craneLib, buildGoModule, buildNpmPackage, ... }:
 
 let
-  # Import ATProto utilities
-  atprotoLib = pkgs.callPackage ../../lib/atproto.nix { inherit craneLib; };
+  # Import ATproto core libraries
+  atprotoCore = import ../../lib/atproto-core.nix { inherit lib pkgs craneLib; };
+  packaging = import ../../lib/packaging.nix { inherit lib pkgs craneLib buildGoModule buildNpmPackage; };
+
+  # Organizational metadata for official ATproto packages
+  _organizationMeta = {
+    name = "atproto";
+    description = "Official AT Protocol implementations";
+    homepage = "https://atproto.com";
+    maintainers = [ "atproto-team" ];
+    category = "official";
+  };
+
 in
 {
-  # Placeholder ATProto core library - demonstrates the structure
-  lexicon = pkgs.writeTextFile {
-    name = "atproto-lexicon-placeholder";
-    text = ''
-      # ATProto Lexicon Library Placeholder
-      
-      This is a placeholder for the ATProto lexicon library.
-      In a real implementation, this would be built from the official ATProto repository.
-    '';
-    
-    passthru = atprotoLib.mkAtprotoPackage {
-      type = "library";
-      services = [];
-      protocols = [ "com.atproto" ];
-    }.passthru;
-    
-    meta = with pkgs.lib; {
-      description = "ATProto lexicon schema definition and validation library (placeholder)";
-      homepage = "https://github.com/bluesky-social/atproto";
-      license = licenses.mit;
-      platforms = platforms.all;
-      maintainers = [ ];
-    };
-  };
-
-  api = pkgs.writeTextFile {
-    name = "atproto-api-placeholder";
-    text = ''
-      # ATProto API Library Placeholder
-      
-      This is a placeholder for the ATProto API library.
-      In a real implementation, this would be built from the official ATProto repository.
-    '';
-    
-    passthru = atprotoLib.mkAtprotoPackage {
-      type = "library";
-      services = [];
-      protocols = [ "com.atproto" "app.bsky" ];
-    }.passthru;
-    
-    meta = with pkgs.lib; {
-      description = "ATProto client API library (placeholder)";
-      homepage = "https://github.com/bluesky-social/atproto";
-      license = licenses.mit;
-      platforms = platforms.all;
-      maintainers = [ ];
-    };
-  };
-
-
+  inherit _organizationMeta;
+  
+  # Official implementations
+  # frontpage = pkgs.callPackage ./frontpage.nix { inherit craneLib atprotoCore packaging; };
+  indigo = pkgs.callPackage ./indigo.nix { };
+  
+  # Core ATproto TypeScript libraries
+  atproto-api = pkgs.callPackage ./atproto-api.nix { };
+  atproto-lexicon = pkgs.callPackage ./atproto-lexicon.nix { };
+  atproto-xrpc = pkgs.callPackage ./atproto-xrpc.nix { };
+  atproto-did = pkgs.callPackage ./atproto-did.nix { };
+  atproto-identity = pkgs.callPackage ./atproto-identity.nix { };
+  atproto-repo = pkgs.callPackage ./atproto-repo.nix { };
+  atproto-syntax = pkgs.callPackage ./atproto-syntax.nix { };
+  
+  # Future official implementations:
+  # lexicons = pkgs.callPackage ./lexicons.nix { inherit atprotoCore packaging; };
 }

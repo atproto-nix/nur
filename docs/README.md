@@ -37,9 +37,10 @@ nix profile install github:atproto-nix/nur#microcosm-constellation
 
 ### For Users
 
-- **[Installation Guide](INSTALLATION.md)** - How to install and use ATProto packages
-- **[Configuration Guide](CONFIGURATION.md)** - Configuring ATProto services on NixOS
-- **[Service Reference](SERVICES.md)** - Complete reference for all available services
+- **[Service Modules Guide](MICROCOSM_MODULES.md)** - Configuration patterns for ATProto services
+- **[Tier 2/3 Applications](TIER2_TIER3_APPLICATIONS.md)** - Advanced ATProto applications and deployment
+- **[PDS Ecosystem](PDS_ECOSYSTEM.md)** - PDS deployment and management tools
+- **[Tangled Integration](TANGLED_INTEGRATION.md)** - Git forge with ATProto integration
 
 ### For Developers
 
@@ -125,6 +126,41 @@ Community-maintained ATProto tools and utilities:
 
 - `blacksky-rsky` - Community ATProto tools
 - Additional community contributions
+
+### Tier 2 Applications (`atproto`)
+
+Advanced ATProto applications and platforms with comprehensive NixOS modules:
+
+- `atproto-leaflet` - Collaborative writing platform with social publishing, Supabase integration, and real-time collaboration
+- `atproto-slices` - Custom AppView platform with automatic SDK generation and OAuth integration
+- `atproto-parakeet` - Full-featured ATProto AppView with consumer, indexer, and backfill services
+- `atproto-teal` - Comprehensive ATProto platform with Aqua web app, Garnet/Amethyst services, and Piper music scraper
+
+### Tier 3 Specialized Services (`atproto`)
+
+Specialized ATProto services with complex dependencies and advanced features:
+
+- `atproto-streamplace` - Video infrastructure platform with GStreamer/FFmpeg integration for live streaming and video processing
+- `atproto-yoten` - Language learning social platform with progress tracking, social features, and ATProto integration
+- `atproto-red-dwarf` - Enhanced Bluesky client using Constellation for backlinks and Slingshot for PDS optimization
+
+### Production ATProto Tools (`atproto`)
+
+Production-ready tools and services:
+
+- `atproto-allegedly` - PLC (Public Ledger for Credentials) tools with PostgreSQL support
+- `atproto-quickdid` - Fast and scalable identity resolution service with SQLite backend
+- `atproto-atbackup` - One-click Bluesky backups (Tauri desktop application - placeholder)
+
+### Tangled Git Forge (`atproto`)
+
+Git forge components with ATProto integration:
+
+- `atproto-appview` - Web interface for Tangled git forge
+- `atproto-knot` - Git server with SSH key management and ATProto integration  
+- `atproto-spindle` - Event processing and CI/CD component
+- `atproto-genjwks` - JWKS generator utility for authentication
+- `atproto-lexgen` - Lexicon generator for ATProto schema development
 
 ## Development Workflow
 

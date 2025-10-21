@@ -1,0 +1,7 @@
+{ ... }:
+
+{
+  imports = [
+    ./allegedly.nix
+  ];
+}

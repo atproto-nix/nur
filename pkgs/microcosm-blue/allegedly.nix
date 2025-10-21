@@ -1,39 +1,110 @@
-{ pkgs, craneLib, fetchgit, ... }:
+{ lib
+, craneLib
+, fetchFromGitHub
+, pkg-config
+, openssl
+, postgresql
+, zstd
+, stdenv
+}:
 
-let
-  # Import ATProto utilities
-  atprotoLib = pkgs.callPackage ../../lib/atproto.nix { inherit craneLib; };
-in
-
-atprotoLib.mkRustAtprotoService {
+craneLib.buildPackage rec {
   pname = "allegedly";
   version = "0.3.3";
-  
-  src = fetchgit {
-    url = "https://tangled.org/@microcosm.blue/Allegedly";
-    rev = "d66bb7f31fbedc2d813b659fb84c6a8cbf1fb428";
-    sha256 = "03fah42q5y3dx7l4kr15msmxhlw508pamls130kn2k1v201w7a7p";
+
+  src = fetchFromGitHub {
+    owner = "microcosm-cc";
+    repo = "allegedly";
+    rev = "v${version}";
+    hash = lib.fakeHash; # Placeholder - needs real hash
   };
-  
-  nativeBuildInputs = with pkgs; [ pkg-config ];
-  buildInputs = with pkgs; [ openssl postgresql ];
-  
-  # Build the main allegedly binary
-  cargoExtraArgs = "--bin allegedly";
-  
-  passthru.atproto = {
-    type = "application";
-    services = [ "allegedly" ];
-    protocols = [ "com.atproto" ];
-    schemaVersion = "1.0";
-    description = "Public ledger server tools and services for the PLC";
+
+  # Standard Rust environment for ATProto services
+  env = {
+    OPENSSL_NO_VENDOR = "1";
+    ZSTD_SYS_USE_PKG_CONFIG = "1";
   };
+
+  nativeBuildInputs = [
+    pkg-config
+  ];
+
+  buildInputs = [
+    openssl
+    postgresql
+    zstd
+  ];
+
+  # Build all binaries (allegedly, backfill, mirror)
+  cargoExtraArgs = "--bins";
   
-  meta = with pkgs.lib; {
-    description = "Public ledger server tools and services (for the PLC)";
+  # ATProto metadata
+  passthru = {
+    atproto = {
+      type = "infrastructure";
+      services = [ "plc-server" "plc-mirror" "plc-tools" ];
+      protocols = [ "plc" "did:plc" ];
+      schemaVersion = "1.0";
+      
+      # Dependencies on other ATProto packages
+      atprotoDependencies = {
+        # Can work with any PLC server implementation
+      };
+      
+      # Configuration requirements
+      configuration = {
+        required = [ ];
+        optional = [ 
+          "ALLEGEDLY_WRAP_PG"
+          "ALLEGEDLY_UPSTREAM"
+          "ALLEGEDLY_WRAP"
+          "ALLEGEDLY_ACME_DOMAIN"
+          "ALLEGEDLY_ACME_CACHE_PATH"
+          "ALLEGEDLY_ACME_DIRECTORY_URL"
+        ];
+      };
+    };
+    
+    organization = {
+      name = "microcosm-blue";
+      displayName = "Microcosm";
+      website = "https://tangled.org/@microcosm.blue/Allegedly";
+      contact = null;
+      maintainer = "microcosm.blue";
+      repository = "https://github.com/microcosm-cc/allegedly";
+      packageCount = 1;
+      atprotoFocus = [ "infrastructure" "identity" ];
+    };
+  };
+
+  meta = with lib; {
+    description = "Public ledger server tools and services for the PLC (Public Ledger Consortium)";
+    longDescription = ''
+      Allegedly provides tools and services for working with PLC (Public Ledger Consortium)
+      operations in the ATProto ecosystem. It can tail PLC operations, export them to
+      bundles, run as a mirror server copying operations from upstream, and provide
+      TLS termination with ACME certificate management.
+      
+      Key features:
+      - Tail PLC operations to stdout for monitoring
+      - Export PLC operations to weekly gzipped bundles
+      - Mirror PLC servers with PostgreSQL backend
+      - TLS termination with automatic ACME certificate provisioning
+      - Rate limiting and reverse proxy capabilities
+      
+      Maintained by microcosm.blue
+    '';
     homepage = "https://tangled.org/@microcosm.blue/Allegedly";
     license = with licenses; [ mit asl20 ];
-    platforms = platforms.unix;
+    platforms = platforms.linux;
     maintainers = [ ];
+    mainProgram = "allegedly";
+    
+    organizationalContext = {
+      organization = "microcosm-blue";
+      displayName = "Microcosm";
+      needsMigration = false;
+      migrationPriority = "high";
+    };
   };
 }

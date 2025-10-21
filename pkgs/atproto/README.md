@@ -1,68 +1,73 @@
-# ATProto Core Libraries
+# ATproto Official Implementations
 
-This package collection provides core ATProto libraries and utilities for building ATProto applications.
+This directory contains official AT Protocol implementations packaged for Nix.
 
-## Available Packages
+## Indigo (Go Implementation)
 
-### TypeScript/Node.js Libraries (Official)
-- `atproto-lexicon` - Schema definition and validation
-- `atproto-api` - Main ATProto client API  
-- `atproto-xrpc` - XRPC protocol implementation
-- `atproto-identity` - Identity resolution and management
-- `atproto-repo` - Repository management
-- `atproto-syntax` - Syntax parsing and validation
+The Indigo package provides the official Go implementation of ATproto services and libraries.
 
-### Rust Libraries (Community)
-- `rsky-lexicon` - Rust lexicon schema handling
-- `rsky-crypto` - Cryptographic utilities
-- `rsky-common` - Common utilities and types
-- `rsky-syntax` - Syntax parsing
-- `rsky-identity` - Identity and DID management
-- `rsky-repo` - Repository management
-- `rsky-firehose` - Event streaming
-- `microcosm-links` - URI parsing and validation
+### Core Services
 
-### Client Libraries
-- `frontpage-atproto-client` - TypeScript client from Frontpage
-- `atproto-browser` - Browser-based ATProto client
-- `frontpage-oauth` - OAuth implementation for ATProto
-- `indigo-atproto` - Go client libraries from Indigo
+- **relay**: Core ATproto relay service for data distribution
+- **rainbow**: AppView service for custom data views  
+- **palomar**: Search indexer for ATproto content
+- **hepa**: Moderation and labeling service
 
-### API Definitions and Code Generation
-- `atproto-lexicons` - Lexicon schema definitions
-- `atproto-codegen` - Cross-language code generation
-- `atproto-lex-cli` - Lexicon CLI tools
+### Core Libraries
 
-### Supporting Libraries
-- `multiformats` - Multiformat data structures
+The `coreLibraries` package provides access to core ATproto Go libraries:
 
-### Development Tools
-- `atproto-lex-cli` - Code generation from lexicon schemas
-- `atproto-codegen` - Cross-language binding generator
+- **api**: ATproto API definitions and client
+- **atproto**: Core ATproto protocol implementation  
+- **lex**: Lexicon schema handling
+- **xrpc**: XRPC protocol implementation
+- **did**: Decentralized Identifier utilities
+- **repo**: Repository and MST implementation
+- **carstore**: CAR file storage
+- **events**: Event streaming and firehose
 
-## Usage
+### Usage
 
 ```nix
-# In your flake.nix or configuration
+# In your flake.nix or configuration.nix
 {
-  inputs.atproto-nur.url = "github:owner/atproto-nur";
-  
-  outputs = { nixpkgs, atproto-nur, ... }: {
-    packages = {
-      # Use individual libraries
-      my-app = pkgs.buildNpmPackage {
-        buildInputs = [ atproto-nur.packages.atproto-api ];
-      };
-    };
+  # Enable Indigo services
+  services.atproto.indigo = {
+    relay.enable = true;
+    rainbow.enable = true;
+    palomar.enable = true;
+    hepa.enable = true;
   };
 }
 ```
 
-## Package Metadata
+### Package Access
 
-All packages include ATProto-specific metadata:
-- `type`: "library", "application", or "tool"
-- `services`: List of ATProto services provided
-- `protocols`: List of supported protocols
+```nix
+# Access individual services
+pkgs.nur.repos.atproto.atproto.indigo.relay
+pkgs.nur.repos.atproto.atproto.indigo.rainbow
+pkgs.nur.repos.atproto.atproto.indigo.palomar
+pkgs.nur.repos.atproto.atproto.indigo.hepa
 
-This metadata enables automated tooling and dependency management.
+# Access core libraries
+pkgs.nur.repos.atproto.atproto.indigo.coreLibraries
+```
+
+## Implementation Details
+
+- **Source**: Fetched from `github.com/bluesky-social/indigo`
+- **Build System**: Go modules with `buildGoModule`
+- **Dependencies**: PostgreSQL, SQLite support
+- **Security**: Full systemd hardening applied
+- **Platform Support**: Unix systems (Linux, macOS, BSD)
+
+## Testing
+
+Integration tests are available in `tests/indigo-services.nix` which verify:
+
+- Service startup and configuration
+- Database integration (PostgreSQL/SQLite)
+- Network connectivity and health checks
+- Security hardening and user isolation
+- Service coordination and dependencies

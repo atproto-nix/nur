@@ -1,160 +1,105 @@
 { pkgs, craneLib, ... }:
 
+let
+  # Import ATProto utilities
+  atprotoLib = pkgs.callPackage ../../../lib/atproto.nix { inherit craneLib; };
+  
+  # Common source for all rsky packages
+  rskySrc = pkgs.fetchFromGitHub {
+    owner = "blacksky-algorithms";
+    repo = "rsky";
+    rev = "f84a5975e82bc1403e3c4477ca7ef46611c4eeda";
+    hash = "sha256-bM8CT6MLxjeK2vFaj90KeSZPwy0q9OxMzcP3rHEv3Hc=";
+  };
+  
+  # Build shared dependencies once for the entire workspace
+  cargoArtifacts = craneLib.buildDepsOnly {
+    src = rskySrc;
+    pname = "rsky-deps";
+    version = "0.1.0";
+    env = atprotoLib.defaultRustEnv;
+    nativeBuildInputs = atprotoLib.defaultRustNativeInputs;
+    buildInputs = atprotoLib.defaultRustBuildInputs;
+    tarFlags = "--no-same-owner";
+  };
+  
+  # Helper function to build rsky packages
+  mkRskyPackage = { pname, version, package, bin ? package, description, services ? [] }:
+    atprotoLib.mkRustAtprotoService {
+      inherit pname version;
+      src = rskySrc;
+      inherit cargoArtifacts;
+      
+      type = "application";
+      inherit services;
+      protocols = [ "com.atproto" "app.bsky" ];
+      
+      cargoExtraArgs = "--package ${package} --bin ${bin}";
+      
+      meta = with pkgs.lib; {
+        inherit description;
+        homepage = "https://github.com/blacksky-algorithms/rsky";
+        license = licenses.mit;
+        platforms = platforms.unix;
+        maintainers = [ ];
+      };
+    };
+in
 {
-  pds = craneLib.buildPackage rec {
+  pds = mkRskyPackage {
     pname = "rsky-pds";
-    version = "0.1.0"; # Placeholder version, should be updated from rsky's Cargo.toml
-    src = pkgs.fetchFromGitHub {
-      owner = "blacksky-algorithms";
-      repo = "rsky";
-      rev = "main"; # Placeholder, should be updated to a specific commit or tag
-      hash = "sha256-nqBe20MCeNrSVxLVxiYc7iCFaBdf5Vf1p/i0D/aS8oY=";
-    };
-    cargoHash = "sha256-0000000000000000000000000000000000000000000000000000000000000000=";
-
-    # Build only the rsky-pds binary
-
-    cargoBuildFlags = [ "--package rsky-pds --bin rsky-pds" ];
-    cargoInstallFlags = [ "--package rsky-pds --bin rsky-pds" ];
-
-    meta = with pkgs.lib; {
-      description = "AT Protocol Personal Data Server (PDS) from rsky";
-      homepage = "https://github.com/atproto-nix/nur"; # Placeholder
-      license = licenses.mit; # Placeholder
-      maintainers = with maintainers; [ ]; # Placeholder
-    };
+    version = "0.1.0";
+    package = "rsky-pds";
+    description = "AT Protocol Personal Data Server (PDS) from rsky";
+    services = [ "pds" ];
   };
 
-  relay = craneLib.buildPackage rec {
+  relay = mkRskyPackage {
     pname = "rsky-relay";
-    version = "0.1.0"; # Placeholder version
-    src = pkgs.fetchFromGitHub {
-      owner = "blacksky-algorithms";
-      repo = "rsky";
-      rev = "main"; # Placeholder
-      hash = "sha256-nqBe20MCeNrSVxLVxiYc7iCFaBdf5Vf1p/i0D/aS8oY=";
-    };
-    cargoHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="; # Placeholder
-
-    cargoBuildFlags = [ "--package rsky-relay --bin rsky-relay" ];
-    cargoInstallFlags = [ "--package rsky-relay --bin rsky-relay" ];
-
-    meta = with pkgs.lib; {
-      description = "AT Protocol Relay from rsky";
-      homepage = "https://github.com/atproto-nix/nur";
-      license = licenses.mit;
-      maintainers = with maintainers; [ ];
-    };
+    version = "0.1.0";
+    package = "rsky-relay";
+    description = "AT Protocol Relay from rsky";
+    services = [ "relay" ];
   };
 
-  feedgen = craneLib.buildPackage rec {
+  feedgen = mkRskyPackage {
     pname = "rsky-feedgen";
-    version = "0.1.0"; # Placeholder version
-    src = pkgs.fetchFromGitHub {
-      owner = "blacksky-algorithms";
-      repo = "rsky";
-      rev = "main"; # Placeholder
-      hash = "sha256-nqBe20MCeNrSVxLVxiYc7iCFaBdf5Vf1p/i0D/aS8oY=";
-    };
-    cargoHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="; # Placeholder
-
-    cargoBuildFlags = [ "--package rsky-feedgen --bin rsky-feedgen" ];
-    cargoInstallFlags = [ "--package rsky-feedgen --bin rsky-feedgen" ];
-
-    meta = with pkgs.lib; {
-      description = "AT Protocol Feed Generator from rsky";
-      homepage = "https://github.com/atproto-nix/nur";
-      license = licenses.mit;
-      maintainers = with maintainers; [ ];
-    };
+    version = "0.1.0";
+    package = "rsky-feedgen";
+    description = "AT Protocol Feed Generator from rsky";
+    services = [ "feedgen" ];
   };
 
-  satnav = craneLib.buildPackage rec {
+  satnav = mkRskyPackage {
     pname = "rsky-satnav";
-    version = "0.1.0"; # Placeholder version
-    src = pkgs.fetchFromGitHub {
-      owner = "blacksky-algorithms";
-      repo = "rsky";
-      rev = "main"; # Placeholder
-      hash = "sha256-nqBe20MCeNrSVxLVxiYc7iCFaBdf5Vf1p/i0D/aS8oY=";
-    };
-    cargoHash = "sha256-0000000000000000000000000000000000000000000000000000000000000000="; # Placeholder, will be updated by Nix
-
-    cargoBuildFlags = [ "--package rsky-satnav --bin rsky-satnav" ];
-    cargoInstallFlags = [ "--package rsky-satnav --bin rsky-satnav" ];
-
-    meta = with pkgs.lib; {
-      description = "AT Protocol Satnav from rsky";
-      homepage = "https://github.com/atproto-nix/nur";
-      license = licenses.mit;
-      maintainers = with maintainers; [ ];
-    };
+    version = "0.1.0";
+    package = "rsky-satnav";
+    description = "AT Protocol Satnav from rsky";
+    services = [ "satnav" ];
   };
 
-  firehose = craneLib.buildPackage rec {
+  firehose = mkRskyPackage {
     pname = "rsky-firehose";
-    version = "0.2.1"; # Version from Cargo.toml
-    src = pkgs.fetchFromGitHub {
-      owner = "blacksky-algorithms";
-      repo = "rsky";
-      rev = "main"; # Placeholder
-      hash = "sha256-nqBe20MCeNrSVxLVxiYc7iCFaBdf5Vf1p/i0D/aS8oY=";
-    };
-    cargoHash = "sha256-0000000000000000000000000000000000000000000000000000000000000000="; # Placeholder
-
-    cargoBuildFlags = [ "--package rsky-firehose --bin rsky-firehose" ];
-    cargoInstallFlags = [ "--package rsky-firehose --bin rsky-firehose" ];
-
-    meta = with pkgs.lib; {
-      description = "AT Protocol Firehose subscriber from rsky";
-      homepage = "https://github.com/atproto-nix/nur";
-      license = licenses.mit;
-      maintainers = with maintainers; [ ];
-    };
+    version = "0.2.1";
+    package = "rsky-firehose";
+    description = "AT Protocol Firehose subscriber from rsky";
+    services = [ "firehose" ];
   };
 
-  jetstreamSubscriber = craneLib.buildPackage rec {
+  jetstreamSubscriber = mkRskyPackage {
     pname = "rsky-jetstream-subscriber";
-    version = "0.1.0"; # Version from Cargo.toml
-    src = pkgs.fetchFromGitHub {
-      owner = "blacksky-algorithms";
-      repo = "rsky";
-      rev = "main"; # Placeholder
-      hash = "sha256-nqBe20MCeNrSVxLVxiYc7iCFaBdf5Vf1p/i0D/aS8oY=";
-    };
-    cargoHash = "sha256-0000000000000000000000000000000000000000000000000000000000000000="; # Placeholder
-
-    cargoBuildFlags = [ "--package rsky-jetstream-subscriber --bin rsky-jetstream-subscriber" ];
-    cargoInstallFlags = [ "--package rsky-jetstream-subscriber --bin rsky-jetstream-subscriber" ];
-
-    meta = with pkgs.lib; {
-      description = "AT Protocol Jetstream Subscriber from rsky";
-      homepage = "https://github.com/atproto-nix/nur";
-      license = licenses.mit;
-      maintainers = with maintainers; [ ];
-    };
+    version = "0.1.0";
+    package = "rsky-jetstream-subscriber";
+    description = "AT Protocol Jetstream Subscriber from rsky";
+    services = [ "jetstream-subscriber" ];
   };
 
-  labeler = craneLib.buildPackage rec {
+  labeler = mkRskyPackage {
     pname = "rsky-labeler";
-    version = "0.1.3"; # Version from Cargo.toml
-    src = pkgs.fetchFromGitHub {
-      owner = "blacksky-algorithms";
-      repo = "rsky";
-      rev = "main"; # Placeholder
-      hash = "sha256-nqBe20MCeNrSVxLVxiYc7iCFaBdf5Vf1p/i0D/aS8oY=";
-    };
-    cargoHash = "sha256-0000000000000000000000000000000000000000000000000000000000000000="; # Placeholder
-
-    cargoBuildFlags = [ "--package rsky-labeler --bin rsky-labeler" ];
-    cargoInstallFlags = [ "--package rsky-labeler --bin rsky-labeler" ];
-
-    meta = with pkgs.lib; {
-      description = "AT Protocol Labeler from rsky";
-      homepage = "https://github.com/atproto-nix/nur";
-      license = licenses.mit;
-      maintainers = with maintainers; [ ];
-    };
+    version = "0.1.3";
+    package = "rsky-labeler";
+    description = "AT Protocol Labeler from rsky";
+    services = [ "labeler" ];
   };
 
   # community = pkgs.buildYarnPackage rec {

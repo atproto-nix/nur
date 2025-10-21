@@ -124,12 +124,26 @@ The development shell provides:
 ```
 .
 ├── flake.nix              # Main flake definition
-├── pkgs/                  # Package definitions
-│   ├── atproto/           # Core ATProto packages
-│   ├── bluesky/           # Official Bluesky packages
-│   ├── microcosm/         # Microcosm service collection
-│   └── blacksky/          # Community packages
-├── modules/               # NixOS service modules
+├── pkgs/                  # Package definitions (organized by organization)
+│   ├── hyperlink-academy/ # Hyperlink Academy projects
+│   ├── slices-network/    # Slices Network projects
+│   ├── teal-fm/          # Teal.fm projects
+│   ├── parakeet-social/  # Parakeet Social projects
+│   ├── stream-place/     # Stream.place projects
+│   ├── yoten-app/        # Yoten App projects
+│   ├── red-dwarf-client/ # Red Dwarf Client projects
+│   ├── tangled-dev/      # Tangled Development projects
+│   ├── smokesignal-events/ # Smokesignal Events projects
+│   ├── microcosm-blue/   # Microcosm Blue projects
+│   ├── witchcraft-systems/ # Witchcraft Systems projects
+│   ├── atbackup-pages-dev/ # ATBackup Pages Dev projects
+│   ├── bluesky-social/   # Official Bluesky Social projects
+│   ├── individual/       # Individual developer projects
+│   ├── microcosm/        # Microcosm service collection (existing)
+│   ├── blacksky/         # Community packages (existing)
+│   ├── bluesky/          # Legacy Bluesky packages (existing)
+│   └── atproto/          # Legacy ATProto packages (now mostly empty)
+├── modules/               # NixOS service modules (organized by organization)
 ├── lib/                   # Shared utilities and helpers
 ├── templates/             # Flake templates
 ├── tests/                 # Integration tests
@@ -143,10 +157,13 @@ The development shell provides:
 
 Before starting, consider:
 
-- **Scope**: Is this a single package or collection?
+- **Organization**: Which organization owns this project?
+- **Scope**: Is this a single package or multiple related packages?
 - **Dependencies**: What are the build and runtime dependencies?
 - **Integration**: Does it need a NixOS module?
 - **Testing**: How will you test the package?
+- **Placement**: Should this go in an existing organizational directory or create a new one?
+- **Migration**: If this is an existing package, does it need to be moved from a legacy location?
 
 ### 2. Using Templates
 
@@ -167,16 +184,20 @@ nix flake init -t .#go-atproto
 
 1. **Create package directory**:
    ```bash
-   mkdir -p pkgs/your-collection/your-package
+   # For a new organization
+   mkdir -p pkgs/your-organization/your-package
+   
+   # For an existing organization
+   mkdir -p pkgs/existing-organization/your-package
    ```
 
 2. **Implement package definition**:
    ```nix
-   # pkgs/your-collection/your-package/default.nix
-   { lib, fetchFromGitHub, atprotoLib, ... }:
+   # pkgs/your-organization/your-package/default.nix
+   { lib, fetchFromGitHub, atprotoLib, organizationMeta ? null, ... }:
    
    atprotoLib.mkRustAtprotoService {
-     pname = "your-package";
+     pname = "your-organization-your-package";  # Include organization in name
      version = "1.0.0";
      
      src = fetchFromGitHub {
@@ -190,6 +211,11 @@ nix flake init -t .#go-atproto
      services = [ "your-service" ];
      protocols = [ "com.atproto" ];
      
+     # Include organizational metadata
+     passthru = {
+       organization = organizationMeta;
+     };
+     
      meta = with lib; {
        description = "Your ATProto service";
        homepage = "https://github.com/upstream-owner/upstream-repo";
@@ -200,13 +226,25 @@ nix flake init -t .#go-atproto
    }
    ```
 
-3. **Add to collection**:
+3. **Add to organizational collection**:
    ```nix
-   # pkgs/your-collection/default.nix
-   { callPackage, ... }:
+   # pkgs/your-organization/default.nix
+   { lib, callPackage, ... }:
    
+   let
+     organizationMeta = {
+       name = "your-organization";
+       displayName = "Your Organization";
+       website = "https://your-org.com";
+       description = "ATProto projects by Your Organization";
+     };
+   in
    {
-     your-package = callPackage ./your-package { };
+     passthru.organization = organizationMeta;
+     
+     your-package = callPackage ./your-package { 
+       inherit organizationMeta;
+     };
    }
    ```
 
@@ -215,7 +253,10 @@ nix flake init -t .#go-atproto
    # In flake.nix
    packages = {
      # ... existing packages
-     your-package = packages.your-collection.your-package;
+     your-organization-your-package = packages.your-organization.your-package;
+     
+     # Optionally provide a shorter alias (with deprecation path)
+     your-package = packages.your-organization.your-package;
    };
    ```
 
@@ -223,21 +264,26 @@ nix flake init -t .#go-atproto
 
 1. **Create module**:
    ```bash
-   mkdir -p modules/your-collection
+   mkdir -p modules/your-organization
    ```
 
 2. **Implement service module**:
    ```nix
-   # modules/your-collection/your-package.nix
+   # modules/your-organization/your-package.nix
    { config, lib, pkgs, ... }:
    
    with lib;
    
    let
-     cfg = config.services.your-package;
+     cfg = config.services.your-organization-your-package;
    in {
-     options.services.your-package = {
+     options.services.your-organization-your-package = {
        enable = mkEnableOption "Your ATProto service";
+       package = mkOption {
+         type = types.package;
+         default = pkgs.your-organization-your-package;
+         description = "Package to use for the service";
+       };
        # ... other options
      };
      
@@ -249,7 +295,7 @@ nix flake init -t .#go-atproto
 
 3. **Add to module collection**:
    ```nix
-   # modules/your-collection/default.nix
+   # modules/your-organization/default.nix
    {
      your-package = ./your-package.nix;
    }
@@ -259,12 +305,12 @@ nix flake init -t .#go-atproto
 
 1. **Build the package**:
    ```bash
-   nix build .#your-package
+   nix build .#your-organization-your-package
    ```
 
 2. **Test the package**:
    ```bash
-   nix run .#your-package -- --help
+   nix run .#your-organization-your-package -- --help
    ```
 
 3. **Create VM test** (for services):
@@ -274,8 +320,8 @@ nix flake init -t .#go-atproto
      name = "your-package-test";
      
      nodes.machine = {
-       imports = [ ../modules/your-collection ];
-       services.your-package.enable = true;
+       imports = [ ../modules/your-organization ];
+       services.your-organization-your-package.enable = true;
      };
      
      testScript = ''

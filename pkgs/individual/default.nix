@@ -1,46 +1,30 @@
-{ pkgs, lib, craneLib, ... }:
-
-# Individual Developers ATProto packages
-# Organization: individual
+# Individual developer ATproto projects
+{ lib, pkgs, craneLib, ... }:
 
 let
-  # Organizational metadata
-  organizationMeta = {
+  # Import ATproto core libraries
+  atprotoCore = import ../../lib/atproto-core.nix { inherit lib pkgs craneLib; };
+  packaging = import ../../lib/packaging.nix { inherit lib pkgs craneLib; };
+
+  # Organizational metadata for individual developer packages
+  _organizationMeta = {
     name = "individual";
     displayName = "Individual Developers";
     website = null;
     contact = null;
     maintainer = "Individual Contributors";
-    description = "ATProto packages from individual developers without clear organizational ownership";
+    description = "ATproto packages from individual developers without clear organizational ownership";
     atprotoFocus = [ "tools" "applications" ];
-    packageCount = 1;
+    category = "community";
   };
-
-  # Package naming pattern: use simple names within organization
-  packages = {
-    pds-gatekeeper = pkgs.callPackage ./pds-gatekeeper.nix { inherit craneLib; };
-  };
-
-  # Enhanced packages with organizational metadata
-  enhancedPackages = lib.mapAttrs (name: pkg:
-    pkg.overrideAttrs (oldAttrs: {
-      passthru = (oldAttrs.passthru or {}) // {
-        organization = organizationMeta;
-        atproto = (oldAttrs.passthru.atproto or {}) // {
-          organization = organizationMeta;
-        };
-      };
-      meta = (oldAttrs.meta or {}) // {
-        organizationalContext = {
-          organization = organizationMeta.name;
-          displayName = organizationMeta.displayName;
-        };
-      };
-    })
-  ) packages;
 
 in
-enhancedPackages // {
-  # Export organizational metadata for external use
-  _organizationMeta = organizationMeta;
+{
+  inherit _organizationMeta;
+  
+  # Individual developer packages
+  # pds-gatekeeper = pkgs.callPackage ./pds-gatekeeper.nix { inherit craneLib; };
+  
+  # Additional individual packages will be added here
+  # quickdid = pkgs.callPackage ./quickdid.nix { inherit atprotoCore packaging; };
 }
