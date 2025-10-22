@@ -1,74 +1,44 @@
 # ATProto NUR
 
-Nix User Repository for ATProto Services and Tools
-
-Development is primarily done on [Tangled](https://tangled.org) at [@atproto-nix.org/nur](tangled.sh/@atproto-nix.org/nur) with a Github [mirror](https://github.com/atproto-nix/nur).
+Nix User Repository for ATProto (AT Protocol) and Bluesky ecosystem packages.
 
 [![Cachix Cache](https://img.shields.io/badge/cachix-atproto-blue.svg)](https://atproto.cachix.org)
 
 ## Overview
 
-The ATProto NUR provides comprehensive Nix packaging for the AT Protocol ecosystem, including:
+This NUR provides Nix packages and NixOS modules for the AT Protocol ecosystem, including:
 
-- **Core ATProto Libraries**: Fundamental libraries and utilities for ATProto development
-- **Official Bluesky Services**: PDS, relay, feed generators, and management tools
-- **Community Applications**: Third-party ATProto applications and specialized services
-- **Development Tools**: Templates, utilities, and development environments
-- **NixOS Modules**: Declarative service configuration with security hardening
+- **Microcosm Services**: constellation, spacedust, slingshot, ufos, and more
+- **Bluesky Official**: indigo (Go) and grain (TypeScript) implementations
+- **Blacksky/Rsky**: Community-maintained AT Protocol tools
+- **Third-party Apps**: leaflet, parakeet, teal, yoten, slices, and others
+- **Development Tools**: Tangled infrastructure, ATProto core libraries
+- **NixOS Modules**: Declarative service configuration for all packages
 
-### Organizational Structure
-
-Packages are organized by their actual organizational ownership rather than arbitrary technical categories. This provides better clarity about project relationships and maintenance responsibilities. See the [Organizational Framework](docs/ORGANIZATIONAL_FRAMEWORK.md) documentation for details.
-
-**🔄 Recent Reorganization**: The repository has been restructured from technical categories to organizational ownership. Old package names continue to work with deprecation warnings during the transition period. See the [Organizational Migration Guide](docs/ORGANIZATIONAL_MIGRATION.md) for detailed migration instructions.
+**Total Packages**: 48+ and growing
 
 ## Quick Start
 
-### Using Packages
-
-Install ATProto packages directly:
-
-```bash
-# Install a specific service (organizational naming)
-nix profile install github:atproto-nix/nur#smokesignal-events-quickdid
-
-# Run temporarily (organizational naming)
-nix run github:atproto-nix/nur#hyperlink-academy-leaflet
-
-# Use in shell (organizational naming)
-nix shell github:atproto-nix/nur#microcosm-blue-allegedly
-
-# Existing Microcosm services (unchanged)
-nix run github:atproto-nix/nur#microcosm-constellation
-
-# Backward compatibility (old names still work with deprecation warnings)
-nix run github:atproto-nix/nur#quickdid  # -> smokesignal-events-quickdid
-nix run github:atproto-nix/nur#leaflet   # -> hyperlink-academy-leaflet
-```
-
-### NixOS Integration
-
-Add to your NixOS configuration:
+### Using with Nix Flakes
 
 ```nix
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     atproto-nur.url = "github:atproto-nix/nur";
   };
 
   outputs = { nixpkgs, atproto-nur, ... }: {
+    # Use packages
+    packages.x86_64-linux.default = atproto-nur.packages.x86_64-linux.microcosm-constellation;
+
+    # Or in NixOS configuration
     nixosConfigurations.myhost = nixpkgs.lib.nixosSystem {
       modules = [
         atproto-nur.nixosModules.default
         {
-          # Enable ATProto services (using new organizational structure)
           services.microcosm-constellation.enable = true;
-          services.smokesignal-events-quickdid.enable = true;
-          services.witchcraft-systems-pds-dash.enable = true;
-          services.hyperlink-academy-leaflet.enable = true;
-          services.individual-pds-gatekeeper.enable = true;
-          services.tangled-dev-appview.enable = true;
+          services.bluesky-social-indigo.enable = true;
         }
       ];
     };
@@ -76,264 +46,198 @@ Add to your NixOS configuration:
 }
 ```
 
-### Development Templates
-
-Create new ATProto services using templates:
+### Direct Installation
 
 ```bash
-# Rust service template
-nix flake init -t github:atproto-nix/nur#rust-atproto
+# Run a package temporarily
+nix run github:atproto-nix/nur#microcosm-constellation
 
-# Node.js/TypeScript template  
-nix flake init -t github:atproto-nix/nur#nodejs-atproto
+# Install to profile
+nix profile install github:atproto-nix/nur#microcosm-slingshot
 
-# Go service template
-nix flake init -t github:atproto-nix/nur#go-atproto
+# Try in a shell
+nix shell github:atproto-nix/nur#smokesignal-events-quickdid
 ```
 
 ## Available Packages
 
-### Organizational Structure
+### Microcosm Services (Rust)
 
-Packages are organized by their actual organizational ownership for better clarity and maintenance:
+Core ATProto infrastructure services:
 
-#### Hyperlink Academy
-- `hyperlink-academy-leaflet` - Collaborative writing platform with social publishing
+- `microcosm-constellation` - Global backlink index
+- `microcosm-spacedust` - Interactions firehose
+- `microcosm-slingshot` - Edge cache for records and identities
+- `microcosm-ufos` - Timeseries stats and sample records
+- `microcosm-pocket` - Non-public user data storage
+- `microcosm-quasar` - Event stream replay and fan-out
+- `microcosm-reflector` - DID:web service server
+- `microcosm-who-am-i` - Identity bridge (deprecated)
 
-#### Slices Network  
-- `slices-network-slices` - Custom AppView platform with automatic SDK generation
+### Bluesky Official
 
-#### Teal.fm
-- `teal-fm-teal` - Music social platform built on ATProto
+- `bluesky-social-indigo` - Official Go implementation (placeholder)
+- `bluesky-social-grain` - Official TypeScript implementation (placeholder)
 
-#### Parakeet Social
-- `parakeet-social-parakeet` - Full-featured ATProto AppView implementation
+### Blacksky/Rsky (Community)
 
-#### Stream.place
-- `stream-place-streamplace` - Video infrastructure platform with ATProto integration
+Community-maintained Rust implementations:
 
-#### Yoten App
-- `yoten-app-yoten` - Language learning social platform
+- `blacksky-pds` - Personal Data Server
+- `blacksky-relay` - Relay server
+- `blacksky-feedgen` - Feed generator
+- `blacksky-firehose` - Firehose subscriber
+- `blacksky-labeler` - Labeling service
+- `blacksky-jetstreamSubscriber` - Jetstream subscriber
+- `blacksky-satnav` - Archive traversal and verification
+- `blacksky-{common,crypto,identity,lexicon,repo,syntax}` - Libraries
 
-#### Red Dwarf Client
-- `red-dwarf-client-red-dwarf` - Constellation-based Bluesky client
+### ATProto Core Libraries (TypeScript)
 
-#### Tangled Development
-- `tangled-dev-appview` - Web interface for git forge
-- `tangled-dev-knot` - Git server with ATProto integration
-- `tangled-dev-spindle` - Event processing component
-- `tangled-dev-genjwks` - JWKS generator utility
-- `tangled-dev-lexgen` - Lexicon generator for ATProto schemas
+- `atproto-atproto-api` - API client library
+- `atproto-atproto-did` - DID utilities
+- `atproto-atproto-identity` - Identity resolution
+- `atproto-atproto-lexicon` - Schema validation
+- `atproto-atproto-repo` - Repository utilities
+- `atproto-atproto-syntax` - Syntax validation
+- `atproto-atproto-xrpc` - XRPC client/server
 
-#### Smokesignal Events
-- `smokesignal-events-quickdid` - Fast and scalable identity resolution service
+### Third-Party Applications
 
-#### Microcosm Blue
-- `microcosm-blue-allegedly` - PLC (Public Ledger for Credentials) tools and services
+- `hyperlink-academy-leaflet` - Collaborative writing platform
+- `parakeet-social-parakeet` - Full-featured AppView
+- `teal-fm-teal` - Music social platform
+- `yoten-app-yoten` - Language learning platform
+- `slices-network-slices` - Custom AppView with SDK generation
+- `stream-place-streamplace` - Video infrastructure
+- `red-dwarf-client-red-dwarf` - Constellation-based client
+- `smokesignal-events-quickdid` - Fast identity resolution
+- `witchcraft-systems-pds-dash` - PDS monitoring dashboard
+- `individual-pds-gatekeeper` - PDS security microservice
+- `atbackup-pages-dev-atbackup` - One-click Bluesky backups
+- `microcosm-blue-allegedly` - PLC tools
 
-#### Witchcraft Systems
-- `witchcraft-systems-pds-dash` - Web dashboard for PDS monitoring and management
+### Tangled Infrastructure
 
-#### ATBackup Pages Dev
-- `atbackup-pages-dev-atbackup` - One-click Bluesky backups desktop application
+- `tangled-dev-appview` - Tangled AppView
+- `tangled-dev-knot` - Git server
+- `tangled-dev-spindle` - Event processor/CI-CD
+- `tangled-dev-genjwks` - JWKS generator
+- `tangled-dev-lexgen` - Lexicon generator
 
-#### Official Bluesky Social
-- `bluesky-social-indigo` - Official Go implementation of ATProto services
-- `bluesky-social-grain` - Official TypeScript implementation of ATProto services
-- `bluesky-social-frontpage` - Official Bluesky frontpage application
+## NixOS Modules
 
-#### Individual Developers
-- `individual-pds-gatekeeper` - Security microservice with 2FA and rate limiting
-- `individual-drainpipe` - Individual developer package
-
-### Microcosm Collection (`microcosm-*`)
-
-Rust-based ATProto service suite:
-- `microcosm-constellation` - Backlink indexer service
-- `microcosm-spacedust` - ATProto service component  
-- `microcosm-slingshot` - ATProto service component with TLS support
-- `microcosm-ufos` - ATProto service component
-- `microcosm-who-am-i` - Identity service (deprecated)
-- `microcosm-quasar` - ATProto service component
-- `microcosm-pocket` - DID document service
-- `microcosm-reflector` - DID document reflection service
-
-### Community Tools (`blacksky-*`)
-
-- `blacksky-rsky-*` - Community ATProto implementation suite (Rust)
-
-## NixOS Service Modules
-
-All packages include corresponding NixOS modules with:
-
-- **Security Hardening**: Comprehensive systemd security restrictions by default
-- **User Management**: Dedicated system users and groups for isolation
-- **Configuration Validation**: Type-safe configuration with helpful error messages
-- **Logging Integration**: Structured logging with configurable levels
-- **Firewall Integration**: Optional automatic firewall configuration
-
-### Example Service Configuration
+Each package has a corresponding NixOS module for declarative configuration:
 
 ```nix
-# Microcosm Constellation backlink indexer
-services.microcosm-constellation = {
-  enable = true;
-  settings = {
-    jetstream = "wss://jetstream1.us-east.bsky.network/subscribe";
-    backend = "rocks";
-    logLevel = "info";
-  };
-  backup = {
+{
+  services.microcosm-constellation = {
     enable = true;
-    interval = 24; # hours
-    maxOldBackups = 7;
+    settings = {
+      jetstream = "wss://jetstream1.us-east.bsky.network/subscribe";
+      backend = "rocks";  # or "memory"
+      dataDir = "/var/lib/constellation";
+    };
+    openFirewall = true;
   };
-  openFirewall = true;
-};
 
-# PDS Dashboard (Witchcraft Systems)
-services.witchcraft-systems-pds-dash = {
-  enable = true;
-  settings = {
-    port = 3000;
-    pds = {
-      endpoint = "https://pds.example.com";
-      adminPassword = "admin-password";
-    };
-    ui = {
-      title = "PDS Dashboard";
-      theme = "default";
+  services.blacksky-pds = {
+    enable = true;
+    settings = {
+      hostname = "pds.example.com";
+      port = 3000;
     };
   };
-};
-
-# QuickDID identity resolution (Smokesignal Events)
-services.smokesignal-events-quickdid = {
-  enable = true;
-  settings = {
-    port = 8080;
-    hostname = "quickdid.example.com";
-    database = {
-      url = "postgresql://quickdid@localhost/quickdid";
-    };
-    plc = {
-      endpoint = "https://plc.directory";
-    };
-  };
-};
-
-# Leaflet collaborative writing (Hyperlink Academy)
-services.hyperlink-academy-leaflet = {
-  enable = true;
-  settings = {
-    port = 3000;
-    hostname = "leaflet.example.com";
-    database = {
-      url = "postgresql://leaflet@localhost/leaflet";
-    };
-    supabase = {
-      url = "https://your-project.supabase.co";
-      anonKey = "your-anon-key";
-      serviceRoleKeyFile = "/run/secrets/supabase-service-key";
-    };
-    oauth = {
-      clientId = "your-oauth-client-id";
-      clientSecretFile = "/run/secrets/oauth-client-secret";
-      redirectUri = "https://leaflet.example.com/api/auth/callback";
-    };
-  };
-};
-
-# PDS Gatekeeper (Individual Developer)
-services.individual-pds-gatekeeper = {
-  enable = true;
-  settings = {
-    port = 8080;
-    database = {
-      url = "postgresql://gatekeeper@localhost/gatekeeper";
-    };
-    email = {
-      smtpHost = "smtp.example.com";
-      smtpPort = 587;
-      smtpUser = "noreply@example.com";
-      smtpPasswordFile = "/run/secrets/smtp-password";
-      fromAddress = "noreply@example.com";
-    };
-  };
-};
+}
 ```
+
+Modules are organized by organization:
+- `atproto-nur.nixosModules.microcosm`
+- `atproto-nur.nixosModules.blacksky`
+- `atproto-nur.nixosModules.bluesky-social`
+- `atproto-nur.nixosModules.tangled-dev`
+- ... and more
 
 ## Development
 
-### Using the Development Shell
+### Building Packages
 
 ```bash
-# Clone the repository
-git clone https://github.com/atproto-nix/nur
-cd nur
-
-# Enter development environment
-nix develop
+# Build a specific package
+nix build .#microcosm-constellation
 
 # Build all packages
-nix build
-
-# Run tests
-nix build .#tests
-
-# Check flake
 nix flake check
+
+# Enter development shell
+nix develop
 ```
 
-### Package Development
+### Adding New Packages
 
-The repository provides helper functions for consistent ATProto packaging:
+1. Create package file in appropriate organization directory under `pkgs/`
+2. Add to `pkgs/ORGANIZATION/default.nix`
+3. Create NixOS module in `modules/ORGANIZATION/`
+4. Test build and module configuration
 
-```nix
-# Rust service
-atprotoLib.mkRustAtprotoService {
-  pname = "my-service";
-  version = "1.0.0";
-  src = fetchFromGitHub { /* ... */ };
-  type = "application";
-  services = [ "my-service" ];
-  protocols = [ "com.atproto" ];
-}
+## Cachix
 
-# Node.js application  
-atprotoLib.mkNodeAtprotoApp {
-  inherit buildNpmPackage;
-  pname = "my-app";
-  version = "1.0.0";
-  src = fetchFromGitHub { /* ... */ };
-  type = "application";
-  services = [ "my-app" ];
-}
+Pre-built binaries are available via Cachix:
+
+```bash
+# Add to /etc/nix/nix.conf or ~/.config/nix/nix.conf
+substituters = https://cache.nixos.org https://atproto.cachix.org
+trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= atproto.cachix.org-1:[KEY_HERE]
 ```
-
-## Documentation
-
-Comprehensive documentation is available in the `docs/` directory:
-
-- **[Organizational Framework](docs/ORGANIZATIONAL_FRAMEWORK.md)** - Understanding the organizational structure
-- **[Organizational Migration](docs/ORGANIZATIONAL_MIGRATION.md)** - Migrating from old to new organizational structure
-- **[Migration Guide](docs/MIGRATION.md)** - General migration guidance
-- **[Packaging Guidelines](docs/PACKAGING.md)** - How to package ATProto applications
-- **[Contributing Guide](docs/CONTRIBUTING.md)** - How to contribute packages and improvements
-- **[Service Modules](docs/MICROCOSM_MODULES.md)** - NixOS module configuration patterns
-- **[PDS Ecosystem](docs/PDS_ECOSYSTEM.md)** - PDS deployment and management
-- **[Templates Guide](docs/TEMPLATES.md)** - Using and customizing development templates
-- **[Testing Guide](docs/TESTING.md)** - Core library testing and validation infrastructure
 
 ## Contributing
 
-We welcome contributions! Please see our [Contributing Guide](docs/CONTRIBUTING.md) for:
+Contributions welcome! Please:
 
-- Packaging new ATProto applications
-- Improving existing packages and modules
-- Adding new language templates
-- Documentation improvements
+1. Follow existing package structure and naming conventions
+2. Pin all source versions (no `rev = "main"` or `lib.fakeHash`)
+3. Add NixOS modules for services
+4. Test builds on your platform
+5. Update this README if adding new packages
+
+See `PINNING_NEEDED.md` for packages that need version pinning.
+
+## Organizational Structure
+
+Packages are organized by their maintainer/organization:
+
+- `microcosm/` - Microcosm Rust services
+- `blacksky/` - Community Blacksky tools
+- `bluesky-social/` - Official Bluesky packages
+- `atproto/` - Core ATProto libraries
+- `tangled-dev/` - Tangled infrastructure
+- `hyperlink-academy/`, `parakeet-social/`, `teal-fm/`, etc. - Third-party apps
+- `individual/` - Individual developer packages
+
+This structure makes it easy to find packages by their maintainer and understand the ecosystem.
 
 ## License
 
-This repository is licensed under the MIT License. Individual packages may have different licenses - see their respective metadata for details.
+Each package has its own license. See individual package definitions for details.
+
+Most packages are MIT or Apache-2.0 licensed.
+
+## Resources
+
+- [AT Protocol Docs](https://atproto.com)
+- [Bluesky](https://bsky.social)
+- [Tangled](https://tangled.org)
+- [NUR Documentation](https://github.com/nix-community/NUR)
+
+## Status
+
+✅ 48 packages available
+✅ Multi-platform support (Linux x86_64/aarch64, macOS x86_64/aarch64)
+✅ NixOS modules for all services
+⚠️  Some packages need version pinning (see PINNING_NEEDED.md)
+
+---
+
+**Development**: Primary development on [Tangled](https://tangled.org) at [@atproto-nix.org/nur](https://tangled.sh/@atproto-nix.org/nur)
+
+**Mirror**: [GitHub](https://github.com/atproto-nix/nur)

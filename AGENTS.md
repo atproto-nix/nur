@@ -1,158 +1,207 @@
-# Gemini Agent Guide for nur-atproto
+# Agent Guide for ATProto NUR
 
-This document provides a guide for Gemini agents to understand and interact with the `nur-atproto` repository.
+This document provides guidance for AI agents working with the ATProto NUR repository.
 
 ## Project Overview
 
-`nur-atproto` is a Nix-based repository for packaging and deploying services related to the AT Protocol and Bluesky. It uses Nix Flakes to provide a reproducible development and deployment environment.
+The ATProto NUR is a Nix User Repository providing packages and NixOS modules for the AT Protocol and Bluesky ecosystem. It contains 48+ packages organized by maintainer/organization.
 
-The repository is structured into two main parts:
-
-1.  **Packages (`pkgs`):** Contains Nix package definitions for core components.
-2.  **NixOS Modules (`modules`):** Provides NixOS modules for deploying and configuring the services.
-
-## Packages
-
-This repository provides the following packages:
-
-### Microcosm Services
-
-A suite of services that form a personal data server (PDS) or a related AT Protocol service.
-
--   **`constellation`**: A global atproto backlink index. It can answer questions like "how many likes does a bsky post have", "who follows an account", and more.
-
-    **Usage:**
-    -   `--bind`: listen address (default: `0.0.0.0:6789`)
-    -   `--bind-metrics`: metrics server listen address (default: `0.0.0.0:8765`)
-    -   `--jetstream`: Jetstream server to connect to
-    -   `--data`: path to store data on disk
-    -   `--backend`: storage backend to use (`memory` or `rocks`)
-
--   **`pocket`**: A service for storing non-public user data, like application preferences.
-
-    **Usage:**
-    -   `--db`: path to the sqlite db file
-    -   `--init-db`: initialize the db and exit
-    -   `--domain`: domain for serving a did doc
-
--   **`quasar`**: An indexed replay and fan-out for event stream services (work in progress).
-
--   **`reflector`**: A tiny did:web service server that maps subdomains to a single service endpoint.
-
-    **Usage:**
-    -   `--id`: DID document service ID
-    -   `--type`: service type
-    -   `--service-endpoint`: HTTPS endpoint for the service
-    -   `--domain`: parent domain
-
--   **`slingshot`**: A fast, eager, production-grade edge cache for atproto records and identities.
-
-    **Usage:**
-    -   `--jetstream`: Jetstream server to connect to
-    -   `--cache-dir`: path to keep disk caches
-    -   `--domain`: domain pointing to this server
-
--   **`spacedust`**: A global atproto interactions firehose. Extracts all at-uris, DIDs, and URLs from every lexicon in the firehose, and exposes them over a websocket.
-
-    **Usage:**
-    -   `--jetstream`: Jetstream server to connect to
-
--   **`ufos`**: A service that provides timeseries stats and sample records for every collection ever seen in the atproto firehose.
-
-    **Usage:**
-    -   `--jetstream`: Jetstream server to connect to
-    -   `--data`: location to store persist data to disk
-
--   **`who-am-i` (deprecated)**: An identity bridge for microcosm demos. It is being retired.
-
-    **Usage:**
-    -   `--app-secret`: secret key for cookie-signing (env: `APP_SECRET`)
-    -   `--oauth-private-key`: path to at-oauth private key (env: `OAUTH_PRIVATE_KEY`)
-    -   `--jwt-private-key`: path to jwt private key
-    -   `--base-url`: client-reachable base url (env: `BASE_URL`)
-    -   `--bind`: host:port to bind to (env: `BIND`, default: `127.0.0.1:9997`)
-
-### Microcosm Libraries
-
--   **`links`**: A Rust library for parsing and extracting links (at-uris, DIDs, and URLs) from atproto records.
-
-### Blacksky
-
-A suite of tools related to the AT Protocol ecosystem.
-
--   `pds`
--   `relay`
--   `feedgen`
--   `satnav`
--   `firehose`
--   `jetstream-subscriber`
--   `labeler`
-
-## NixOS Modules
-
-The `microcosm` modules are designed to be composed together to create a running AT Protocol environment. Each module corresponds to a specific service.
-
-## Technology Stack
-
-This project is built using the following technologies:
-
--   **Nix:** For package management and reproducible builds.
--   **Rust:** For performance-critical components.
-
-## Cachix Cache
-
-This repository uses [Cachix](https://www.cachix.org/) to provide a binary cache for pre-built packages. This can significantly speed up builds.
-
-To use the cache, add the following to your `/etc/nix/nix.conf`:
+## Repository Structure
 
 ```
-substituters = https://atproto.cachix.org
-trusted-public-keys = atproto.cachix.org-1:s+32V2F3E5N6bY5fL2yV/s/Vb+9/a/a/a/a/a/a/a/a=
+nur/
+├── flake.nix              # Flake configuration (simplified)
+├── default.nix            # Package exports
+├── pkgs/                  # Package definitions (organized by org)
+│   ├── microcosm/         # Microcosm Rust services
+│   ├── blacksky/          # Community ATProto tools
+│   ├── bluesky-social/    # Official Bluesky packages
+│   ├── atproto/           # Core libraries
+│   ├── tangled-dev/       # Tangled infrastructure
+│   └── [other orgs]/      # Third-party apps
+├── modules/               # NixOS service modules
+├── lib/                   # Build utilities and helpers
+└── tests/                 # Package tests
 ```
-**Note:** The `trusted-public-keys` value is a placeholder. I was unable to find the correct public key.
 
-## Interacting with the Project
+## Key Principles
 
-As a Gemini agent, you can use the Nix command-line interface to work with this repository.
+1. **Simplicity**: This repo was recently simplified. Keep it simple - no over-engineering.
+2. **Organizational Structure**: Packages are grouped by their maintainer/organization for clarity.
+3. **Reproducibility**: All packages should have pinned versions (no `rev = "main"` or `lib.fakeHash`).
+4. **NixOS Integration**: Each package should have a corresponding NixOS module.
+
+## Common Tasks
 
 ### Building Packages
 
-To build a package, use the `nix build` command with the corresponding flake output. For example, to build the `constellation` package:
-
 ```bash
-nix build .#constellation
-```
+# Build specific package
+nix build .#microcosm-constellation
 
-### Development Environment
+# Evaluate flake
+nix flake show
 
-To enter a development shell with all the necessary dependencies, use the `nix develop` command:
+# Check all packages
+nix flake check
 
-```bash
+# Enter dev shell
 nix develop
 ```
 
-### Deploying with NixOS
+### Adding New Packages
 
-The NixOS modules in `modules/microcosm` can be used to deploy the services to a NixOS machine. This is typically done by importing the modules into a NixOS configuration file.
+1. Create `.nix` file in appropriate `pkgs/ORGANIZATION/` directory
+2. Add to `pkgs/ORGANIZATION/default.nix`
+3. Pin all versions (no `rev = "main"`, no `lib.fakeHash`)
+4. Create NixOS module in `modules/ORGANIZATION/`
+5. Test build
 
-For example, to enable the `quasar` service, you would add the following to your `configuration.nix`:
+### Package Naming Convention
+
+- Format: `{organization}-{package-name}`
+- Examples:
+  - `microcosm-constellation`
+  - `blacksky-pds`
+  - `tangled-dev-spindle`
+  - `hyperlink-academy-leaflet`
+
+## Important Files
+
+### `flake.nix`
+- Main flake configuration
+- Multi-platform support (x86_64/aarch64 for Linux/Darwin)
+- Exports packages, lib, and nixosModules
+- **Keep it simple** - no backward compatibility layers
+
+### `default.nix`
+- Package aggregation from `pkgs/`
+- Exports lib and modules
+- Filter to only include derivations
+
+### `pkgs/default.nix`
+- Imports all organizational package collections
+- Flattens into single namespace with org prefixes
+- Each organization has its own subdirectory
+
+### `lib/atproto.nix`
+- Main packaging utilities
+- Rust build helpers (uses crane)
+- ATProto-specific helpers
+
+## Package Categories
+
+### Working Packages (48 total)
+- Microcosm services (8): constellation, spacedust, slingshot, ufos, etc.
+- Blacksky/Rsky (19): PDS, relay, feedgen, libraries, etc.
+- ATProto core libraries (8): TypeScript packages
+- Third-party apps (10+): leaflet, parakeet, teal, yoten, etc.
+- Tangled infrastructure (5): appview, knot, spindle, etc.
+
+### Packages Needing Work
+See `PINNING_NEEDED.md` for packages that need version pinning:
+- tangled-dev/* (3 packages)
+- witchcraft-systems/pds-dash
+- hyperlink-academy/leaflet
+- atproto/frontpage
+- And others
+
+## Build System
+
+### Rust Packages
+- Use `craneLib` for building
+- Multi-package workspaces (like microcosm) share build artifacts
+- See `lib/atproto.nix` for helpers
+
+### Go Packages
+- Use `buildGoModule`
+- Need `vendorHash` pinned
+
+### Node.js/TypeScript Packages
+- Use `buildNpmPackage`
+- Need `npmDepsHash` pinned
+
+## NixOS Modules
+
+Each service has a module in `modules/ORGANIZATION/SERVICE.nix`:
 
 ```nix
-{
-  imports = [
-    ./path/to/nur-atproto/modules/microcosm/quasar.nix
-  ];
+{ config, lib, pkgs, ... }:
+let
+  cfg = config.services.PACKAGE-NAME;
+in {
+  options.services.PACKAGE-NAME = {
+    enable = lib.mkEnableOption "SERVICE";
+    settings = { ... };
+  };
 
-  services.microcosm.quasar.enable = true;
+  config = lib.mkIf cfg.enable {
+    systemd.services.PACKAGE-NAME = { ... };
+  };
 }
 ```
 
-## Agent Workflow
+Modules are grouped by organization in `modules/ORGANIZATION/default.nix`.
 
-When working with the `nur-atproto` repository, a Gemini agent should follow these steps:
+## Development Workflow
 
-1.  **Understand the Goal:** Clarify the user's intent. Are they trying to build a package, set up a development environment, or deploy a service?
-2.  **Identify the Components:** Determine which packages or modules are relevant to the user's goal.
-3.  **Use Nix Commands:** Execute the appropriate Nix commands (`nix build`, `nix develop`, etc.) to achieve the desired outcome.
-4.  **Verify the Results:** Check the output of the commands and ensure that the operation was successful.
-5.  **Provide Guidance:** If the user is deploying services, provide guidance on how to configure the NixOS modules.
+1. **Make changes** to packages or modules
+2. **Test locally**: `nix build .#PACKAGE`
+3. **Check flake**: `nix flake check`
+4. **Update README** if adding/removing packages
+5. **Commit** with clear message
+
+## What NOT to Do
+
+❌ Don't add complex organizational frameworks
+❌ Don't create over-engineered abstractions
+❌ Don't use `rev = "main"` or `lib.fakeHash`
+❌ Don't add backward compatibility layers
+❌ Don't create extensive documentation systems
+
+✅ DO keep it simple
+✅ DO pin all versions
+✅ DO test builds
+✅ DO follow existing patterns
+
+## Current Status
+
+- ✅ 48 packages available and evaluating
+- ✅ Flake simplified and clean
+- ✅ Multi-platform support
+- ✅ NixOS modules for all services
+- ⚠️ ~8 packages need version pinning (see PINNING_NEEDED.md)
+
+## Resources
+
+- [Nix Manual](https://nixos.org/manual/nix/stable/)
+- [NUR Guidelines](https://github.com/nix-community/NUR)
+- [AT Protocol Docs](https://atproto.com)
+- [Crane (Rust builder)](https://github.com/ipetkov/crane)
+
+## Notes for Agents
+
+- This repo serves both **packaging** (for binary cache) and **server deployment** (via NixOS modules)
+- The organizational structure is intentional - it helps users find packages by maintainer
+- Recently simplified from an over-complex structure - maintain simplicity
+- Some packages have `fakeHash` and won't build until hashes are calculated
+- Primary development is on Tangled, GitHub is a mirror
+
+## Quick Reference
+
+```bash
+# List all packages
+nix flake show 2>&1 | grep "package '"
+
+# Build a package
+nix build .#PACKAGE-NAME
+
+# Test a module
+nixos-rebuild test --flake .#test-config
+
+# Update inputs
+nix flake update
+
+# Format nix files
+nixpkgs-fmt *.nix
+```
