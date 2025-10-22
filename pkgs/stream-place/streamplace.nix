@@ -1,11 +1,13 @@
-{ pkgs, buildGoModule, fetchgit, ... }:
+{ pkgs, buildGoModule, fetchFromTangled, ... }:
 
 buildGoModule rec {
   pname = "streamplace";
   version = "0.1.0";
   
-  src = fetchgit {
-    url = "https://tangled.org/@stream.place/streamplace";
+  src = fetchFromTangled {
+    domain = "tangled.org";
+    owner = "@stream.place";
+    repo = "streamplace";
     rev = "167ae0c640c8c338393f4c91409d5a0048b82bb6";
     sha256 = "1yahp3qb2rzrrqbkgj6s8kbl9aaxwphagrd0ah4d7928kyfgq2dk";
   };

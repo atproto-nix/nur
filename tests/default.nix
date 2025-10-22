@@ -34,4 +34,10 @@
   backward-compatibility = import ./backward-compatibility.nix { inherit pkgs; };
   module-configuration = import ./module-configuration.nix { inherit pkgs; };
   module-structure-validation = import ./module-structure-validation.nix { inherit pkgs; };
+  
+  # Service discovery and coordination tests (Task 15)
+  service-discovery-coordination = import ./service-discovery-coordination.nix { inherit pkgs; lib = pkgs.lib; };
+  
+  # Comprehensive CI/CD infrastructure validation (Task 8)
+  comprehensive-ci-cd-validation = import ./comprehensive-ci-cd-validation.nix { inherit pkgs; };
 }

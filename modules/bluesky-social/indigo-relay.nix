@@ -12,7 +12,7 @@ in
 
     package = mkOption {
       type = types.package;
-      default = pkgs.bluesky-social-indigo-relay or pkgs.indigo-relay;
+      default = pkgs.bluesky-social-indigo-relay;
       description = "The Indigo Relay package to use.";
     };
 

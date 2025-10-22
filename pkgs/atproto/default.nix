@@ -21,7 +21,6 @@ in
   
   # Official implementations
   # frontpage = pkgs.callPackage ./frontpage.nix { inherit craneLib atprotoCore packaging; };
-  indigo = pkgs.callPackage ./indigo.nix { };
   
   # Core ATproto TypeScript libraries
   atproto-api = pkgs.callPackage ./atproto-api.nix { };

@@ -6,5 +6,6 @@
     ./pds-managed.nix
     ./pds-enterprise.nix
     ./tangled-deployment.nix
+    ./atproto-stacks.nix
   ];
 }

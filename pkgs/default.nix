@@ -7,18 +7,18 @@ let
     hyperlink-academy = pkgs.callPackage ./hyperlink-academy { inherit lib; };
     
     # Custom AppView and social platforms
-    slices-network = pkgs.callPackage ./slices-network { inherit lib; };
+    slices-network = pkgs.callPackage ./slices-network { inherit lib craneLib; fetchFromTangled = pkgs.fetchFromTangled; };
     teal-fm = pkgs.callPackage ./teal-fm { inherit lib; };
     parakeet-social = pkgs.callPackage ./parakeet-social { inherit lib; };
     
     # Media and streaming platforms
-    stream-place = pkgs.callPackage ./stream-place { inherit lib buildGoModule; };
+    stream-place = pkgs.callPackage ./stream-place { inherit lib buildGoModule; fetchFromTangled = pkgs.fetchFromTangled; };
     
     # Language learning and specialized apps
-    yoten-app = pkgs.callPackage ./yoten-app { inherit lib; };
+    yoten-app = pkgs.callPackage ./yoten-app { inherit lib buildGoModule; fetchFromTangled = pkgs.fetchFromTangled; };
     
     # Client applications
-    red-dwarf-client = pkgs.callPackage ./red-dwarf-client { inherit lib buildNpmPackage; };
+    red-dwarf-client = pkgs.callPackage ./red-dwarf-client { inherit lib buildNpmPackage; fetchFromTangled = pkgs.fetchFromTangled; };
     
     # Development tools and infrastructure
     tangled-dev = pkgs.callPackage ./tangled-dev { inherit lib; };
@@ -27,7 +27,7 @@ let
     smokesignal-events = pkgs.callPackage ./smokesignal-events { inherit lib craneLib; };
     
     # Microcosm ecosystem tools
-    microcosm-blue = pkgs.callPackage ./microcosm-blue { inherit lib craneLib; };
+    microcosm-blue = pkgs.callPackage ./microcosm-blue { inherit lib craneLib; fetchFromTangled = pkgs.fetchFromTangled; };
     
     # System administration and monitoring
     witchcraft-systems = pkgs.callPackage ./witchcraft-systems { inherit lib; };
@@ -47,7 +47,7 @@ let
     # Legacy package collections (for backward compatibility)
     microcosm = pkgs.callPackage ./microcosm { inherit craneLib; };
     blacksky = pkgs.callPackage ./blacksky { inherit craneLib; };
-    bluesky = pkgs.callPackage ./bluesky { inherit craneLib; };
+    bluesky-legacy = pkgs.callPackage ./bluesky-legacy { inherit craneLib; };
   };
 
   # Helper function to check if something is a derivation
@@ -81,37 +81,9 @@ let
     in
     lib.foldl' (acc: collection: acc // collection) {} orgCollections;
 
-  # Create aliases for backward compatibility
-  backwardCompatibilityAliases = {
-    # Individual package aliases (old names -> new organizational names)
-    leaflet = flattenedPackages.hyperlink-academy-leaflet or null;
-    slices = flattenedPackages.slices-network-slices or null;
-    teal = flattenedPackages.teal-fm-teal or null;
-    parakeet = flattenedPackages.parakeet-social-parakeet or null;
-    streamplace = flattenedPackages.stream-place-streamplace or null;
-    yoten = flattenedPackages.yoten-app-yoten or null;
-    red-dwarf = flattenedPackages.red-dwarf-client-red-dwarf or null;
-    quickdid = flattenedPackages.smokesignal-events-quickdid or null;
-    allegedly = flattenedPackages.microcosm-blue-allegedly or null;
-    pds-dash = flattenedPackages.witchcraft-systems-pds-dash or null;
-    atbackup = flattenedPackages.atbackup-pages-dev-atbackup or null;
-    indigo = flattenedPackages.bluesky-social-indigo or null;
-    grain = flattenedPackages.bluesky-social-grain or null;
-    pds-gatekeeper = flattenedPackages.individual-pds-gatekeeper or null;
-    
-    # Tangled-dev packages
-    appview = flattenedPackages.tangled-dev-appview or null;
-    knot = flattenedPackages.tangled-dev-knot or null;
-    spindle = flattenedPackages.tangled-dev-spindle or null;
-    genjwks = flattenedPackages.tangled-dev-genjwks or null;
-    lexgen = flattenedPackages.tangled-dev-lexgen or null;
-  };
-
-  # Filter out null aliases
-  validAliases = lib.filterAttrs (n: v: v != null) backwardCompatibilityAliases;
-
 in
-flattenedPackages // validAliases // {
+
+flattenedPackages // {
   # Export organizational collections for direct access (not in flake packages)
   organizations = organizationalPackages;
   

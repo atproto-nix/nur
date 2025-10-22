@@ -12,7 +12,7 @@ in
 
     package = mkOption {
       type = types.package;
-      default = pkgs.bluesky-social-grain-appview or pkgs.grain-appview;
+      default = pkgs.bluesky-social-grain-appview;
       description = "The Grain AppView package to use.";
     };
 

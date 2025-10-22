@@ -4,33 +4,33 @@
 with lib;
 
 let
-  cfg = config.services.atproto-leaflet;
+  cfg = config.services.hyperlink-academy-leaflet;
 in
 {
-  options.services.atproto-leaflet = {
+  options.services.hyperlink-academy-leaflet = {
     enable = mkEnableOption "Leaflet collaborative writing platform";
 
     package = mkOption {
       type = types.package;
-      default = pkgs.hyperlink-academy-leaflet or pkgs.leaflet;
+      default = pkgs.hyperlink-academy.leaflet;
       description = "The Leaflet package to use.";
     };
 
     dataDir = mkOption {
       type = types.str;
-      default = "/var/lib/atproto-leaflet";
+      default = "/var/lib/hyperlink-academy-leaflet";
       description = "The absolute path to the directory to store data in.";
     };
 
     user = mkOption {
       type = types.str;
-      default = "atproto-leaflet";
+      default = "hyperlink-academy-leaflet";
       description = "User account for Leaflet service.";
     };
 
     group = mkOption {
       type = types.str;
-      default = "atproto-leaflet";
+      default = "hyperlink-academy-leaflet";
       description = "Group for Leaflet service.";
     };
 
@@ -149,15 +149,15 @@ in
     assertions = [
       {
         assertion = cfg.settings.database.url != "";
-        message = "services.atproto-leaflet: database URL must be specified";
+        message = "services.hyperlink-academy-leaflet: database URL must be specified";
       }
       {
         assertion = cfg.settings.supabase.url != "";
-        message = "services.atproto-leaflet: Supabase URL must be specified";
+        message = "services.hyperlink-academy-leaflet: Supabase URL must be specified";
       }
       {
         assertion = cfg.settings.oauth.clientId != "";
-        message = "services.atproto-leaflet: OAuth client ID must be specified";
+        message = "services.hyperlink-academy-leaflet: OAuth client ID must be specified";
       }
     ];
 
@@ -177,7 +177,7 @@ in
     ];
 
     # Main Leaflet web application service
-    systemd.services.atproto-leaflet = {
+    systemd.services.hyperlink-academy-leaflet = {
       description = "Leaflet collaborative writing platform";
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" "postgresql.service" ];
@@ -232,15 +232,17 @@ in
           export DATABASE_PASSWORD="$(cat ${cfg.settings.database.passwordFile})"
         ''}
 
+        # Change to the application directory for proper Next.js operation
+        cd ${cfg.package}/lib/leaflet
         exec ${cfg.package}/bin/leaflet
       '';
     };
 
     # Optional AppView service
-    systemd.services.atproto-leaflet-appview = mkIf cfg.settings.appview.enable {
+    systemd.services.hyperlink-academy-leaflet-appview = mkIf cfg.settings.appview.enable {
       description = "Leaflet AppView service";
       wantedBy = [ "multi-user.target" ];
-      after = [ "network.target" "atproto-leaflet.service" ];
+      after = [ "network.target" "hyperlink-academy-leaflet.service" ];
       wants = [ "network.target" ];
 
       serviceConfig = {
@@ -283,15 +285,17 @@ in
           export DATABASE_PASSWORD="$(cat ${cfg.settings.database.passwordFile})"
         ''}
 
+        # Change to the application directory
+        cd ${cfg.package}/lib/leaflet
         exec ${cfg.package}/bin/leaflet-appview
       '';
     };
 
     # Optional feed service
-    systemd.services.atproto-leaflet-feedservice = mkIf cfg.settings.feedService.enable {
+    systemd.services.hyperlink-academy-leaflet-feedservice = mkIf cfg.settings.feedService.enable {
       description = "Leaflet feed service";
       wantedBy = [ "multi-user.target" ];
-      after = [ "network.target" "atproto-leaflet.service" ];
+      after = [ "network.target" "hyperlink-academy-leaflet.service" ];
       wants = [ "network.target" ];
 
       serviceConfig = {
@@ -334,6 +338,8 @@ in
           export DATABASE_PASSWORD="$(cat ${cfg.settings.database.passwordFile})"
         ''}
 
+        # Change to the application directory
+        cd ${cfg.package}/lib/leaflet
         exec ${cfg.package}/bin/leaflet-feedservice
       '';
     };

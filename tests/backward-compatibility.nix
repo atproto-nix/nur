@@ -42,7 +42,7 @@ pkgs.nixosTest {
       };
     };
 
-    services.atproto-slices = {
+    services.slices-network-slices = {
       enable = false;
       settings = {
         database.url = "postgresql://test:test@localhost:5432/test";
@@ -59,7 +59,7 @@ pkgs.nixosTest {
       };
     };
 
-    services.atproto-teal = {
+    services.teal-fm-teal = {
       enable = false;
       settings = {
         database.url = "postgresql://test:test@localhost:5432/test";
@@ -76,7 +76,7 @@ pkgs.nixosTest {
       };
     };
 
-    services.atproto-parakeet = {
+    services.parakeet-social-parakeet = {
       enable = false;
       settings = {
         database.url = "postgresql://test:test@localhost:5432/test";
@@ -110,7 +110,7 @@ pkgs.nixosTest {
       };
     };
 
-    services.quickdid = {
+    services.smokesignal-events-quickdid = {
       enable = false;
       settings = {
         port = 8080;
@@ -138,7 +138,7 @@ pkgs.nixosTest {
     };
 
     # Test legacy bluesky service names
-    services.bluesky-frontpage = {
+    services.bluesky-social-frontpage = {
       enable = false;
       settings = {
         port = 3000;

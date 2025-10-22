@@ -12,7 +12,7 @@ in
 
     package = mkOption {
       type = types.package;
-      default = pkgs.bluesky-social-grain-notifications or pkgs.grain-notifications;
+      default = pkgs.bluesky-social-grain-notifications;
       description = "The Grain Notifications package to use.";
     };
 

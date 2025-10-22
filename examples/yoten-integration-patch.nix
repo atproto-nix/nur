@@ -6,7 +6,7 @@
 with lib;
 
 let
-  cfg = config.services.atproto-yoten;
+  cfg = config.services.yoten-app-yoten;
   # Add integration library import
   nixosIntegration = import ../../lib/nixos-integration.nix { inherit lib config; };
 in
@@ -16,7 +16,7 @@ in
     ../common/nixos-integration.nix
   ];
 
-  options.services.atproto-yoten = {
+  options.services.yoten-app-yoten = {
     enable = mkEnableOption "Yoten language learning social platform";
 
     package = mkOption {
@@ -117,11 +117,11 @@ in
         # ADD: Integration-specific validations
         {
           assertion = cfg.nginx.enable -> cfg.nginx.serverName != "";
-          message = "services.atproto-yoten: Nginx server name must be specified when nginx is enabled";
+          message = "services.yoten-app-yoten: Nginx server name must be specified when nginx is enabled";
         }
         {
           assertion = cfg.database.type == "postgres" -> (hasInfix "postgresql://" cfg.database.url);
-          message = "services.atproto-yoten: PostgreSQL URL must start with 'postgresql://' when using postgres database type";
+          message = "services.yoten-app-yoten: PostgreSQL URL must start with 'postgresql://' when using postgres database type";
         }
       ];
     }
@@ -163,7 +163,7 @@ in
 
     # MODIFY: Enhanced systemd service configuration
     {
-      systemd.services.atproto-yoten = {
+      systemd.services.yoten-app-yoten = {
         description = "Yoten language learning social platform";
         wantedBy = [ "multi-user.target" ];
         

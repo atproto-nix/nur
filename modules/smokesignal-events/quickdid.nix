@@ -4,10 +4,10 @@
 with lib;
 
 let
-  cfg = config.services.quickdid;
+  cfg = config.services.smokesignal-events-quickdid;
 in
 {
-  options.services.quickdid = {
+  options.services.smokesignal-events-quickdid = {
     enable = mkEnableOption "QuickDID AT Protocol identity resolution service";
 
     package = mkOption {
@@ -290,15 +290,15 @@ in
     assertions = [
       {
         assertion = cfg.settings.httpExternal != "";
-        message = "services.quickdid: httpExternal must be specified";
+        message = "services.smokesignal-events-quickdid: httpExternal must be specified";
       }
       {
         assertion = cfg.settings.proactiveRefresh.threshold >= 0.0 && cfg.settings.proactiveRefresh.threshold <= 1.0;
-        message = "services.quickdid: proactiveRefresh threshold must be between 0.0 and 1.0";
+        message = "services.smokesignal-events-quickdid: proactiveRefresh threshold must be between 0.0 and 1.0";
       }
       {
         assertion = cfg.settings.metrics.adapter == "statsd" -> (cfg.settings.metrics.statsd.host != null);
-        message = "services.quickdid: StatsD host must be specified when using statsd metrics adapter";
+        message = "services.smokesignal-events-quickdid: StatsD host must be specified when using statsd metrics adapter";
       }
     ];
 
@@ -318,7 +318,7 @@ in
     ];
 
     # systemd service
-    systemd.services.quickdid = {
+    systemd.services.smokesignal-events-quickdid = {
       description = "QuickDID AT Protocol identity resolution service";
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" ] 

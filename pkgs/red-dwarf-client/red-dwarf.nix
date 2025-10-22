@@ -1,12 +1,14 @@
-{ pkgs, buildNpmPackage, fetchgit, ... }:
+{ pkgs, buildNpmPackage, fetchFromTangled, ... }:
 
 # Red Dwarf - Bluesky client using Constellation
 buildNpmPackage rec {
   pname = "red-dwarf";
   version = "0.1.0";
   
-  src = fetchgit {
-    url = "https://tangled.org/@whey.party/red-dwarf";
+  src = fetchFromTangled {
+    domain = "tangled.org";
+    owner = "@whey.party";
+    repo = "red-dwarf";
     rev = "5ed2c581f947abad6e87b29bc072990522ca1c6d";
     sha256 = "11a639sg78jlpaqrgck18hpy9fmkfalvzzkyxqha1d1sfcq5gdqz";
   };

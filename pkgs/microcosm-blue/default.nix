@@ -1,4 +1,4 @@
-{ pkgs, lib, craneLib, ... }:
+{ pkgs, lib, craneLib, fetchFromTangled ? pkgs.fetchFromTangled, ... }:
 
 # Microcosm ATProto packages
 # Organization: microcosm-blue
@@ -19,7 +19,7 @@ let
 
   # Package naming pattern: use simple names within organization
   packages = {
-    allegedly = pkgs.callPackage ./allegedly.nix { inherit craneLib; };
+    allegedly = pkgs.callPackage ./allegedly.nix { inherit craneLib fetchFromTangled; };
   };
 
   # Enhanced packages with organizational metadata

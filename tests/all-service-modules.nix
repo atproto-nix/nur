@@ -80,7 +80,7 @@ let
     # services.blacksky-rsky-relay.enable = false;
     
     # Enable ATProto services with minimal configuration
-    services.atproto-allegedly = {
+    services.microcosm-blue-allegedly = {
       enable = true;
       settings = {
         port = 9080;
@@ -91,7 +91,7 @@ let
       };
     };
     
-    services.atproto-quickdid = {
+    services.smokesignal-events-quickdid = {
       enable = true;
       settings = {
         port = 9081;
@@ -102,35 +102,35 @@ let
       };
     };
     
-    services.atproto-red-dwarf = {
+    services.red-dwarf-client-red-dwarf = {
       enable = true;
       settings = {
         port = 9082;
       };
     };
     
-    services.atproto-streamplace = {
+    services.stream-place-streamplace = {
       enable = true;
       settings = {
         port = 9083;
       };
     };
     
-    services.atproto-yoten = {
+    services.yoten-app-yoten = {
       enable = true;
       settings = {
         port = 9084;
       };
     };
     
-    services.atproto-teal = {
+    services.teal-fm-teal = {
       enable = true;
       settings = {
         port = 9085;
       };
     };
     
-    services.atproto-parakeet = {
+    services.parakeet-social-parakeet = {
       enable = true;
       settings = {
         port = 9086;

@@ -36,7 +36,7 @@ pkgs.nixosTest {
       };
     };
 
-    services.atproto-slices = {
+    services.slices-network-slices = {
       enable = false;  # Don't actually start, just test module structure
       settings = {
         database.url = "postgresql://test:test@localhost:5432/test";
@@ -53,7 +53,7 @@ pkgs.nixosTest {
       };
     };
 
-    services.atproto-parakeet = {
+    services.parakeet-social-parakeet = {
       enable = false;  # Don't actually start, just test module structure
       settings = {
         database.url = "postgresql://test:test@localhost:5432/test";
@@ -66,7 +66,7 @@ pkgs.nixosTest {
       };
     };
 
-    services.atproto-teal = {
+    services.teal-fm-teal = {
       enable = false;  # Don't actually start, just test module structure
       settings = {
         database.url = "postgresql://test:test@localhost:5432/test";

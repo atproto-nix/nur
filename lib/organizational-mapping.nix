@@ -185,7 +185,7 @@ let
     "pds-dash" = {
       organization = "witchcraft-systems";
       displayName = "Witchcraft Systems";
-      currentPath = "pkgs/bluesky/pds-dash";
+      currentPath = "pkgs/bluesky-legacy/pds-dash";
       newPath = "pkgs/witchcraft-systems/pds-dash";
       repository = "https://github.com/witchcraft-systems/pds-dash";
       maintainer = "Witchcraft Systems";
@@ -236,7 +236,7 @@ let
     "pds-gatekeeper" = {
       organization = "individual";
       displayName = "Individual Developers";
-      currentPath = "pkgs/bluesky/pds-gatekeeper";
+      currentPath = "pkgs/bluesky-legacy/pds-gatekeeper";
       newPath = "pkgs/individual/pds-gatekeeper";
       repository = "https://github.com/fatfingers23/pds_gatekeeper";
       maintainer = "fatfingers23";

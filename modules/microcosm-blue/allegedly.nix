@@ -216,7 +216,7 @@ in
     ];
 
     # systemd service
-    systemd.services.allegedly = {
+    systemd.services.microcosm-blue-allegedly = {
       description = "Allegedly PLC tools service";
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" ] ++ lib.optional (cfg.settings.database.enable && cfg.settings.database.createDatabase) [ "postgresql.service" ];

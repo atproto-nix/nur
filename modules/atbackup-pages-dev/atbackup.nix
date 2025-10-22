@@ -4,10 +4,10 @@
 with lib;
 
 let
-  cfg = config.services.atbackup;
+  cfg = config.services.atbackup-pages-dev-atbackup;
 in
 {
-  options.services.atbackup = {
+  options.services.atbackup-pages-dev-atbackup = {
     enable = mkEnableOption "ATBackup AT Protocol backup service";
 
     package = mkOption {
@@ -221,18 +221,18 @@ in
           cfg.settings.storage.s3.accessKeyId != null &&
           cfg.settings.storage.s3.secretAccessKeyFile != null
         );
-        message = "services.atbackup: S3 configuration must be complete when using S3 storage";
+        message = "services.atbackup-pages-dev-atbackup: S3 configuration must be complete when using S3 storage";
       }
       {
         assertion = cfg.settings.webInterface.enable && cfg.settings.webInterface.auth.enable -> (
           cfg.settings.webInterface.auth.username != null &&
           cfg.settings.webInterface.auth.passwordFile != null
         );
-        message = "services.atbackup: web interface authentication requires username and passwordFile";
+        message = "services.atbackup-pages-dev-atbackup: web interface authentication requires username and passwordFile";
       }
       {
         assertion = cfg.settings.backups.schedule.enable -> (cfg.settings.backups.schedule.accounts != []);
-        message = "services.atbackup: scheduled backups require at least one account to be configured";
+        message = "services.atbackup-pages-dev-atbackup: scheduled backups require at least one account to be configured";
       }
     ];
 
@@ -266,7 +266,7 @@ in
     };
 
     # Main ATBackup service
-    systemd.services.atbackup = mkIf cfg.settings.webInterface.enable {
+    systemd.services.atbackup-pages-dev-atbackup = mkIf cfg.settings.webInterface.enable {
       description = "ATBackup AT Protocol backup service";
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" ];
@@ -342,7 +342,7 @@ in
     };
 
     # Scheduled backup service
-    systemd.services.atbackup-scheduler = mkIf cfg.settings.backups.schedule.enable {
+    systemd.services.atbackup-pages-dev-atbackup-scheduler = mkIf cfg.settings.backups.schedule.enable {
       description = "ATBackup scheduled backup service";
       serviceConfig = {
         Type = "oneshot";

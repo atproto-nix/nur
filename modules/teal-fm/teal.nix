@@ -4,10 +4,10 @@
 with lib;
 
 let
-  cfg = config.services.atproto-teal;
+  cfg = config.services.teal-fm-teal;
 in
 {
-  options.services.atproto-teal = {
+  options.services.teal-fm-teal = {
     enable = mkEnableOption "Teal ATProto platform";
 
     package = mkOption {
@@ -232,19 +232,19 @@ in
     assertions = [
       {
         assertion = cfg.settings.database.url != "";
-        message = "services.atproto-teal: database URL must be specified";
+        message = "services.teal-fm-teal: database URL must be specified";
       }
       {
         assertion = cfg.settings.oauth.clientId != "";
-        message = "services.atproto-teal: OAuth client ID must be specified";
+        message = "services.teal-fm-teal: OAuth client ID must be specified";
       }
       {
         assertion = cfg.settings.atproto.handle != "";
-        message = "services.atproto-teal: AT Protocol handle must be specified";
+        message = "services.teal-fm-teal: AT Protocol handle must be specified";
       }
       {
         assertion = cfg.settings.s3.enable -> (cfg.settings.s3.bucket != "");
-        message = "services.atproto-teal: S3 bucket must be specified when S3 is enabled";
+        message = "services.teal-fm-teal: S3 bucket must be specified when S3 is enabled";
       }
     ];
 
@@ -264,7 +264,7 @@ in
     ];
 
     # Teal Aqua web application service
-    systemd.services.atproto-teal-aqua = mkIf cfg.settings.aqua.enable {
+    systemd.services.teal-fm-teal-aqua = mkIf cfg.settings.aqua.enable {
       description = "Teal Aqua web application";
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" "postgresql.service" ] 
@@ -347,7 +347,7 @@ in
     };
 
     # Teal Garnet service
-    systemd.services.atproto-teal-garnet = mkIf cfg.settings.services.garnet.enable {
+    systemd.services.teal-fm-teal-garnet = mkIf cfg.settings.services.garnet.enable {
       description = "Teal Garnet service";
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" "postgresql.service" ];
@@ -397,7 +397,7 @@ in
     };
 
     # Teal Amethyst service
-    systemd.services.atproto-teal-amethyst = mkIf cfg.settings.services.amethyst.enable {
+    systemd.services.teal-fm-teal-amethyst = mkIf cfg.settings.services.amethyst.enable {
       description = "Teal Amethyst service";
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" "postgresql.service" ];
@@ -447,7 +447,7 @@ in
     };
 
     # Teal Piper music scraper service
-    systemd.services.atproto-teal-piper = mkIf cfg.settings.services.piper.enable {
+    systemd.services.teal-fm-teal-piper = mkIf cfg.settings.services.piper.enable {
       description = "Teal Piper music scraper service";
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" "postgresql.service" ];

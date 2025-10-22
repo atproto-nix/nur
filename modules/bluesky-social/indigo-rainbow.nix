@@ -12,7 +12,7 @@ in
 
     package = mkOption {
       type = types.package;
-      default = pkgs.bluesky-social-indigo-rainbow or pkgs.indigo-rainbow;
+      default = pkgs.bluesky-social-indigo-rainbow;
       description = "The Indigo Rainbow package to use.";
     };
 

@@ -1,4 +1,4 @@
-{ pkgs, lib, buildGoModule, ... }:
+{ pkgs, lib, buildGoModule, fetchFromTangled, ... }:
 
 # Stream.place ATProto packages
 # Organization: stream-place
@@ -19,7 +19,7 @@ let
 
   # Package naming pattern: use simple names within organization
   packages = {
-    streamplace = pkgs.callPackage ./streamplace.nix { inherit buildGoModule; };
+    streamplace = pkgs.callPackage ./streamplace.nix { inherit buildGoModule fetchFromTangled; };
   };
 
   # Enhanced packages with organizational metadata

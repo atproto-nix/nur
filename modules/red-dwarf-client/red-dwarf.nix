@@ -4,10 +4,10 @@
 with lib;
 
 let
-  cfg = config.services.atproto-red-dwarf;
+  cfg = config.services.red-dwarf-client-red-dwarf;
 in
 {
-  options.services.atproto-red-dwarf = {
+  options.services.red-dwarf-client-red-dwarf = {
     enable = mkEnableOption "Red Dwarf Bluesky client";
 
     package = mkOption {
@@ -219,15 +219,15 @@ in
     assertions = [
       {
         assertion = cfg.settings.server.publicUrl != "";
-        message = "services.atproto-red-dwarf: public URL must be specified";
+        message = "services.red-dwarf-client-red-dwarf: public URL must be specified";
       }
       {
         assertion = cfg.settings.oauth.clientId != "";
-        message = "services.atproto-red-dwarf: OAuth client ID must be specified";
+        message = "services.red-dwarf-client-red-dwarf: OAuth client ID must be specified";
       }
       {
         assertion = cfg.settings.microcosm.constellation.enable -> (cfg.settings.microcosm.constellation.url != "");
-        message = "services.atproto-red-dwarf: Constellation URL must be specified when Constellation is enabled";
+        message = "services.red-dwarf-client-red-dwarf: Constellation URL must be specified when Constellation is enabled";
       }
     ];
 
@@ -252,7 +252,7 @@ in
     ];
 
     # Red Dwarf web application service
-    systemd.services.atproto-red-dwarf = {
+    systemd.services.red-dwarf-client-red-dwarf = {
       description = "Red Dwarf Bluesky client";
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" ];

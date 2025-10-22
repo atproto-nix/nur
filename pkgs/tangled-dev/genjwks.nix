@@ -1,7 +1,7 @@
 { pkgs, ... }:
 
 pkgs.writeTextFile {
-  name = "tangled-genjwks-placeholder";
+  name = "tangled-dev-genjwks-placeholder";
   text = ''
     # Tangled JWKS Generator Placeholder
     
@@ -21,7 +21,7 @@ pkgs.writeTextFile {
       schemaVersion = "1.0";
       
       tangled = {
-        component = "genjwks";
+        component = "tangled-dev-genjwks";
         description = "JWKS generator utility for Tangled";
         nixPath = "code-references/tangled-core";
       };

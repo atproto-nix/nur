@@ -1,6 +1,6 @@
 { lib
 , craneLib
-, fetchFromGitHub
+, fetchFromTangled
 , pkg-config
 , openssl
 , postgresql
@@ -10,13 +10,14 @@
 
 craneLib.buildPackage rec {
   pname = "allegedly";
-  version = "0.3.3";
+  version = "0.3.0";
 
-  src = fetchFromGitHub {
-    owner = "microcosm-cc";
-    repo = "allegedly";
+  src = fetchFromTangled {
+    domain = "tangled.org";
+    owner = "@microcosm.blue";
+    repo = "Allegedly";
     rev = "v${version}";
-    hash = lib.fakeHash; # Placeholder - needs real hash
+    hash = "sha256-0j68x62l6sx38k74s77hzswz97gjibvv71wbn4hx8sphs213wk5j";
   };
 
   # Standard Rust environment for ATProto services
@@ -71,7 +72,7 @@ craneLib.buildPackage rec {
       website = "https://tangled.org/@microcosm.blue/Allegedly";
       contact = null;
       maintainer = "microcosm.blue";
-      repository = "https://github.com/microcosm-cc/allegedly";
+      repository = "https://tangled.org/@microcosm.blue/Allegedly";
       packageCount = 1;
       atprotoFocus = [ "infrastructure" "identity" ];
     };

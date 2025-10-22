@@ -11,6 +11,7 @@ with lib;
     ./rsky/firehose.nix
     ./rsky/jetstream-subscriber.nix
     ./rsky/labeler.nix
+    # ./rsky/pdsadmin.nix  # Temporarily disabled - see package notes
     # Individual service modules will be imported here
   ];
 
@@ -19,11 +20,13 @@ with lib;
   };
 
   config = mkIf config.blacksky.enable {
-    blacksky.pds.enable = false;
-    blacksky.feedgen.enable = false;
-    blacksky.satnav.enable = false;
-    blacksky.firehose.enable = false;
-    blacksky.jetstream-subscriber.enable = false;
-    blacksky.labeler.enable = false;
+    services.blacksky.pds.enable = mkDefault false;
+    services.blacksky.relay.enable = mkDefault false;
+    services.blacksky.feedgen.enable = mkDefault false;
+    services.blacksky.satnav.enable = mkDefault false;
+    services.blacksky.firehose.enable = mkDefault false;
+    services.blacksky.jetstream-subscriber.enable = mkDefault false;
+    services.blacksky.labeler.enable = mkDefault false;
+    # services.blacksky.pdsadmin.enable = mkDefault false;  # Temporarily disabled
   };
 }

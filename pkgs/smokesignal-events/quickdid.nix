@@ -10,7 +10,7 @@ atprotoLib.mkRustAtprotoService {
   version = "1.0.0-rc.5";
   
   src = fetchgit {
-    url = "https://tangled.org/@smokesignal.events/quickdid";
+    url = "https://tangled.sh/@smokesignal.events/quickdid";
     rev = "eaebd066cf27ad6671a21652c5d7c66e8a2885be";
     sha256 = "1gmqqakc6ljndw3lgv8c6ggwy1ag577hlja1gqq5f77j862yxs7v";
   };
@@ -36,7 +36,7 @@ atprotoLib.mkRustAtprotoService {
       website = null;
       contact = null;
       maintainer = "Smokesignal Events";
-      repository = "https://tangled.org/@smokesignal.events/quickdid";
+      repository = "https://tangled.sh/@smokesignal.events/quickdid";
       packageCount = 1;
       atprotoFocus = [ "infrastructure" "identity" ];
     };
@@ -50,7 +50,7 @@ atprotoLib.mkRustAtprotoService {
       
       Maintained by Smokesignal Events
     '';
-    homepage = "https://tangled.org/@smokesignal.events/quickdid";
+    homepage = "https://tangled.sh/@smokesignal.events/quickdid";
     license = licenses.mit;
     platforms = platforms.unix;
     maintainers = [ ];

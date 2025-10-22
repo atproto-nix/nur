@@ -10,7 +10,7 @@ import <nixpkgs/nixos/tests/make-test-python.nix> ({ pkgs, ... }: {
       ];
       
       # Enable PDS dashboard
-      services.bluesky.pds-dash = {
+      services.witchcraft-systems-pds-dash = {
         enable = true;
         settings = {
           pdsUrl = "http://localhost:3000";

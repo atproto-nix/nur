@@ -16,12 +16,12 @@ let
 in
 {
   # ATProto packaging utilities library
-  lib = pkgs.callPackage ./lib/atproto.nix { inherit craneLib; };
+  lib = pkgs.callPackage ./lib/atproto.nix { inherit craneLib; fetchFromTangled = pkgs.fetchFromTangled; };
   
   # Legacy package collections (for backward compatibility)
   microcosm = allPackages.organizations.microcosm or {};
   blacksky = allPackages.organizations.blacksky or {};
-  bluesky = allPackages.organizations.bluesky or {};
+  bluesky-legacy = allPackages.organizations.bluesky-legacy or {};
   atproto = allPackages.organizations.atproto or {};
   
   # New organizational collections

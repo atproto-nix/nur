@@ -1,4 +1,4 @@
-{ pkgs, lib, buildNpmPackage, ... }:
+{ pkgs, lib, buildNpmPackage, fetchFromTangled, ... }:
 
 # Red Dwarf Client ATProto packages
 # Organization: red-dwarf-client
@@ -19,7 +19,7 @@ let
 
   # Package naming pattern: use simple names within organization
   packages = {
-    red-dwarf = pkgs.callPackage ./red-dwarf.nix { inherit buildNpmPackage; };
+    red-dwarf = pkgs.callPackage ./red-dwarf.nix { inherit buildNpmPackage fetchFromTangled; };
   };
 
   # Enhanced packages with organizational metadata

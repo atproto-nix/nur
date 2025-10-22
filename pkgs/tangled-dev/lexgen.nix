@@ -1,7 +1,7 @@
 { pkgs, ... }:
 
 pkgs.writeTextFile {
-  name = "tangled-lexgen-placeholder";
+  name = "tangled-dev-lexgen-placeholder";
   text = ''
     # Tangled Lexicon Generator Placeholder
     
@@ -21,7 +21,7 @@ pkgs.writeTextFile {
       schemaVersion = "1.0";
       
       tangled = {
-        component = "lexgen";
+        component = "tangled-dev-lexgen";
         description = "Lexicon generator for ATProto schemas in Tangled";
         nixPath = "code-references/tangled-core";
       };

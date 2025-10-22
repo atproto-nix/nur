@@ -12,7 +12,6 @@ in
   imports = [
     ./frontpage.nix
     ./drainpipe.nix
-    ./indigo.nix
     # Future official service modules:
   ];
   

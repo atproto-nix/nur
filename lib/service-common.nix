@@ -447,17 +447,27 @@ rec {
     then toInt (last parts)
     else throw "Invalid bind address format: ${bindAddr}";
 
-  # Service coordination helpers
+  # Service coordination helpers (enhanced with new discovery system)
   mkServiceCoordination = { services ? [], discoveryBackend ? "consul", ... }@args:
+    let
+      serviceDiscovery = import ./service-discovery.nix { inherit lib; pkgs = {}; };
+      dependencyManagement = import ./dependency-management.nix { inherit lib; pkgs = {}; };
+    in
     {
       # Service discovery configuration
-      discovery = {
+      discovery = serviceDiscovery.mkServiceDiscovery {
         backend = discoveryBackend;
         services = lib.mapAttrs (name: config: {
           port = config.port;
           healthCheck = config.healthCheck or "/health";
           tags = config.tags or [];
         }) (args.serviceConfigs or {});
+      };
+      
+      # Dependency management
+      dependencies = dependencyManagement.mkDependencyManagement {
+        services = args.serviceConfigs or {};
+        startupStrategy = args.startupStrategy or "sequential";
       };
       
       # Load balancing configuration

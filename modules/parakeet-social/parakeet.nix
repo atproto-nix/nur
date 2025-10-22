@@ -4,10 +4,10 @@
 with lib;
 
 let
-  cfg = config.services.atproto-parakeet;
+  cfg = config.services.parakeet-social-parakeet;
 in
 {
-  options.services.atproto-parakeet = {
+  options.services.parakeet-social-parakeet = {
     enable = mkEnableOption "Parakeet ATProto AppView";
 
     package = mkOption {
@@ -263,19 +263,19 @@ in
     assertions = [
       {
         assertion = cfg.settings.database.url != "";
-        message = "services.atproto-parakeet: database URL must be specified";
+        message = "services.parakeet-social-parakeet: database URL must be specified";
       }
       {
         assertion = cfg.settings.redis.url != "";
-        message = "services.atproto-parakeet: Redis URL must be specified";
+        message = "services.parakeet-social-parakeet: Redis URL must be specified";
       }
       {
         assertion = cfg.settings.appview.did != "";
-        message = "services.atproto-parakeet: AppView DID must be specified";
+        message = "services.parakeet-social-parakeet: AppView DID must be specified";
       }
       {
         assertion = cfg.settings.consumer.enable -> (cfg.settings.consumer.indexer.relaySource != null);
-        message = "services.atproto-parakeet: relay source must be specified when consumer is enabled";
+        message = "services.parakeet-social-parakeet: relay source must be specified when consumer is enabled";
       }
     ];
 
@@ -300,7 +300,7 @@ in
     ];
 
     # Parakeet AppView service
-    systemd.services.atproto-parakeet = {
+    systemd.services.parakeet-social-parakeet = {
       description = "Parakeet ATProto AppView";
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" "postgresql.service" "redis.service" ] 
@@ -365,7 +365,7 @@ in
     };
 
     # Optional Parakeet consumer service
-    systemd.services.atproto-parakeet-consumer = mkIf cfg.settings.consumer.enable {
+    systemd.services.parakeet-social-parakeet-consumer = mkIf cfg.settings.consumer.enable {
       description = "Parakeet consumer service";
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" "postgresql.service" "redis.service" ]
@@ -439,7 +439,7 @@ in
     };
 
     # Optional Parakeet index service
-    systemd.services.atproto-parakeet-index = mkIf cfg.settings.index.enable {
+    systemd.services.parakeet-social-parakeet-index = mkIf cfg.settings.index.enable {
       description = "Parakeet index service";
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" "postgresql.service" ];

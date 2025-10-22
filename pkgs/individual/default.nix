@@ -23,8 +23,9 @@ in
   inherit _organizationMeta;
   
   # Individual developer packages
-  # pds-gatekeeper = pkgs.callPackage ./pds-gatekeeper.nix { inherit craneLib; };
+  pds-gatekeeper = pkgs.callPackage ./pds-gatekeeper.nix { 
+    inherit craneLib; 
+  };
   
   # Additional individual packages will be added here
-  # quickdid = pkgs.callPackage ./quickdid.nix { inherit atprotoCore packaging; };
 }

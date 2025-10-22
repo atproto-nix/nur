@@ -131,7 +131,7 @@ in {
     ];
     
     # systemd service
-    systemd.services.bluesky-frontpage = {
+    systemd.services.bluesky-social-frontpage = {
       description = "Bluesky Frontpage web application";
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" ];

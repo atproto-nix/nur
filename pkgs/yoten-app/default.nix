@@ -1,4 +1,4 @@
-{ pkgs, lib, ... }:
+{ pkgs, lib, buildGoModule, fetchFromTangled, ... }:
 
 # Yoten App ATProto packages
 # Organization: yoten-app
@@ -19,7 +19,7 @@ let
 
   # Package naming pattern: use simple names within organization
   packages = {
-    yoten = pkgs.callPackage ./yoten.nix { };
+    yoten = pkgs.callPackage ./yoten.nix { inherit buildGoModule fetchFromTangled; };
   };
 
   # Enhanced packages with organizational metadata

@@ -3,7 +3,7 @@
 with lib;
 
 let
-  cfg = config.services.bluesky.pds-dash;
+  cfg = config.services.witchcraft-systems-pds-dash;
   
   # Generate config.ts from NixOS configuration
   configFile = pkgs.writeText "config.ts" ''
@@ -68,7 +68,7 @@ let
   '';
 in
 {
-  options.services.bluesky.pds-dash = {
+  options.services.witchcraft-systems-pds-dash = {
     enable = mkEnableOption "PDS Dashboard web interface";
 
     package = mkOption {
@@ -165,15 +165,15 @@ in
     assertions = [
       {
         assertion = cfg.settings.pdsUrl != "";
-        message = "services.bluesky.pds-dash.settings.pdsUrl must be set";
+        message = "services.witchcraft-systems-pds-dash.settings.pdsUrl must be set";
       }
       {
         assertion = cfg.settings.port > 0 && cfg.settings.port < 65536;
-        message = "services.bluesky.pds-dash.settings.port must be a valid port number (1-65535)";
+        message = "services.witchcraft-systems-pds-dash.settings.port must be a valid port number (1-65535)";
       }
       {
         assertion = cfg.settings.maxPosts > 0;
-        message = "services.bluesky.pds-dash.settings.maxPosts must be positive";
+        message = "services.witchcraft-systems-pds-dash.settings.maxPosts must be positive";
       }
     ];
 

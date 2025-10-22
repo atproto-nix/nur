@@ -4,10 +4,10 @@
 with lib;
 
 let
-  cfg = config.services.atproto-yoten;
+  cfg = config.services.yoten-app-yoten;
 in
 {
-  options.services.atproto-yoten = {
+  options.services.yoten-app-yoten = {
     enable = mkEnableOption "Yoten language learning social platform";
 
     package = mkOption {
@@ -240,19 +240,19 @@ in
     assertions = [
       {
         assertion = cfg.settings.server.publicUrl != "";
-        message = "services.atproto-yoten: public URL must be specified";
+        message = "services.yoten-app-yoten: public URL must be specified";
       }
       {
         assertion = cfg.settings.atproto.handle != "";
-        message = "services.atproto-yoten: AT Protocol handle must be specified";
+        message = "services.yoten-app-yoten: AT Protocol handle must be specified";
       }
       {
         assertion = cfg.settings.oauth.clientId != "";
-        message = "services.atproto-yoten: OAuth client ID must be specified";
+        message = "services.yoten-app-yoten: OAuth client ID must be specified";
       }
       {
         assertion = cfg.settings.database.type == "postgres" -> (hasInfix "postgresql://" cfg.settings.database.url);
-        message = "services.atproto-yoten: PostgreSQL URL must start with 'postgresql://' when using postgres database type";
+        message = "services.yoten-app-yoten: PostgreSQL URL must start with 'postgresql://' when using postgres database type";
       }
     ];
 
@@ -273,7 +273,7 @@ in
     ];
 
     # Yoten web application service
-    systemd.services.atproto-yoten = {
+    systemd.services.yoten-app-yoten = {
       description = "Yoten language learning social platform";
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" ] 

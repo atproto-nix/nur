@@ -199,7 +199,7 @@ with lib;
   
   config = mkIf config.profiles.pds-enterprise.enable {
     # PDS Dashboard configuration
-    services.bluesky.pds-dash = mkIf config.profiles.pds-enterprise.dashboard.enable {
+    services.witchcraft-systems-pds-dash = mkIf config.profiles.pds-enterprise.dashboard.enable {
       enable = true;
       settings = {
         pdsUrl = "https://${config.profiles.pds-enterprise.hostname}";

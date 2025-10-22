@@ -15,7 +15,7 @@ pkgs.nixosTest {
     # We don't enable the services since they require external dependencies
     # but we verify the module structure is correct
     
-    services.atproto-streamplace = {
+    services.stream-place-streamplace = {
       enable = false;  # Don't actually start, just test module structure
       settings = {
         server = {
@@ -43,7 +43,7 @@ pkgs.nixosTest {
       };
     };
 
-    services.atproto-yoten = {
+    services.yoten-app-yoten = {
       enable = false;  # Don't actually start, just test module structure
       settings = {
         server = {
@@ -71,7 +71,7 @@ pkgs.nixosTest {
       };
     };
 
-    services.atproto-red-dwarf = {
+    services.red-dwarf-client-red-dwarf = {
       enable = false;  # Don't actually start, just test module structure
       settings = {
         server = {

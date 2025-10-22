@@ -12,7 +12,7 @@ in
 
     package = mkOption {
       type = types.package;
-      default = pkgs.bluesky-social-grain-darkroom or pkgs.grain-darkroom;
+      default = pkgs.bluesky-social-grain-darkroom;
       description = "The Grain Darkroom package to use.";
     };
 

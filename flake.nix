@@ -21,6 +21,10 @@
       let
         overlays = [
           (import rust-overlay)
+          # Add fetchFromTangled to pkgs
+          (final: prev: {
+            fetchFromTangled = final.callPackage ./lib/fetch-tangled.nix { };
+          })
         ];
         pkgs = import nixpkgs {
           inherit system overlays;
@@ -118,7 +122,7 @@
           # Legacy module collections (for backward compatibility)
           microcosm = import ./modules/microcosm;
           blacksky = import ./modules/blacksky;
-          bluesky = import ./modules/bluesky;
+          bluesky-legacy = import ./modules/bluesky-legacy;
           atproto = import ./modules/atproto;
           
           # New organizational module collections
@@ -145,7 +149,7 @@
           # Legacy module collections (for backward compatibility)
           microcosm = import ./modules/microcosm;
           blacksky = import ./modules/blacksky;
-          bluesky = import ./modules/bluesky;
+          bluesky-legacy = import ./modules/bluesky-legacy;
           atproto = import ./modules/atproto;
           
           # New organizational module collections

@@ -1,20 +1,37 @@
-{ lib, pkgs, craneLib, ... }:
+{
+  lib,
+  pkgs,
+  craneLib,
+  fetchFromTangled ? pkgs.fetchFromTangled,
+  ...
+}:
 
 let
   # Import organizational framework
   organizationalFramework = import ./organizational-framework.nix { inherit lib; };
   # ATProto package metadata schema validation
-  validateAtprotoMetadata = metadata: 
+  validateAtprotoMetadata =
+    metadata:
     let
-      requiredFields = [ "type" "services" "protocols" ];
-      validTypes = [ "application" "library" "tool" ];
+      requiredFields = [
+        "type"
+        "services"
+        "protocols"
+      ];
+      validTypes = [
+        "application"
+        "library"
+        "tool"
+      ];
       hasRequiredFields = builtins.all (field: builtins.hasAttr field metadata) requiredFields;
       validType = builtins.elem metadata.type validTypes;
       validServices = builtins.isList metadata.services;
       validProtocols = builtins.isList metadata.protocols;
     in
     if !hasRequiredFields then
-      throw "ATProto metadata missing required fields: ${builtins.toString (builtins.filter (field: !builtins.hasAttr field metadata) requiredFields)}"
+      throw "ATProto metadata missing required fields: ${
+        builtins.toString (builtins.filter (field: !builtins.hasAttr field metadata) requiredFields)
+      }"
     else if !validType then
       throw "ATProto metadata type must be one of: ${builtins.toString validTypes}, got: ${metadata.type}"
     else if !validServices then
@@ -30,11 +47,14 @@ let
     OPENSSL_NO_VENDOR = "1";
     OPENSSL_LIB_DIR = "${lib.getLib pkgs.openssl}/lib";
     OPENSSL_INCLUDE_DIR = "${lib.getDev pkgs.openssl}/include";
-    BINDGEN_EXTRA_CLANG_ARGS = lib.concatStringsSep " " ([
-      "-I${pkgs.llvmPackages.libclang.lib}/lib/clang/${lib.versions.major pkgs.llvmPackages.libclang.version}/include"
-    ] ++ lib.optionals pkgs.stdenv.isLinux [
-      "-I${pkgs.glibc.dev}/include"
-    ]);
+    BINDGEN_EXTRA_CLANG_ARGS = lib.concatStringsSep " " (
+      [
+        "-I${pkgs.llvmPackages.libclang.lib}/lib/clang/${lib.versions.major pkgs.llvmPackages.libclang.version}/include"
+      ]
+      ++ lib.optionals pkgs.stdenv.isLinux [
+        "-I${pkgs.glibc.dev}/include"
+      ]
+    );
     ZSTD_SYS_USE_PKG_CONFIG = "1";
     CC = "${pkgs.llvmPackages.clang}/bin/clang";
     CXX = "${pkgs.llvmPackages.clang}/bin/clang++";
@@ -60,7 +80,13 @@ let
 in
 {
   # Helper for creating ATProto package metadata
-  mkAtprotoPackage = { type, services ? [], protocols ? ["com.atproto"], ... }@args:
+  mkAtprotoPackage =
+    {
+      type,
+      services ? [ ],
+      protocols ? [ "com.atproto" ],
+      ...
+    }@args:
     let
       atprotoMetadata = {
         inherit type services protocols;
@@ -68,111 +94,178 @@ in
       };
       validated = validateAtprotoMetadata atprotoMetadata;
     in
-    args // {
-      passthru = (args.passthru or {}) // {
+    args
+    // {
+      passthru = (args.passthru or { }) // {
         atproto = atprotoMetadata;
       };
-      
-      meta = (args.meta or {}) // {
+
+      meta = (args.meta or { }) // {
         # Add ATProto-specific metadata to package meta
         atproto = atprotoMetadata;
       };
     };
 
   # Helper for Rust ATProto services with standard environment
-  mkRustAtprotoService = args@{ pname, version, src, type ? "application", services ? [], protocols ? ["com.atproto"], ... }:
+  mkRustAtprotoService =
+    args@{
+      pname,
+      version,
+      src,
+      type ? "application",
+      services ? [ ],
+      protocols ? [ "com.atproto" ],
+      ...
+    }:
     let
       # Extract ATProto-specific arguments
       atprotoArgs = { inherit type services protocols; };
-      
+
       # Remove ATProto-specific arguments from crane arguments
-      craneArgs = builtins.removeAttrs args [ "type" "services" "protocols" ];
-      
+      craneArgs = builtins.removeAttrs args [
+        "type"
+        "services"
+        "protocols"
+      ];
+
       # Standard Rust environment and dependencies
       standardArgs = {
-        env = defaultRustEnv // (args.env or {});
-        nativeBuildInputs = defaultRustNativeInputs ++ (args.nativeBuildInputs or []);
-        buildInputs = defaultRustBuildInputs ++ (args.buildInputs or []);
+        env = defaultRustEnv // (args.env or { });
+        nativeBuildInputs = defaultRustNativeInputs ++ (args.nativeBuildInputs or [ ]);
+        buildInputs = defaultRustBuildInputs ++ (args.buildInputs or [ ]);
         tarFlags = "--no-same-owner";
       };
-      
+
       # Merge all arguments
       finalArgs = standardArgs // craneArgs;
-      
+
       # Build the package first, then add ATProto metadata
       package = craneLib.buildPackage finalArgs;
     in
-    package // {
-      passthru = (package.passthru or {}) // {
-        atproto = atprotoArgs // { schemaVersion = "1.0"; };
+    package
+    // {
+      passthru = (package.passthru or { }) // {
+        atproto = atprotoArgs // {
+          schemaVersion = "1.0";
+        };
       };
-      meta = (package.meta or {}) // {
-        atproto = atprotoArgs // { schemaVersion = "1.0"; };
+      meta = (package.meta or { }) // {
+        atproto = atprotoArgs // {
+          schemaVersion = "1.0";
+        };
       };
     };
 
   # Helper for Node.js ATProto applications
-  mkNodeAtprotoApp = { buildNpmPackage, pname, version, src, type ? "application", services ? [], protocols ? ["com.atproto"], ... }@args:
+  mkNodeAtprotoApp =
+    {
+      buildNpmPackage,
+      pname,
+      version,
+      src,
+      type ? "application",
+      services ? [ ],
+      protocols ? [ "com.atproto" ],
+      ...
+    }@args:
     let
       # Extract ATProto-specific arguments
       atprotoArgs = { inherit type services protocols; };
-      
+
       # Remove ATProto-specific arguments from buildNpmPackage arguments
-      npmArgs = builtins.removeAttrs args [ "type" "services" "protocols" "buildNpmPackage" ];
-      
+      npmArgs = builtins.removeAttrs args [
+        "type"
+        "services"
+        "protocols"
+        "buildNpmPackage"
+      ];
+
       # Standard Node.js build configuration
       standardArgs = {
         inherit pname version src;
         # Add any standard Node.js environment or build configuration here
       };
-      
+
       # Merge all arguments
       finalArgs = standardArgs // npmArgs;
-      
+
       # Build the package first, then add ATProto metadata
       package = buildNpmPackage finalArgs;
     in
-    package // {
-      passthru = (package.passthru or {}) // {
-        atproto = atprotoArgs // { schemaVersion = "1.0"; };
+    package
+    // {
+      passthru = (package.passthru or { }) // {
+        atproto = atprotoArgs // {
+          schemaVersion = "1.0";
+        };
       };
-      meta = (package.meta or {}) // {
-        atproto = atprotoArgs // { schemaVersion = "1.0"; };
+      meta = (package.meta or { }) // {
+        atproto = atprotoArgs // {
+          schemaVersion = "1.0";
+        };
       };
     };
 
   # Helper for Go ATProto applications
-  mkGoAtprotoApp = { buildGoModule, pname, version, src, type ? "application", services ? [], protocols ? ["com.atproto"], ... }@args:
+  mkGoAtprotoApp =
+    {
+      buildGoModule,
+      pname,
+      version,
+      src,
+      type ? "application",
+      services ? [ ],
+      protocols ? [ "com.atproto" ],
+      ...
+    }@args:
     let
       # Extract ATProto-specific arguments
       atprotoArgs = { inherit type services protocols; };
-      
+
       # Remove ATProto-specific arguments from buildGoModule arguments
-      goArgs = builtins.removeAttrs args [ "type" "services" "protocols" "buildGoModule" ];
-      
+      goArgs = builtins.removeAttrs args [
+        "type"
+        "services"
+        "protocols"
+        "buildGoModule"
+      ];
+
       # Standard Go build configuration
       standardArgs = {
         inherit pname version src;
         # Add any standard Go environment or build configuration here
       };
-      
+
       # Merge all arguments
       finalArgs = standardArgs // goArgs;
-      
+
       # Build the package first, then add ATProto metadata
       package = buildGoModule finalArgs;
     in
-    package // {
-      passthru = (package.passthru or {}) // {
-        atproto = atprotoArgs // { schemaVersion = "1.0"; };
+    package
+    // {
+      passthru = (package.passthru or { }) // {
+        atproto = atprotoArgs // {
+          schemaVersion = "1.0";
+        };
       };
-      meta = (package.meta or {}) // {
-        atproto = atprotoArgs // { schemaVersion = "1.0"; };
+      meta = (package.meta or { }) // {
+        atproto = atprotoArgs // {
+          schemaVersion = "1.0";
+        };
       };
     };
 
   # Helper for building Rust workspace packages with shared dependencies
-  mkRustWorkspace = { src, members, commonEnv ? {}, commonNativeInputs ? [], commonBuildInputs ? [], ... }@args:
+  mkRustWorkspace =
+    {
+      src,
+      members,
+      commonEnv ? { },
+      commonNativeInputs ? [ ],
+      commonBuildInputs ? [ ],
+      ...
+    }@args:
     let
       # Build shared dependencies once
       cargoArtifacts = craneLib.buildDepsOnly {
@@ -184,14 +277,13 @@ in
         buildInputs = defaultRustBuildInputs ++ commonBuildInputs;
         tarFlags = "--no-same-owner";
       };
-      
+
       # Function to build individual packages
-      buildMember = member:
+      buildMember =
+        member:
         let
-          packageName = if lib.hasSuffix "/fuzz" member then 
-            lib.replaceStrings ["/"] ["-"] member 
-          else 
-            member;
+          packageName =
+            if lib.hasSuffix "/fuzz" member then lib.replaceStrings [ "/" ] [ "-" ] member else member;
         in
         craneLib.buildPackage {
           inherit src cargoArtifacts;
@@ -207,45 +299,62 @@ in
     lib.genAttrs members buildMember;
 
   # Dependency resolution utilities
-  resolveDependencies = atprotoPackages: packageName:
+  resolveDependencies =
+    atprotoPackages: packageName:
     let
       package = atprotoPackages.${packageName} or (throw "Package ${packageName} not found");
-      atprotoDeps = package.passthru.atproto.atprotoDependencies or {};
-      
+      atprotoDeps = package.passthru.atproto.atprotoDependencies or { };
+
       # Recursively resolve dependencies
-      resolveDep = depName: depVersion:
+      resolveDep =
+        depName: depVersion:
         let
           depPackage = atprotoPackages.${depName} or (throw "Dependency ${depName} not found");
-          depAtprotoDeps = depPackage.passthru.atproto.atprotoDependencies or {};
+          depAtprotoDeps = depPackage.passthru.atproto.atprotoDependencies or { };
         in
         [ depPackage ] ++ (lib.flatten (lib.mapAttrsToList resolveDep depAtprotoDeps));
     in
     lib.unique (lib.flatten (lib.mapAttrsToList resolveDep atprotoDeps));
 
   # Validation utilities
-  validatePackageMetadata = package:
+  validatePackageMetadata =
+    package:
     let
       atproto = package.passthru.atproto or (throw "Package missing ATProto metadata");
     in
     validateAtprotoMetadata atproto;
 
   # Service configuration helpers
-  mkServiceConfig = { serviceName, package, user ? serviceName, group ? serviceName, dataDir ? "/var/lib/${serviceName}", ... }@args:
+  mkServiceConfig =
     {
-      inherit serviceName package user group dataDir;
-      
+      serviceName,
+      package,
+      user ? serviceName,
+      group ? serviceName,
+      dataDir ? "/var/lib/${serviceName}",
+      ...
+    }@args:
+    {
+      inherit
+        serviceName
+        package
+        user
+        group
+        dataDir
+        ;
+
       # Standard systemd service configuration
       systemdConfig = {
         description = "ATProto ${serviceName} service";
         wantedBy = [ "multi-user.target" ];
         after = [ "network.target" ];
-        
+
         serviceConfig = {
           Type = "exec";
           User = user;
           Group = group;
           WorkingDirectory = dataDir;
-          
+
           # Security hardening
           NoNewPrivileges = true;
           ProtectSystem = "strict";
@@ -259,13 +368,14 @@ in
           RestrictNamespaces = true;
           LockPersonality = true;
           MemoryDenyWriteExecute = true;
-          
+
           # File system access
           ReadWritePaths = [ dataDir ];
           ReadOnlyPaths = [ "/nix/store" ];
-        } // (args.serviceConfig or {});
+        }
+        // (args.serviceConfig or { });
       };
-      
+
       # User and group configuration
       userConfig = {
         ${user} = {
@@ -274,11 +384,11 @@ in
           home = dataDir;
         };
       };
-      
+
       groupConfig = {
-        ${group} = {};
+        ${group} = { };
       };
-      
+
       # Directory management
       tmpfilesRules = [
         "d '${dataDir}' 0750 ${user} ${group} - -"
@@ -286,16 +396,26 @@ in
     };
 
   # Cross-language compatibility utilities
-  mkCrossLanguageBindings = { lexiconSrc, languages ? [ "typescript" "rust" "go" ], outputDir ? "generated" }:
+  mkCrossLanguageBindings =
+    {
+      lexiconSrc,
+      languages ? [
+        "typescript"
+        "rust"
+        "go"
+      ],
+      outputDir ? "generated",
+    }:
     let
-      generateForLanguage = lang:
+      generateForLanguage =
+        lang:
         pkgs.stdenv.mkDerivation {
           name = "atproto-bindings-${lang}";
           src = lexiconSrc;
-          
+
           buildPhase = ''
             mkdir -p $out/${outputDir}/${lang}
-            
+
             # This would use the appropriate code generation tools
             case "${lang}" in
               typescript)
@@ -309,15 +429,16 @@ in
                 ;;
             esac
           '';
-          
+
           installPhase = "true"; # Output is already in $out
         };
     in
     lib.genAttrs languages generateForLanguage;
 
   # Lexicon validation and processing utilities
-  validateLexicon = lexiconFile:
-    pkgs.runCommand "validate-lexicon" {} ''
+  validateLexicon =
+    lexiconFile:
+    pkgs.runCommand "validate-lexicon" { } ''
       # Basic lexicon validation
       if [ -f "${lexiconFile}" ]; then
         echo "Lexicon file exists: ${lexiconFile}"
@@ -329,10 +450,11 @@ in
     '';
 
   # Package compatibility matrix utilities
-  checkCompatibility = package1: package2:
+  checkCompatibility =
+    package1: package2:
     let
-      p1Protocols = package1.passthru.atproto.protocols or [];
-      p2Protocols = package2.passthru.atproto.protocols or [];
+      p1Protocols = package1.passthru.atproto.protocols or [ ];
+      p2Protocols = package2.passthru.atproto.protocols or [ ];
       commonProtocols = lib.intersectLists p1Protocols p2Protocols;
     in
     {
@@ -344,23 +466,26 @@ in
 
   # Export standard environments and inputs for reuse
   inherit defaultRustEnv defaultRustNativeInputs defaultRustBuildInputs;
-  
+
+  # Export fetchFromTangled utility
+  inherit fetchFromTangled;
+
   # Export organizational framework
   organizational = organizationalFramework;
-  
+
   # Enhanced package creation with organizational metadata
-  mkOrganizationalAtprotoPackage = packageName: packageDef:
-    organizationalFramework.createOrganizationalPackage packageName packageDef;
-  
+  mkOrganizationalAtprotoPackage =
+    packageName: packageDef: organizationalFramework.createOrganizationalPackage packageName packageDef;
+
   # Organizational validation utilities
-  validateOrganizationalPlacement = packageName: actualPath:
-    organizationalFramework.validatePackage packageName actualPath;
-  
+  validateOrganizationalPlacement =
+    packageName: actualPath: organizationalFramework.validatePackage packageName actualPath;
+
   # Get organizational metadata for package
-  getOrganizationalMetadata = packageName:
-    organizationalFramework.mapping.generateOrganizationalMetadata packageName;
-  
+  getOrganizationalMetadata =
+    packageName: organizationalFramework.mapping.generateOrganizationalMetadata packageName;
+
   # Check if package needs organizational migration
-  needsOrganizationalMigration = packageName:
-    organizationalFramework.utils.needsMigration packageName;
+  needsOrganizationalMigration =
+    packageName: organizationalFramework.utils.needsMigration packageName;
 }

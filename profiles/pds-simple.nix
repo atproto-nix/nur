@@ -37,7 +37,7 @@ with lib;
     # Note: This assumes a future services.bluesky.pds module will be implemented
     # For now, we configure the management tools that work with any PDS
     
-    services.bluesky.pds-dash = mkIf config.profiles.pds-simple.enableDashboard {
+    services.witchcraft-systems-pds-dash = mkIf config.profiles.pds-simple.enableDashboard {
       enable = true;
       settings = {
         pdsUrl = "https://${config.profiles.pds-simple.hostname}";

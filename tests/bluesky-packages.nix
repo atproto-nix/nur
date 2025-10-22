@@ -2,7 +2,7 @@ import <nixpkgs/nixos/tests/make-test-python.nix> ({ pkgs, ... }:
 
 let
   craneLib = (import (builtins.fetchTarball "https://github.com/ipetkov/crane/archive/master.tar.gz")).mkLib pkgs;
-  blueskyPackages = pkgs.callPackage ../pkgs/bluesky { inherit craneLib; };
+  blueskyPackages = pkgs.callPackage ../pkgs/bluesky-legacy { inherit craneLib; };
 in
 
 {

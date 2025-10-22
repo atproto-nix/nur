@@ -1,0 +1,109 @@
+# fetchFromTangled utility for Tangled.org repository access
+# Based on the implementation from @isabelroses.com/fetch-tangled
+# This is a fork of fetchFromGitHub adapted for Tangled.org repositories
+
+{ lib, fetchgit, fetchzip }:
+
+let
+  # Helper function to generate repository names from rev/tag
+  repoRevToNameMaybe = repo: revOrTag: prefix:
+    if revOrTag != null then
+      "${repo}-${lib.strings.sanitizeDerivationName revOrTag}"
+    else
+      "${repo}-${prefix}";
+
+in
+lib.makeOverridable (
+  {
+    domain ? "tangled.sh",
+    owner,
+    repo,
+    rev ? null,
+    tag ? null,
+    name ? repoRevToNameMaybe repo (if rev != null then rev else tag) "tangled",
+
+    # fetchgit options
+    fetchSubmodules ? false,
+    leaveDotGit ? false,
+    deepClone ? false,
+    forceFetchGit ? false,
+    fetchLFS ? false,
+    sparseCheckout ? [ ],
+
+    meta ? { },
+    ...
+  }@args:
+
+  assert lib.assertMsg (lib.xor (tag != null) (rev != null)) 
+    "fetchFromTangled requires one of either `rev` or `tag` to be provided (not both).";
+
+  let
+    position = (
+      if args.meta.description or null != null then
+        builtins.unsafeGetAttrPos "description" args.meta
+      else if tag != null then
+        builtins.unsafeGetAttrPos "tag" args
+      else
+        builtins.unsafeGetAttrPos "rev" args
+    );
+
+    baseUrl = "https://${domain}/${owner}/${repo}";
+
+    newMeta = meta // {
+      homepage = meta.homepage or baseUrl;
+    } // lib.optionalAttrs (position != null) {
+      # Indicate where derivation originates, similar to mkDerivation
+      position = "${position.file}:${toString position.line}";
+    };
+
+    passthruAttrs = removeAttrs args [
+      "domain"
+      "owner"
+      "repo"
+      "tag"
+      "rev"
+      "fetchSubmodules"
+      "forceFetchGit"
+    ];
+
+    useFetchGit = 
+      fetchSubmodules || leaveDotGit || deepClone || forceFetchGit || fetchLFS || (sparseCheckout != [ ]);
+    
+    # We prefer fetchzip in cases we don't need submodules as the hash
+    # is more stable in that case.
+    fetcher = if useFetchGit then
+      fetchgit
+    # fetchzip may not be overridable when using external tools, for example nix-prefetch
+    else if fetchzip ? override then
+      fetchzip.override { withUnzip = false; }
+    else
+      fetchzip;
+
+    revWithTag = if tag != null then "refs%2Ftags%2F${tag}" else rev;
+
+    fetcherArgs = (
+      if useFetchGit then
+        {
+          inherit tag rev deepClone fetchSubmodules sparseCheckout fetchLFS leaveDotGit;
+          url = baseUrl;
+        }
+      else
+        {
+          url = "${baseUrl}/archive/${revWithTag}";
+          extension = "tar.gz";
+          
+          passthru = {
+            gitRepoUrl = baseUrl;
+          };
+        }
+    ) // passthruAttrs // {
+      inherit name;
+    };
+
+  in
+  fetcher fetcherArgs // {
+    meta = newMeta;
+    inherit owner repo tag;
+    rev = revWithTag;
+  }
+)

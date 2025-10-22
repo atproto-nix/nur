@@ -12,7 +12,7 @@ in
 
     package = mkOption {
       type = types.package;
-      default = pkgs.bluesky-social-grain-labeler or pkgs.grain-labeler;
+      default = pkgs.bluesky-social-grain-labeler;
       description = "The Grain Labeler package to use.";
     };
 

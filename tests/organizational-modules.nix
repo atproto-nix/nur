@@ -52,7 +52,7 @@ pkgs.nixosTest {
     };
 
     # Slices Network modules
-    services.atproto-slices = {
+    services.slices-network-slices = {
       enable = false;
       settings = {
         database.url = "postgresql://test:test@localhost:5432/test";
@@ -70,7 +70,7 @@ pkgs.nixosTest {
     };
 
     # Teal.fm modules
-    services.atproto-teal = {
+    services.teal-fm-teal = {
       enable = false;
       settings = {
         database.url = "postgresql://test:test@localhost:5432/test";
@@ -88,7 +88,7 @@ pkgs.nixosTest {
     };
 
     # Parakeet Social modules
-    services.atproto-parakeet = {
+    services.parakeet-social-parakeet = {
       enable = false;
       settings = {
         database.url = "postgresql://test:test@localhost:5432/test";
@@ -102,7 +102,7 @@ pkgs.nixosTest {
     };
 
     # Smokesignal Events modules
-    services.quickdid = {
+    services.smokesignal-events-quickdid = {
       enable = false;
       settings = {
         port = 8080;
@@ -151,7 +151,7 @@ pkgs.nixosTest {
     };
 
     # ATBackup modules
-    services.atbackup = {
+    services.atbackup-pages-dev-atbackup = {
       enable = false;
       settings = {
         port = 3000;
@@ -181,7 +181,7 @@ pkgs.nixosTest {
     };
 
     # Bluesky Social modules
-    services.bluesky-frontpage = {
+    services.bluesky-social-frontpage = {
       enable = false;
       settings = {
         port = 3000;

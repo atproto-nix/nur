@@ -23,9 +23,6 @@ in
   imports = [
     # ATProto module aliases - services moved from atproto/ to organizational directories
     
-    # Hyperlink Academy modules (moved from atproto/)
-    (mkRenamedOptionModule [ "services" "atproto-leaflet" ] [ "services" "hyperlink-academy-leaflet" ])
-    
     # Slices Network modules (moved from atproto/)  
     (mkRenamedOptionModule [ "services" "atproto-slices" ] [ "services" "slices-network-slices" ])
     
@@ -43,11 +40,6 @@ in
     
     # Red Dwarf Client modules (moved from atproto/)
     (mkRenamedOptionModule [ "services" "atproto-red-dwarf" ] [ "services" "red-dwarf-client-red-dwarf" ])
-    
-    # Tangled Development modules (moved from atproto/)
-    (mkRenamedOptionModule [ "services" "atproto-appview" ] [ "services" "tangled-dev-appview" ])
-    (mkRenamedOptionModule [ "services" "atproto-knot" ] [ "services" "tangled-dev-knot" ])
-    (mkRenamedOptionModule [ "services" "atproto-spindle" ] [ "services" "tangled-dev-spindle" ])
     
     # Smokesignal Events modules (moved from atproto/)
     # Note: quickdid currently uses services.quickdid, will be renamed to services.smokesignal-events-quickdid
@@ -83,17 +75,14 @@ in
     
     # Additional legacy aliases for services that may have used different naming patterns
     
-    # Legacy atproto service aliases (for services that might have been named differently)
-    (mkRenamedOptionModule [ "services" "leaflet" ] [ "services" "hyperlink-academy-leaflet" ])
+        # Legacy atproto service aliases (for services that might have been named differently)
     (mkRenamedOptionModule [ "services" "slices" ] [ "services" "slices-network-slices" ])
     (mkRenamedOptionModule [ "services" "teal" ] [ "services" "teal-fm-teal" ])
     (mkRenamedOptionModule [ "services" "parakeet" ] [ "services" "parakeet-social-parakeet" ])
     (mkRenamedOptionModule [ "services" "streamplace" ] [ "services" "stream-place-streamplace" ])
     (mkRenamedOptionModule [ "services" "yoten" ] [ "services" "yoten-app-yoten" ])
     (mkRenamedOptionModule [ "services" "red-dwarf" ] [ "services" "red-dwarf-client-red-dwarf" ])
-    (mkRenamedOptionModule [ "services" "appview" ] [ "services" "tangled-dev-appview" ])
-    (mkRenamedOptionModule [ "services" "knot" ] [ "services" "tangled-dev-knot" ])
-    (mkRenamedOptionModule [ "services" "spindle" ] [ "services" "tangled-dev-spindle" ])
+
     (mkRenamedOptionModule [ "services" "quickdid" ] [ "services" "smokesignal-events-quickdid" ])
     (mkRenamedOptionModule [ "services" "allegedly" ] [ "services" "microcosm-blue-allegedly" ])
     (mkRenamedOptionModule [ "services" "atbackup" ] [ "services" "atbackup-pages-dev-atbackup" ])
@@ -104,8 +93,6 @@ in
   # Deprecation warnings for users still using old service names
   warnings = lib.flatten [
     # ATProto module deprecation warnings
-    (lib.optional (config.services ? atproto-leaflet) 
-      (mkDeprecationWarning "services.atproto-leaflet" "services.hyperlink-academy-leaflet"))
     (lib.optional (config.services ? atproto-slices) 
       (mkDeprecationWarning "services.atproto-slices" "services.slices-network-slices"))
     (lib.optional (config.services ? atproto-teal) 
@@ -132,8 +119,6 @@ in
       (mkDeprecationWarning "services.atproto-atbackup" "services.atbackup-pages-dev-atbackup"))
     
     # Legacy service name deprecation warnings
-    (lib.optional (config.services ? leaflet) 
-      (mkDeprecationWarning "services.leaflet" "services.hyperlink-academy-leaflet"))
     (lib.optional (config.services ? slices) 
       (mkDeprecationWarning "services.slices" "services.slices-network-slices"))
     (lib.optional (config.services ? teal) 

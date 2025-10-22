@@ -75,7 +75,7 @@ pkgs.nixosTest {
     };
 
     # Test QuickDID module with custom configuration
-    services.quickdid = {
+    services.smokesignal-events-quickdid = {
       enable = false;
       package = pkgs.hello; # Use a dummy package for testing
       dataDir = "/custom/quickdid/data";

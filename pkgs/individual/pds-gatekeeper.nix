@@ -1,6 +1,6 @@
 { lib
 , craneLib
-, fetchFromGitHub
+, fetchgit
 , pkg-config
 , openssl
 , sqlite
@@ -12,11 +12,10 @@ craneLib.buildPackage rec {
   pname = "pds-gatekeeper";
   version = "0.1.2";
 
-  src = fetchFromGitHub {
-    owner = "fatfingers23";
-    repo = "pds_gatekeeper";
-    rev = "v${version}"; # TODO: Pin to specific commit hash
-    hash = lib.fakeHash; # Placeholder - needs real hash
+  src = fetchgit {
+    url = "https://tangled.org/@baileytownsend.dev/pds-gatekeeper";
+    rev = "3d3b821be3a57544b67024353c43ba7f391a6ec1";
+    hash = "sha256-JdhPDpEXzy6CovNGbIMQzzmRtuJoW5LvydpeDNFFpSs=";
   };
 
   # Standard Rust environment for ATProto services
@@ -87,8 +86,8 @@ craneLib.buildPackage rec {
       displayName = "Individual Developers";
       website = null;
       contact = null;
-      maintainer = "fatfingers23";
-      repository = "https://github.com/fatfingers23/pds_gatekeeper";
+      maintainer = "baileytownsend.dev";
+      repository = "https://tangled.org/@baileytownsend.dev/pds-gatekeeper";
       packageCount = 1;
       atprotoFocus = [ "infrastructure" "tools" ];
     };
@@ -102,11 +101,11 @@ craneLib.buildPackage rec {
       enhanced account creation controls. It works by intercepting specific PDS
       endpoints through a reverse proxy configuration.
       
-      Maintained by fatfingers23
+      Maintained by baileytownsend.dev
     '';
-    homepage = "https://github.com/fatfingers23/pds_gatekeeper";
+    homepage = "https://tangled.org/@baileytownsend.dev/pds-gatekeeper";
     license = licenses.mit;
-    platforms = platforms.linux;
+    platforms = platforms.unix;
     maintainers = [ ];
     mainProgram = "pds_gatekeeper";
     

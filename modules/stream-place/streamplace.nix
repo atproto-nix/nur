@@ -4,10 +4,10 @@
 with lib;
 
 let
-  cfg = config.services.atproto-streamplace;
+  cfg = config.services.stream-place-streamplace;
 in
 {
-  options.services.atproto-streamplace = {
+  options.services.stream-place-streamplace = {
     enable = mkEnableOption "Streamplace video infrastructure platform";
 
     package = mkOption {
@@ -189,19 +189,19 @@ in
     assertions = [
       {
         assertion = cfg.settings.server.publicUrl != "";
-        message = "services.atproto-streamplace: public URL must be specified";
+        message = "services.stream-place-streamplace: public URL must be specified";
       }
       {
         assertion = cfg.settings.database.url != "";
-        message = "services.atproto-streamplace: database URL must be specified";
+        message = "services.stream-place-streamplace: database URL must be specified";
       }
       {
         assertion = cfg.settings.atproto.handle != "";
-        message = "services.atproto-streamplace: AT Protocol handle must be specified";
+        message = "services.stream-place-streamplace: AT Protocol handle must be specified";
       }
       {
         assertion = cfg.settings.storage.type == "s3" -> (cfg.settings.storage.s3.bucket != "");
-        message = "services.atproto-streamplace: S3 bucket must be specified when using S3 storage";
+        message = "services.stream-place-streamplace: S3 bucket must be specified when using S3 storage";
       }
     ];
 
@@ -229,7 +229,7 @@ in
     ];
 
     # Streamplace server service
-    systemd.services.atproto-streamplace = {
+    systemd.services.stream-place-streamplace = {
       description = "Streamplace video infrastructure platform";
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" "postgresql.service" ];

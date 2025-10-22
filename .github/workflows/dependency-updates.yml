@@ -46,19 +46,34 @@ jobs:
       id: check
       run: |
         echo "=== Checking for dependency updates ==="
+        
+        # Use the new automated dependency update script
+        ./scripts/automated-dependency-updates.sh check
+        
+        # Also run the original update script for compatibility
         ./scripts/update-dependencies.sh
         
-        # Check if updates are available
+        # Check if updates are available from either script
+        updates_found=false
+        
         if [ -f update-log-*.txt ]; then
-          if grep -q "Updates available" update-log-*.txt; then
-            echo "updates-available=true" >> $GITHUB_OUTPUT
-            echo "📦 Updates are available"
-          else
-            echo "updates-available=false" >> $GITHUB_OUTPUT
-            echo "✅ All dependencies are up to date"
+          if grep -q "Updates available\|Update available" update-log-*.txt; then
+            updates_found=true
           fi
+        fi
+        
+        if [ -f automated-update-log-*.txt ]; then
+          if grep -q "Updates available\|Update available" automated-update-log-*.txt; then
+            updates_found=true
+          fi
+        fi
+        
+        if [ "$updates_found" = true ]; then
+          echo "updates-available=true" >> $GITHUB_OUTPUT
+          echo "📦 Updates are available"
         else
           echo "updates-available=false" >> $GITHUB_OUTPUT
+          echo "✅ All dependencies are up to date"
         fi
     
     - name: Upload dependency check results
@@ -245,16 +260,16 @@ jobs:
       run: |
         echo "=== Applying dependency updates ==="
         
-        # Update flake inputs
-        nix flake update
+        # Use the automated dependency update script for comprehensive updates
+        ./scripts/automated-dependency-updates.sh update
         
-        # Format code
-        if command -v nixpkgs-fmt &> /dev/null; then
-          nixpkgs-fmt .
-        fi
-        
-        # Validate changes
+        # Additional validation
+        echo "=== Additional validation ==="
         nix flake check --no-build
+        
+        # Run security scanning after updates
+        echo "=== Post-update security scanning ==="
+        ./scripts/automated-dependency-updates.sh security
     
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v6
