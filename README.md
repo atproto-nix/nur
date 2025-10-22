@@ -104,18 +104,21 @@ Community-maintained Rust implementations:
 
 ### Third-Party Applications
 
-- `hyperlink-academy-leaflet` - Collaborative writing platform
-- `parakeet-social-parakeet` - Full-featured AppView
+**Web Services** (with NixOS modules):
+- `hyperlink-academy-leaflet` - Collaborative writing platform (Next.js)
 - `teal-fm-teal` - Music social platform
 - `yoten-app-yoten` - Language learning platform
+- `red-dwarf-client-red-dwarf` - Constellation-based Bluesky client
+- `witchcraft-systems-pds-dash` - PDS monitoring dashboard (Deno)
+- `parakeet-social-parakeet` - Full-featured AppView (placeholder)
 - `slices-network-slices` - Custom AppView with SDK generation
 - `stream-place-streamplace` - Video infrastructure
-- `red-dwarf-client-red-dwarf` - Constellation-based client
-- `smokesignal-events-quickdid` - Fast identity resolution
-- `witchcraft-systems-pds-dash` - PDS monitoring dashboard
+- `smokesignal-events-quickdid` - Fast identity resolution service
 - `individual-pds-gatekeeper` - PDS security microservice
-- `atbackup-pages-dev-atbackup` - One-click Bluesky backups
-- `microcosm-blue-allegedly` - PLC tools
+- `microcosm-blue-allegedly` - PLC tools and services
+
+**Desktop App** (package only, no module):
+- `atbackup-pages-dev-atbackup` - One-click Bluesky backups (Tauri desktop app)
 
 ### Tangled Infrastructure
 
@@ -127,7 +130,9 @@ Community-maintained Rust implementations:
 
 ## NixOS Modules
 
-Each package has a corresponding NixOS module for declarative configuration:
+**Service packages** (servers/daemons/web apps) have corresponding NixOS modules for declarative server deployment.
+
+**Note**: Only `atbackup` (Tauri desktop app) is package-only with no NixOS module.
 
 ```nix
 {
@@ -151,12 +156,21 @@ Each package has a corresponding NixOS module for declarative configuration:
 }
 ```
 
-Modules are organized by organization:
-- `atproto-nur.nixosModules.microcosm`
-- `atproto-nur.nixosModules.blacksky`
-- `atproto-nur.nixosModules.bluesky-social`
-- `atproto-nur.nixosModules.tangled-dev`
-- ... and more
+Available module collections:
+- `atproto-nur.nixosModules.microcosm` - Microcosm services (constellation, slingshot, etc.)
+- `atproto-nur.nixosModules.blacksky` - Blacksky/rsky services (PDS, relay, etc.)
+- `atproto-nur.nixosModules.bluesky-social` - Official Bluesky services (indigo, grain)
+- `atproto-nur.nixosModules.tangled-dev` - Tangled infrastructure (appview, knot, spindle)
+- `atproto-nur.nixosModules.hyperlink-academy` - Leaflet collaborative writing
+- `atproto-nur.nixosModules.slices-network` - Slices AppView
+- `atproto-nur.nixosModules.teal-fm` - Teal music platform
+- `atproto-nur.nixosModules.parakeet-social` - Parakeet AppView
+- `atproto-nur.nixosModules.yoten-app` - Yoten language learning
+- `atproto-nur.nixosModules.stream-place` - Streamplace video platform
+- `atproto-nur.nixosModules.red-dwarf-client` - Red Dwarf client
+- `atproto-nur.nixosModules.witchcraft-systems` - PDS dashboard
+- `atproto-nur.nixosModules.smokesignal-events` - QuickDID service
+- `atproto-nur.nixosModules.individual` - PDS gatekeeper, drainpipe
 
 ## Development
 

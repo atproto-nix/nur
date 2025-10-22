@@ -3,7 +3,9 @@
     "allow": [
       "Bash(nix flake update)",
       "Bash(nix flake show)",
-      "Bash(git add -A)"
+      "Bash(git add -A)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nrefactor: Simplify NUR repository structure\n\nMajor simplification of the ATProto NUR to improve maintainability\nand reduce complexity while keeping all 48 packages functional.\n\nChanges:\n- Removed 533MB code-references/ submodules (no longer needed)\n- Deleted over-engineered documentation (kept README.md + new agents.md)\n- Removed 31 test files (kept tests/ directory for future use)\n- Deleted examples/, templates/, profiles/, scripts/ directories\n- Simplified lib/ directory (removed 4 organizational framework files)\n- Simplified flake.nix (removed backward compatibility layer)\n- Simplified default.nix (removed organizational metadata complexity)\n- Updated flake inputs to latest (nixpkgs, crane, rust-overlay)\n- Created PINNING_NEEDED.md documenting packages needing version pins\n- Updated README.md with clear, simple usage instructions\n- Updated agents.md with current repository state\n\nStats:\n- 101 files changed, 482 insertions(+), 24,662 deletions(-)\n- Repository size reduced by ~534MB\n- 48 packages still available and evaluating successfully\n- All NixOS modules intact and functional\n\nThe repository now follows a simpler structure focused on actual\nuse cases (server deployment + packaging) rather than over-engineering.\n\nOrganizational package structure is maintained for clarity.\n\nNext steps: Pin package versions (see PINNING_NEEDED.md)\n\n🤖 Generated with Claude Code\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git checkout 30c4bbd -- modules/hyperlink-academy modules/witchcraft-systems modules/teal-fm modules/red-dwarf-client modules/yoten-app)"
     ],
     "deny": [],
     "ask": []

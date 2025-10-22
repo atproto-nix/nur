@@ -52,12 +52,19 @@
         nixosModules = {
           default = import ./modules;
 
-          # Individual organization modules
+          # Core service modules
           microcosm = import ./modules/microcosm;
           blacksky = import ./modules/blacksky;
           bluesky-social = import ./modules/bluesky-social;
-          bluesky-legacy = import ./modules/bluesky-legacy;
           atproto = import ./modules/atproto;
+          individual = import ./modules/individual;
+          microcosm-blue = import ./modules/microcosm-blue;
+          smokesignal-events = import ./modules/smokesignal-events;
+
+          # Infrastructure services
+          tangled-dev = import ./modules/tangled-dev;
+
+          # Web applications / AppViews
           hyperlink-academy = import ./modules/hyperlink-academy;
           slices-network = import ./modules/slices-network;
           teal-fm = import ./modules/teal-fm;
@@ -65,12 +72,7 @@
           stream-place = import ./modules/stream-place;
           yoten-app = import ./modules/yoten-app;
           red-dwarf-client = import ./modules/red-dwarf-client;
-          tangled-dev = import ./modules/tangled-dev;
-          smokesignal-events = import ./modules/smokesignal-events;
-          microcosm-blue = import ./modules/microcosm-blue;
           witchcraft-systems = import ./modules/witchcraft-systems;
-          atbackup-pages-dev = import ./modules/atbackup-pages-dev;
-          individual = import ./modules/individual;
         };
 
         devShells.default = pkgs.mkShell {
