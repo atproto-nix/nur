@@ -10,8 +10,8 @@
   frontpage-services = import ./frontpage-services.nix { inherit pkgs; lib = pkgs.lib; };
   indigo-services = import ./indigo-services.nix { inherit pkgs; lib = pkgs.lib; };
   atproto-typescript-libs = import ./atproto-typescript-libs.nix { inherit pkgs; lib = pkgs.lib; };
-  tier2-modules = import ./tier2-modules.nix { inherit pkgs; };
-  tier3-modules = import ./tier3-modules.nix { inherit pkgs; };
+  third-party-apps-modules = import ./third-party-apps-modules.nix { inherit pkgs; };
+  specialized-apps-modules = import ./specialized-apps-modules.nix { inherit pkgs; };
   pds-ecosystem = import ./pds-ecosystem.nix { inherit pkgs; };
   
   # Core library package tests (Task 2.4)

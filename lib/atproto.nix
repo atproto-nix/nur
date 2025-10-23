@@ -58,7 +58,7 @@ let
     ZSTD_SYS_USE_PKG_CONFIG = "1";
     CC = "${pkgs.llvmPackages.clang}/bin/clang";
     CXX = "${pkgs.llvmPackages.clang}/bin/clang++";
-    PKG_CONFIG_PATH = "${pkgs.zstd.dev}/lib/pkgconfig:${pkgs.lz4.dev}/lib/pkgconfig";
+    PKG_CONFIG_PATH = "${pkgs.zstd.dev}/lib/pkgconfig:${pkgs.lz4.dev}/lib/pkgconfig:${pkgs.openssl.dev}/lib/pkgconfig";
   };
 
   # Standard native build inputs for Rust ATProto services

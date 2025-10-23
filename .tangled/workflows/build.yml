@@ -243,10 +243,10 @@ steps:
       run_test "frontpage-services" "Frontpage services"
       run_test "indigo-services" "Indigo services"
       
-      # Tier-based module tests
-      echo "=== Tier-based Module Tests ==="
-      run_test "tier2-modules" "Tier 2 modules"
-      run_test "tier3-modules" "Tier 3 modules"
+      # Application module tests
+      echo "=== Application Module Tests ==="
+      run_test "third-party-apps-modules" "Third-party apps modules"
+      run_test "specialized-apps-modules" "Specialized apps modules"
       
       # Organizational framework tests
       echo "=== Organizational Framework Tests ==="
@@ -651,7 +651,7 @@ steps:
       ### Organizational Testing  
       - ✅ Organizational framework validation: Structure verified
       - ✅ Module configuration testing: Configurations validated
-      - ✅ Tier-based module testing: All tiers tested
+      - ✅ Application module testing: Third-party and specialized apps tested
       
       ### Integration Testing
       - ✅ PDS ecosystem integration: Services coordinated

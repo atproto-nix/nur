@@ -1,9 +1,6 @@
-{ pkgs, craneLib, ... }:
+{ pkgs, craneLib }:
 
 let
-  # Import ATProto utilities
-  atprotoLib = pkgs.callPackage ../../lib/atproto.nix { inherit craneLib; };
-  
   src = pkgs.fetchFromGitHub {
     owner = "at-microcosm";
     repo = "microcosm-rs";
@@ -12,20 +9,50 @@ let
   };
 
   commonEnv = {
-    # Additional environment variables specific to microcosm
+    LIBCLANG_PATH = pkgs.lib.makeLibraryPath [ pkgs.llvmPackages.libclang.lib ];
+    OPENSSL_NO_VENDOR = "1";
+    OPENSSL_LIB_DIR = "${pkgs.lib.getLib pkgs.openssl}/lib";
+    OPENSSL_INCLUDE_DIR = "${pkgs.lib.getDev pkgs.openssl}/include";
+    BINDGEN_EXTRA_CLANG_ARGS = pkgs.lib.concatStringsSep " " [
+        "-I${pkgs.llvmPackages.libclang.lib}/lib/clang/${pkgs.lib.versions.major pkgs.llvmPackages.libclang.version}/include"
+        "-I${pkgs.glibc.dev}"
+    ];
+    ZSTD_SYS_USE_PKG_CONFIG = "1";
+    CC = "${pkgs.llvmPackages.clang}/bin/clang";
+    CXX = "${pkgs.llvmPackages.clang}/bin/clang++";
+    PKG_CONFIG_PATH = "${pkgs.zstd.dev}/lib/pkgconfig:${pkgs.lz4.dev}/lib/pkgconfig:${pkgs.openssl.dev}/lib/pkgconfig";
   };
+
+  nativeInputs = with pkgs;
+[
+    pkg-config
+    perl
+    llvmPackages.libclang
+  ];
+
+  buildInputs = with pkgs;
+[
+    zstd
+    lz4
+    rocksdb
+    openssl
+    sqlite
+    postgresql
+  ];
   cargoArtifacts = craneLib.buildDepsOnly {
     inherit src;
     pname = "microcosm-rs-deps";
     version = "0.1.0";
-    env = atprotoLib.defaultRustEnv // commonEnv;
-    nativeBuildInputs = atprotoLib.defaultRustNativeInputs;
-    buildInputs = atprotoLib.defaultRustBuildInputs;
+    nativeBuildInputs = nativeInputs;
+    buildInputs = buildInputs;
+    env = commonEnv;
     tarFlags = "--no-same-owner";
   };
 
   members = [
+    "links"
     "constellation"
+    "jetstream"
     "ufos"
     "ufos/fuzz"
     "spacedust"
@@ -39,17 +66,14 @@ let
     let
       packageName = if member == "ufos/fuzz" then "ufos-fuzz" else member;
     in
-    atprotoLib.mkRustAtprotoService {
+    craneLib.buildPackage {
+      inherit src cargoArtifacts;
       pname = packageName;
       version = "0.1.0";
-      inherit src cargoArtifacts;
       cargoExtraArgs = "--package ${packageName}";
-      description = "Microcosm ATProto service: ${packageName}";
-      longDescription = ''
-        ${packageName} is part of the Microcosm ATProto service collection.
-        Note: jetstream and links are library-only packages and not included as standalone services.
-      '';
-      services = [ packageName ];
+      nativeBuildInputs = nativeInputs;
+      buildInputs = buildInputs;
+      tarFlags = "--no-same-owner";
       env = commonEnv;
     };
 

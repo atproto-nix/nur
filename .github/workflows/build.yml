@@ -190,8 +190,8 @@ jobs:
         echo "Running service module tests..."
         nix build .#tests.constellation-shell
         nix build .#tests.microcosm-standardized
-        nix build .#tests.tier2-modules
-        nix build .#tests.tier3-modules
+        nix build .#tests.third-party-apps-modules
+        nix build .#tests.specialized-apps-modules
         
         # Organizational tests
         echo "Running organizational tests..."
