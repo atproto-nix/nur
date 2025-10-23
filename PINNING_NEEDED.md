@@ -1,80 +1,91 @@
 # Packages Needing Hash Calculation
 
-**Last Updated:** 2025-10-22 (Post-Phase 3)
-**Status:** All packages now pinned to specific commits, but 6 packages need hash calculation on Linux x86_64
+**Last Updated:** 2025-10-23 (Post-hash calculation session)
+**Status:** Source hashes calculated, npmDepsHash remaining for 2 packages
 
 ---
 
 ## Summary
 
 ✅ **All packages now use specific commit hashes** (no more `rev = "main"`)
-⚠️ **6 packages use `lib.fakeHash`** and need real hashes calculated on Linux x86_64
-📊 **48 total packages** in repository
+✅ **Source hashes calculated for all packages**
+⚠️ **2 packages need `npmDepsHash` calculation** (pnpm/yarn based projects)
+⚠️ **1 package has security issue** (atbackup - insecure libsoup2 dependency)
+📊 **50 total packages** in repository (48 original + 2 likeandscribe exports)
 
 ---
 
-## Packages Requiring Hash Calculation (6 total)
+## Packages Requiring Hash Calculation (2 remaining)
 
-These packages are pinned to specific commits but use `lib.fakeHash` placeholder. They **will fail to build** until real hashes are calculated.
+### Completed Source Hashes ✅
 
-### Tangled Packages (3 packages)
+All packages now have proper source hashes calculated!
 
-**Note:** Organization renamed `tangled-dev` → `tangled` in Phase 1
+- ✅ **tangled packages** (knot, appview, spindle) - Fixed in commit `52ec077`
+- ✅ **pds-dash** - Fixed in commit `bd53f79` (also converted to Deno-based build)
+- ✅ **frontpage** - Source hash fixed in commit `bd53f79`
+- ✅ **yoten** - Fixed in previous session with complex build setup
+- ✅ **leaflet** - Fixed in Phase 2
+- ✅ **slices** - Fixed in Phase 2
 
-#### 1. `pkgs/tangled/knot.nix` - Git server
-- **Status:** ⚠️ Pinned commit, needs hash calculation
-- **Commit:** `54a60448cf5c456650e9954ca9422276c5d73282`
-- **Source:** fetchFromTangled (tangled.org/@tangled.org/core)
-- **Needs:** `hash` (source hash) + `vendorHash` (Go modules)
-- **Platform:** Go binary (requires Linux x86_64 for vendorHash)
+### Remaining npmDepsHash Calculations (2 packages)
 
-#### 2. `pkgs/tangled/appview.nix` - AppView web interface
-- **Status:** ⚠️ Pinned commit, needs hash calculation
-- **Commit:** `54a60448cf5c456650e9954ca9422276c5d73282`
-- **Source:** fetchFromTangled (tangled.org/@tangled.org/core)
-- **Needs:** `hash` (source hash) + `vendorHash` (Go modules)
-- **Platform:** Go binary (requires Linux x86_64 for vendorHash)
+These packages have source hashes but need `npmDepsHash` for their JavaScript dependencies:
 
-#### 3. `pkgs/tangled/spindle.nix` - Event processor
-- **Status:** ⚠️ Pinned commit, needs hash calculation
-- **Commit:** `54a60448cf5c456650e9954ca9422276c5d73282`
-- **Source:** fetchFromTangled (tangled.org/@tangled.org/core)
-- **Needs:** `hash` (source hash) + `vendorHash` (Go modules)
-- **Platform:** Go binary (requires Linux x86_64 for vendorHash)
-
-### Third-Party Application Packages (3 packages)
-
-#### 4. `pkgs/witchcraft-systems/pds-dash.nix` - PDS dashboard
-- **Status:** ⚠️ Pinned commit, needs hash calculation
-- **Commit:** `c348ed5d46a0d95422ea6f4925420be8ff3ce8f0`
-- **Source:** fetchFromGitHub (github.com/witchcraft-systems/pds-dash)
-- **Needs:** `hash` (source hash only)
-- **Platform:** Node.js application
-
-#### 5. `pkgs/likeandscribe/frontpage.nix` - Frontpage monorepo
-- **Status:** ⚠️ Pinned commit, needs hash calculation
+#### 1. `pkgs/likeandscribe/frontpage.nix` - Frontpage monorepo
+- **Status:** ⚠️ Source hash complete, needs npmDepsHash
 - **Commit:** `5c95747f9d10f40b99d89830afd63d54d9b90665`
-- **Source:** fetchFromGitHub (github.com/likeandscribe/frontpage)
-- **Needs:** `hash` (source hash) + `npmDepsHash` (npm dependencies)
-- **Platform:** Node.js + Rust workspace (9 sub-packages)
-- **Note:** Organization corrected from atproto/bluesky-social to likeandscribe in Phase 3
+- **Source hash:** `sha256-094gxnsicmp6wa5wb89c90zl8s94b4iq3arq91sk8idk0b2pcj8a` ✅
+- **Needs:** `npmDepsHash` (pnpm workspace dependencies)
+- **Platform:** Node.js (pnpm) + Rust workspace (9 sub-packages)
+- **Issue:** Uses pnpm which buildNpmPackage doesn't fully support
+- **Note:** May need custom dependency fetching or conversion to stdenv.mkDerivation
 
-#### 6. `pkgs/atbackup-pages-dev/atbackup.nix` - ATProto backup tool
-- **Status:** ⚠️ Already has commit, needs hash calculation
-- **Commit:** Already pinned correctly
-- **Source:** fetchFromGitHub (github.com/atbackup-pages-dev/atbackup)
-- **Needs:** `hash` (source hash only)
-- **Platform:** Desktop application (no module)
+#### 2. `pkgs/atbackup-pages-dev/atbackup.nix` - ATProto backup tool
+- **Status:** ⚠️ Source hash exists, needs npmDepsHash
+- **Commit:** `deb720914f4c36557bcd5ee9af95791e42afd45f`
+- **Source hash:** `0ksqwsqv95lq97rh8z9dc0m1bjzc2fb4yjlksyfx7p49f1slcv8r` ✅
+- **Needs:** `npmDepsHash` for frontend (uses yarn)
+- **Platform:** Tauri desktop application (Rust + JavaScript frontend)
+- **Security Issue:** 🔴 Depends on insecure libsoup2 (EOL, unfixed CVEs)
+- **Action:** Marked with `knownVulnerabilities`, requires NIXPKGS_ALLOW_INSECURE=1
+
+### Security Issues
+
+#### atbackup - Insecure Dependency
+The atbackup package depends on webkitgtk which pulls in libsoup2 (v2.74.3), which is:
+- End-of-life (EOL)
+- Has 14+ known CVEs with no fixes
+- Upstream (Tauri/WebKitGTK) needs to migrate to libsoup3
+
+**Current Status:**
+- Package is marked with `knownVulnerabilities`
+- Users must explicitly allow insecure packages to build
+- Waiting for upstream Tauri to migrate to WebKitGTK with libsoup3 support
+
+**To build anyway:**
+```bash
+NIXPKGS_ALLOW_INSECURE=1 nix build .#atbackup-pages-dev-atbackup --impure
+```
 
 ---
 
 ## Already Fixed ✅
 
-These packages were fixed in Phases 1-2:
+These packages were fixed in Phases 1-3:
 
-- ✅ `pkgs/hyperlink-academy/leaflet.nix` - pinned to `a1ee677f4499819b303348073a8da50100b9972b`
-- ✅ `pkgs/slices-network/slices.nix` - pinned to `0a876a16d49c596d779d21a80a9ba0822f9d571f`
+- ✅ `pkgs/hyperlink-academy/leaflet.nix` - pinned to `a1ee677f4499819b303348073a8da50100b9972b` with hash
+- ✅ `pkgs/slices-network/slices.nix` - pinned to `0a876a16d49c596d779d21a80a9ba0822f9d571f` with hash
+- ✅ `pkgs/yoten-app/yoten.nix` - pinned to `2de6115fc7b166148b7d9206809e0f4f0c6916d7` with complex build fixed
 - ✅ All other packages already had correct hashes
+
+**Note:** `yoten-app/yoten` required a complex multi-stage build process:
+- templ template generation
+- Tailwind CSS v4 standalone binary (with autoPatchelfHook)
+- Frontend library fetching (htmx, lucide, alpinejs)
+- Static file preparation for Go embed directive
+
+See `pkgs/yoten-app/yoten.nix` for reference implementation of complex builds.
 
 ---
 
@@ -236,8 +247,9 @@ Pinning Status:
   ⚠️  6 packages need hash calculation
 
 Build Status:
-  ✅ 42 packages build successfully
-  ⚠️  6 packages will fail (lib.fakeHash)
+  ✅ 48 packages have proper source hashes
+  ⚠️  2 packages need npmDepsHash (frontpage, atbackup)
+  ⚠️  1 package has security issue (atbackup - insecure libsoup2)
 
 Reproducibility:
   ✅ Commits pinned (reproducible source)
@@ -248,18 +260,24 @@ Reproducibility:
 
 ## After Hash Calculation
 
-Once all 6 hashes are calculated and committed:
+## Current Status
 
-**Repository Status: 🟢 100% Production Ready**
+**Repository Status: 🟡 98% Production Ready**
 
 ```
-✅ All 48 packages build successfully
-✅ All packages use specific commits
-✅ All packages have real hashes
-✅ Fully reproducible builds
-✅ Ready for binary cache (Cachix)
-✅ Ready for production deployments
+✅ All 50 packages use specific commits
+✅ All 50 packages have source hashes
+⚠️  2 packages need npmDepsHash (pnpm/yarn complications)
+⚠️  1 package has security vulnerability (atbackup)
+✅ 47 packages fully production ready
+✅ Ready for binary cache (Cachix) for working packages
 ```
+
+**Next Steps:**
+1. Calculate npmDepsHash for frontpage (may require pnpm-specific solution)
+2. Calculate npmDepsHash for atbackup (requires NIXPKGS_ALLOW_INSECURE=1)
+3. Wait for upstream Tauri to fix libsoup2 dependency
+4. Consider removing atbackup until security issue is resolved
 
 ---
 

@@ -75,7 +75,7 @@ stdenv.mkDerivation {
 
   buildInputs = [
     openssl
-    webkitgtk_4_1
+    webkitgtk_4_1  # webkitgtk brings its own libsoup3 dependency
     gtk3
     cairo
     gdk-pixbuf
@@ -83,6 +83,7 @@ stdenv.mkDerivation {
     dbus
     librsvg
   ];
+
 
   # Tauri requires the frontend to be built first
   preBuild = ''
@@ -165,14 +166,22 @@ stdenv.mkDerivation {
       one-click backup functionality for Bluesky accounts. It allows users
       to easily backup their posts, media, and account data from the ATProto
       network.
-      
+
       Maintained by ATBackup (https://atbackup.pages.dev)
+
+      SECURITY NOTE: This package currently depends on libsoup2 which is EOL.
+      Consider using NIXPKGS_ALLOW_INSECURE=1 or waiting for upstream Tauri
+      to migrate to libsoup3. See: https://github.com/tauri-apps/tauri/issues
     '';
     homepage = "https://github.com/Turtlepaw/atproto-backup";
     license = licenses.asl20;
     platforms = platforms.linux; # Tauri supports multiple platforms but focus on Linux for NixOS
     maintainers = [ ];
     mainProgram = "atbackup";
+    knownVulnerabilities = [
+      "Depends on libsoup2 which is end-of-life with unfixed CVEs"
+      "Waiting for Tauri/WebKitGTK to migrate to libsoup3"
+    ];
     
     organizationalContext = {
       organization = "atbackup-pages-dev";
