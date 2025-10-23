@@ -248,15 +248,33 @@ Some packages require multi-stage builds with frontend tooling. See `pkgs/yoten-
 
 See `CLAUDE.md` for detailed build patterns and best practices.
 
-## Cachix
+## Binary Cache (Cachix)
 
-Pre-built binaries are available via Cachix:
+Pre-built binaries are available via Cachix to avoid building from source:
 
 ```bash
-# Add to /etc/nix/nix.conf or ~/.config/nix/nix.conf
+# One-time setup using cachix (recommended)
+nix-env -iA cachix -f https://cachix.org/api/v1/install
+cachix use atproto
+
+# Or manually add to /etc/nixos/configuration.nix
+nix.settings = {
+  substituters = [
+    "https://cache.nixos.org"
+    "https://atproto.cachix.org"
+  ];
+  trusted-public-keys = [
+    "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+    "atproto.cachix.org-1:mgH0q9dt3ZI9puHEfIGDnkRBfT80I3vfEh4Wda2B0rk="
+  ];
+};
+
+# Or for non-NixOS users, add to ~/.config/nix/nix.conf
 substituters = https://cache.nixos.org https://atproto.cachix.org
-trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= atproto.cachix.org-1:[KEY_HERE]
+trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= atproto.cachix.org-1:mgH0q9dt3ZI9puHEfIGDnkRBfT80I3vfEh4Wda2B0rk=
 ```
+
+**Note**: Binary cache is automatically populated by CI builds. 47/50 packages currently have pre-built binaries available.
 
 ## Contributing
 
