@@ -3,6 +3,7 @@
 Nix User Repository for ATProto (AT Protocol) and Bluesky ecosystem packages.
 
 [![Cachix Cache](https://img.shields.io/badge/cachix-atproto-blue.svg)](https://atproto.cachix.org)
+[![MCP-NixOS](https://img.shields.io/badge/MCP-NixOS-blue)](https://mcp-nixos.io/)
 
 ## Overview
 
@@ -122,11 +123,26 @@ Community-maintained Rust implementations:
 
 ### Tangled Infrastructure
 
-- `tangled-dev-appview` - Tangled AppView
-- `tangled-dev-knot` - Git server
-- `tangled-dev-spindle` - Event processor/CI-CD
-- `tangled-dev-genjwks` - JWKS generator
-- `tangled-dev-lexgen` - Lexicon generator
+Git forge and development tools for ATProto:
+
+- `tangled-appview` - Tangled AppView web interface
+- `tangled-knot` - Git server with ATProto integration
+- `tangled-spindle` - Event processor and CI/CD
+- `tangled-genjwks` - JWKS generator utility
+- `tangled-lexgen` - Lexicon generator utility
+
+**Website**: https://tangled.org
+
+### likeandscribe
+
+Community platform for ATProto:
+
+- `likeandscribe-frontpage` - Hacker News-style community (9 sub-packages)
+  - Main frontend application
+  - ATProto browser interface
+  - Drainpipe firehose consumer
+  - OAuth components
+  - Unravel utility
 
 ## NixOS Modules
 
@@ -160,7 +176,8 @@ Available module collections:
 - `atproto-nur.nixosModules.microcosm` - Microcosm services (constellation, slingshot, etc.)
 - `atproto-nur.nixosModules.blacksky` - Blacksky/rsky services (PDS, relay, etc.)
 - `atproto-nur.nixosModules.bluesky-social` - Official Bluesky services (indigo, grain)
-- `atproto-nur.nixosModules.tangled-dev` - Tangled infrastructure (appview, knot, spindle)
+- `atproto-nur.nixosModules.tangled` - Tangled infrastructure (appview, knot, spindle)
+- `atproto-nur.nixosModules.likeandscribe` - Frontpage and drainpipe services
 - `atproto-nur.nixosModules.hyperlink-academy` - Leaflet collaborative writing
 - `atproto-nur.nixosModules.slices-network` - Slices AppView
 - `atproto-nur.nixosModules.teal-fm` - Teal music platform
@@ -170,7 +187,35 @@ Available module collections:
 - `atproto-nur.nixosModules.red-dwarf-client` - Red Dwarf client
 - `atproto-nur.nixosModules.witchcraft-systems` - PDS dashboard
 - `atproto-nur.nixosModules.smokesignal-events` - QuickDID service
-- `atproto-nur.nixosModules.individual` - PDS gatekeeper, drainpipe
+- `atproto-nur.nixosModules.individual` - PDS gatekeeper
+
+## AI-Assisted Development
+
+This repository uses [MCP-NixOS](https://mcp-nixos.io/) for AI-assisted development with Claude Code and other MCP-compatible assistants.
+
+**Benefits:**
+- Real-time NixOS package information (130K+ packages)
+- Accurate configuration options (22K+ options)
+- Version tracking across nixpkgs channels
+- Prevents AI hallucinations about package availability
+
+**Setup:**
+```bash
+# Create MCP configuration for Claude Code
+cat > ~/.claude-code/mcp.json << 'EOF'
+{
+  "mcpServers": {
+    "mcp-nixos": {
+      "command": "nix",
+      "args": ["run", "github:utensils/mcp-nixos"]
+    }
+  }
+}
+EOF
+# Restart Claude Code to load the MCP server
+```
+
+See [MCP_INTEGRATION.md](./MCP_INTEGRATION.md) for detailed setup instructions.
 
 ## Development
 
@@ -221,14 +266,20 @@ See `PINNING_NEEDED.md` for packages that need version pinning.
 Packages are organized by their maintainer/organization:
 
 - `microcosm/` - Microcosm Rust services
-- `blacksky/` - Community Blacksky tools
-- `bluesky-social/` - Official Bluesky packages
-- `atproto/` - Core ATProto libraries
-- `tangled-dev/` - Tangled infrastructure
+- `blacksky/` - Community Blacksky/Rsky tools
+- `bluesky-social/` - Official Bluesky packages (indigo, grain)
+- `atproto/` - Core ATProto TypeScript libraries
+- `tangled/` - Tangled git forge infrastructure
+- `likeandscribe/` - Frontpage community platform
 - `hyperlink-academy/`, `parakeet-social/`, `teal-fm/`, etc. - Third-party apps
 - `individual/` - Individual developer packages
 
 This structure makes it easy to find packages by their maintainer and understand the ecosystem.
+
+**Recent Changes:**
+- Phase 1: Renamed `tangled-dev` → `tangled` (correct organization)
+- Phase 2: Pinned leaflet and slices to specific commits
+- Phase 3: Moved frontpage/drainpipe from atproto to `likeandscribe` (correct maintainer)
 
 ## License
 
@@ -247,8 +298,13 @@ Most packages are MIT or Apache-2.0 licensed.
 
 ✅ 48 packages available
 ✅ Multi-platform support (Linux x86_64/aarch64, macOS x86_64/aarch64)
-✅ NixOS modules for all services
-⚠️  Some packages need version pinning (see PINNING_NEEDED.md)
+✅ NixOS modules for all services (100% coverage)
+✅ All packages pinned to specific commits
+⚠️  6 packages need hash calculation on Linux (see PINNING_NEEDED.md)
+
+**Repository Health**: 🟡 90% Production Ready
+
+See [NEXT_STEPS.md](./NEXT_STEPS.md) for development roadmap.
 
 ---
 
