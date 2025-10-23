@@ -1,5 +1,5 @@
 # Official AT Protocol implementations
-{ lib, pkgs, craneLib, buildGoModule, buildNpmPackage, fetchFromTangled ? pkgs.fetchFromTangled, ... }:
+{ lib, pkgs, craneLib, buildGoModule, buildNpmPackage, ... }:
 
 let
   # Import ATproto core libraries
@@ -18,10 +18,7 @@ let
 in
 {
   inherit _organizationMeta;
-  
-  # Official implementations
-  frontpage = pkgs.callPackage ./frontpage.nix { inherit craneLib atprotoCore packaging fetchFromTangled; };
-  
+
   # Core ATproto TypeScript libraries
   atproto-api = pkgs.callPackage ./atproto-api.nix { };
   atproto-lexicon = pkgs.callPackage ./atproto-lexicon.nix { };

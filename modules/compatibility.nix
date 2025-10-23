@@ -72,6 +72,15 @@ in
     
     # Bluesky Social modules (moved from bluesky/ to bluesky-social/)
     (mkRenamedOptionModule [ "services" "bluesky-frontpage" ] [ "services" "bluesky-social-frontpage" ])
+
+    # Phase 3 module consolidation (2025-10-22)
+    # Frontpage: corrected to likeandscribe organization
+    (mkRenamedOptionModule [ "services" "atproto" "frontpage" ] [ "services" "likeandscribe" "frontpage" ])
+    (mkRenamedOptionModule [ "services" "bluesky-social" "frontpage" ] [ "services" "likeandscribe" "frontpage" ])
+
+    # Drainpipe: moved to likeandscribe (part of frontpage monorepo)
+    (mkRenamedOptionModule [ "services" "atproto" "drainpipe" ] [ "services" "likeandscribe" "drainpipe" ])
+    (mkRenamedOptionModule [ "services" "individual" "drainpipe" ] [ "services" "likeandscribe" "drainpipe" ])
     
     # Additional legacy aliases for services that may have used different naming patterns
     
@@ -171,7 +180,17 @@ in
       (mkDeprecationWarning "services.atproto-grain-darkroom" "services.bluesky-social-grain-darkroom"))
     (lib.optional (config.services ? atproto-grain-labeler) 
       (mkDeprecationWarning "services.atproto-grain-labeler" "services.bluesky-social-grain-labeler"))
-    (lib.optional (config.services ? atproto-grain-notifications) 
+    (lib.optional (config.services ? atproto-grain-notifications)
       (mkDeprecationWarning "services.atproto-grain-notifications" "services.bluesky-social-grain-notifications"))
+
+    # Phase 3 module consolidation deprecation warnings (2025-10-22)
+    (lib.optional (config.services.atproto or {} ? frontpage)
+      (mkDeprecationWarning "services.atproto.frontpage" "services.likeandscribe.frontpage"))
+    (lib.optional (config.services.bluesky-social or {} ? frontpage)
+      (mkDeprecationWarning "services.bluesky-social.frontpage" "services.likeandscribe.frontpage"))
+    (lib.optional (config.services.atproto or {} ? drainpipe)
+      (mkDeprecationWarning "services.atproto.drainpipe" "services.likeandscribe.drainpipe"))
+    (lib.optional (config.services.individual or {} ? drainpipe)
+      (mkDeprecationWarning "services.individual.drainpipe" "services.likeandscribe.drainpipe"))
   ];
 }

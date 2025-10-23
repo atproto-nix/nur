@@ -2,7 +2,7 @@
 
 {
   imports = [
-    ./frontpage.nix
+    # frontpage.nix moved to modules/likeandscribe/frontpage.nix
     ./grain-appview.nix
     ./grain-darkroom.nix
     ./grain-labeler.nix

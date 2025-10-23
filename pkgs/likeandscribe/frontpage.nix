@@ -1,11 +1,10 @@
-# Frontpage/Bluesky official implementation
-{ lib, pkgs, craneLib, buildNpmPackage, fetchFromTangled, atprotoCore, packaging, ... }:
+# Frontpage - Hacker News-style community for ATProto
+{ lib, pkgs, craneLib, buildNpmPackage, fetchFromGitHub, atprotoCore, packaging, ... }:
 
 let
-  # Source from Tangled repository
-  src = fetchFromTangled {
-    domain = "tangled.org";
-    owner = "@frontpage.fyi";
+  # Source from GitHub repository
+  src = fetchFromGitHub {
+    owner = "likeandscribe";
     repo = "frontpage";
     rev = "5c95747f9d10f40b99d89830afd63d54d9b90665";
     hash = lib.fakeHash; # Calculate on Linux x86_64
@@ -99,7 +98,7 @@ let
       
       meta = with lib; {
         description = "Frontpage web application";
-        homepage = "https://github.com/bluesky-social/frontpage";
+        homepage = "https://github.com/likeandscribe/frontpage";
         license = licenses.mit;
         maintainers = [ ];
         platforms = platforms.linux;
@@ -115,7 +114,7 @@ let
       
       meta = with lib; {
         description = "ATproto browser interface";
-        homepage = "https://github.com/bluesky-social/frontpage";
+        homepage = "https://github.com/likeandscribe/frontpage";
         license = licenses.mit;
         maintainers = [ ];
         platforms = platforms.linux;
@@ -131,7 +130,7 @@ let
       
       meta = with lib; {
         description = "Unravel utility for ATproto";
-        homepage = "https://github.com/bluesky-social/frontpage";
+        homepage = "https://github.com/likeandscribe/frontpage";
         license = licenses.mit;
         maintainers = [ ];
         platforms = platforms.linux;
@@ -147,7 +146,7 @@ let
       
       meta = with lib; {
         description = "Frontpage ATproto client library";
-        homepage = "https://github.com/bluesky-social/frontpage";
+        homepage = "https://github.com/likeandscribe/frontpage";
         license = licenses.mit;
         maintainers = [ ];
         platforms = platforms.linux;
@@ -162,7 +161,7 @@ let
       
       meta = with lib; {
         description = "Frontpage OAuth implementation";
-        homepage = "https://github.com/bluesky-social/frontpage";
+        homepage = "https://github.com/likeandscribe/frontpage";
         license = licenses.mit;
         maintainers = [ ];
         platforms = platforms.linux;
@@ -177,7 +176,7 @@ let
       
       meta = with lib; {
         description = "Frontpage OAuth preview client";
-        homepage = "https://github.com/bluesky-social/frontpage";
+        homepage = "https://github.com/likeandscribe/frontpage";
         license = licenses.mit;
         maintainers = [ ];
         platforms = platforms.linux;
@@ -203,7 +202,7 @@ let
       buildInputs = packaging.standardBuildInputs;
       
       meta = with lib; {
-        homepage = "https://github.com/bluesky-social/frontpage";
+        homepage = "https://github.com/likeandscribe/frontpage";
         license = licenses.mit;
         maintainers = [ ];
         platforms = platforms.linux;
@@ -276,18 +275,18 @@ in
     ];
     
     meta = with lib; {
-      description = "Complete Frontpage/Bluesky implementation";
+      description = "Complete Frontpage implementation";
       longDescription = ''
-        Official Bluesky Frontpage implementation including:
+        Frontpage - Hacker News-style community platform for ATProto including:
         - Frontpage web application (Next.js)
         - ATproto browser interface
         - Unravel utility
         - Drainpipe firehose consumer (Rust)
         - OAuth components
-        
-        This is the official reference implementation from Bluesky Social.
+
+        Created by likeandscribe for the ATProto ecosystem.
       '';
-      homepage = "https://github.com/bluesky-social/frontpage";
+      homepage = "https://github.com/likeandscribe/frontpage";
       license = licenses.mit;
       maintainers = [ ];
       platforms = platforms.linux;

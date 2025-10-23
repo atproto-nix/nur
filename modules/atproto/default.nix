@@ -10,8 +10,8 @@ in
 {
   # Import all official ATproto service modules
   imports = [
-    ./frontpage.nix
-    ./drainpipe.nix
+    # drainpipe.nix moved to modules/likeandscribe/drainpipe.nix (part of frontpage monorepo)
+    # frontpage.nix moved to modules/likeandscribe/frontpage.nix
     # Future official service modules:
   ];
   

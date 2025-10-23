@@ -26,6 +26,7 @@
     # New organizational framework modules
     ./atproto
     ./individual
+    ./likeandscribe
     
     # Legacy atproto module (for remaining modules)
     # Note: This will be phased out as packages migrate to new structure

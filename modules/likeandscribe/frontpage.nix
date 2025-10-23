@@ -3,32 +3,32 @@
 with lib;
 
 let
-  cfg = config.services.bluesky-social.frontpage;
+  cfg = config.services.likeandscribe.frontpage;
 in {
-  options.services.bluesky-social.frontpage = {
-    enable = mkEnableOption "Bluesky Frontpage web application";
+  options.services.likeandscribe.frontpage = {
+    enable = mkEnableOption "Frontpage web application";
     
     package = mkOption {
       type = types.package;
-      default = pkgs.bluesky-social-frontpage or pkgs.frontpage;
+      default = pkgs.likeandscribe-frontpage or pkgs.frontpage;
       description = "Frontpage package to use";
     };
     
     user = mkOption {
       type = types.str;
-      default = "bluesky-frontpage";
+      default = "frontpage";
       description = "User account for Frontpage service";
     };
     
     group = mkOption {
       type = types.str;
-      default = "bluesky-frontpage";
+      default = "frontpage";
       description = "Group for Frontpage service";
     };
     
     dataDir = mkOption {
       type = types.path;
-      default = "/var/lib/bluesky-frontpage";
+      default = "/var/lib/frontpage";
       description = "Data directory for Frontpage service";
     };
     
@@ -131,8 +131,8 @@ in {
     ];
     
     # systemd service
-    systemd.services.bluesky-social-frontpage = {
-      description = "Bluesky Frontpage web application";
+    systemd.services.likeandscribe-frontpage = {
+      description = "Frontpage web application";
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" ];
       
@@ -160,7 +160,7 @@ in {
         User = cfg.user;
         Group = cfg.group;
         WorkingDirectory = cfg.dataDir;
-        ExecStart = "${cfg.package}/bin/bluesky-frontpage";
+        ExecStart = "${cfg.package}/bin/frontpage";
         Restart = "on-failure";
         RestartSec = "5s";
         

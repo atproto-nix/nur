@@ -2,16 +2,16 @@
 { config, lib, pkgs, ... }:
 
 let
-  cfg = config.services.atproto.drainpipe;
-  
+  cfg = config.services.likeandscribe.drainpipe;
+
 in
 {
-  options.services.atproto.drainpipe = {
+  options.services.likeandscribe.drainpipe = {
     enable = lib.mkEnableOption "Drainpipe firehose consumer";
-    
+
     package = lib.mkOption {
       type = lib.types.package;
-      default = pkgs.atproto.frontpage.drainpipe;
+      default = pkgs.likeandscribe-frontpage.drainpipe or pkgs.drainpipe;
       description = "Drainpipe package to use";
     };
     

@@ -43,7 +43,8 @@ let
     
     # New organizational framework packages
     atproto = pkgs.callPackage ./atproto { inherit lib craneLib buildGoModule buildNpmPackage; };
-    
+    likeandscribe = pkgs.callPackage ./likeandscribe { inherit lib craneLib buildNpmPackage; };
+
     # Legacy package collections (for backward compatibility)
     microcosm = pkgs.callPackage ./microcosm { inherit craneLib; };
     blacksky = pkgs.callPackage ./blacksky { inherit craneLib; };
