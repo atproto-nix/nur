@@ -12,7 +12,7 @@ buildNpmPackage rec {
   src = fetchFromGitHub {
     owner = "hyperlink-academy";
     repo = "leaflet";
-    rev = "main"; # Use latest main branch - in production this should be pinned to a specific commit
+    rev = "a1ee677f4499819b303348073a8da50100b9972b";
     sha256 = "sha256-Gk6Pe826itrdi9uH3Ks0oHgKnOAGFDOEY8w+DRon3W8=";
   };
 

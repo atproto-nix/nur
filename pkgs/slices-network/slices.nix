@@ -10,7 +10,7 @@ let
     domain = "tangled.org";
     owner = "@slices.network";
     repo = "slices";
-    rev = "main";
+    rev = "0a876a16d49c596d779d21a80a9ba0822f9d571f";
     sha256 = "1qwcnc52x5nc7s7g4zkv36i5fbm63h1ggwwhk7cgxsj3qxkiczpg";
   };
 
