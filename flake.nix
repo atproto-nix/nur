@@ -40,12 +40,24 @@
           n != "lib" &&
           n != "modules" &&
           n != "overlays" &&
+          n != "organizations" &&
+          n != "_organizationalMetadata" &&
           pkgs.lib.isDerivation v
         ) nurPackages;
 
+        # Extract organizational collections for nested access
+        organizations = nurPackages.organizations or {};
+
       in
       {
-        packages = packages;
+        # Flattened packages (e.g., tangled-knot, tangled-appview)
+        packages = packages //
+          # Also expose organizational attribute sets (e.g., tangled.knot, tangled.appview)
+          (pkgs.lib.mapAttrs (orgName: orgPackages:
+            pkgs.lib.filterAttrs (n: v:
+              n != "_organizationMeta" && pkgs.lib.isDerivation v
+            ) orgPackages
+          ) organizations);
 
         lib = nurPackages.lib or {};
 
@@ -55,8 +67,7 @@
           # Core service modules
           microcosm = import ./modules/microcosm;
           blacksky = import ./modules/blacksky;
-          bluesky-social = import ./modules/bluesky-social;
-          atproto = import ./modules/atproto;
+          bluesky = import ./modules/bluesky;
           individual = import ./modules/individual;
           microcosm-blue = import ./modules/microcosm-blue;
           smokesignal-events = import ./modules/smokesignal-events;
@@ -73,6 +84,7 @@
           yoten-app = import ./modules/yoten-app;
           red-dwarf-client = import ./modules/red-dwarf-client;
           witchcraft-systems = import ./modules/witchcraft-systems;
+          mackuba = import ./modules/mackuba;
           whey-party = import ./modules/whey-party;
         };
 

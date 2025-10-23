@@ -1,25 +1,35 @@
 { pkgs, lib, ... }:
 
 # Official Bluesky ATProto packages
-# Organization: bluesky-social
+# Organization: bluesky (formerly bluesky-social)
 # Website: https://bsky.social
 
 let
   # Organizational metadata
   organizationMeta = {
-    name = "bluesky-social";
+    name = "bluesky";
     displayName = "Official Bluesky";
     website = "https://bsky.social";
     contact = null;
     maintainer = "Bluesky Social";
     description = "Official Bluesky ATProto implementations and tools";
     atprotoFocus = [ "infrastructure" "servers" "libraries" ];
-    packageCount = 1;
+    packageCount = 8;
   };
 
   # Package naming pattern: use simple names within organization
   packages = {
+    # Go implementation (Indigo)
     indigo = pkgs.callPackage ./indigo.nix { };
+
+    # TypeScript libraries from @atproto/* packages
+    atproto-api = pkgs.callPackage ./atproto-api.nix { };
+    atproto-lexicon = pkgs.callPackage ./atproto-lexicon.nix { };
+    atproto-xrpc = pkgs.callPackage ./atproto-xrpc.nix { };
+    atproto-did = pkgs.callPackage ./atproto-did.nix { };
+    atproto-identity = pkgs.callPackage ./atproto-identity.nix { };
+    atproto-repo = pkgs.callPackage ./atproto-repo.nix { };
+    atproto-syntax = pkgs.callPackage ./atproto-syntax.nix { };
   };
 
   # Enhanced packages with organizational metadata
@@ -40,8 +50,21 @@ let
     })
   ) packages;
 
+  # Create an "all" derivation to build all packages at once
+  allPackages = pkgs.symlinkJoin {
+    name = "bluesky-all";
+    paths = lib.attrValues enhancedPackages;
+    meta = {
+      description = "All Bluesky packages";
+      homepage = "https://bsky.social";
+    };
+  };
+
 in
 enhancedPackages // {
+  # Export "all" package to build everything at once
+  all = allPackages;
+
   # Export organizational metadata for external use
   _organizationMeta = organizationMeta;
 }

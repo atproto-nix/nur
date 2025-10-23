@@ -39,16 +39,16 @@ let
     whey-party = pkgs.callPackage ./whey-party { inherit lib buildNpmPackage; fetchFromTangled = pkgs.fetchFromTangled; };
 
     # Official Bluesky packages
-    bluesky-social = pkgs.callPackage ./bluesky-social { inherit lib; };
+    bluesky = pkgs.callPackage ./bluesky { inherit lib; };
 
     # Photo-sharing platforms
     grain-social = pkgs.callPackage ./grain-social { inherit lib; };
 
     # Individual developer packages
     individual = pkgs.callPackage ./individual { inherit lib craneLib; };
-    
+    mackuba = pkgs.callPackage ./mackuba { inherit lib; };
+
     # New organizational framework packages
-    atproto = pkgs.callPackage ./atproto { inherit lib craneLib buildGoModule buildNpmPackage; };
     likeandscribe = pkgs.callPackage ./likeandscribe { inherit lib craneLib buildNpmPackage; };
 
     # Legacy package collections (for backward compatibility)

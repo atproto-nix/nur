@@ -14,16 +14,29 @@ let
     maintainer = "Tangled";
     description = "Git forge and development tools for ATProto ecosystem";
     atprotoFocus = [ "tools" "infrastructure" "applications" ];
-    packageCount = 5;
+    packageCount = 7;
   };
 
   # Package naming pattern: use simple names within organization
   packages = {
+    appview-static-files = pkgs.callPackage ./appview-static-files.nix { };
     appview = pkgs.callPackage ./appview.nix { inherit buildGoModule; };
     knot = pkgs.callPackage ./knot.nix { inherit buildGoModule; };
     spindle = pkgs.callPackage ./spindle.nix { inherit buildGoModule; };
+    avatar = pkgs.callPackage ./avatar.nix { };
+    camo = pkgs.callPackage ./camo.nix { };
     genjwks = pkgs.callPackage ./genjwks.nix { };
     lexgen = pkgs.callPackage ./lexgen.nix { };
+  };
+
+  # Create an "all" derivation to build all packages at once
+  allPackages = pkgs.symlinkJoin {
+    name = "tangled-all";
+    paths = lib.filter (pkg: pkg != packages.appview-static-files) (lib.attrValues packages);
+    meta = {
+      description = "All Tangled packages";
+      homepage = "https://tangled.org";
+    };
   };
 
   # Enhanced packages with organizational metadata
@@ -46,6 +59,9 @@ let
 
 in
 enhancedPackages // {
+  # Export "all" package to build everything at once
+  all = allPackages;
+
   # Export organizational metadata for external use
   _organizationMeta = organizationMeta;
 }

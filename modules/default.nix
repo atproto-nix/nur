@@ -20,13 +20,13 @@
     ./microcosm-blue
     ./witchcraft-systems
     ./atbackup-pages-dev
-    ./bluesky-social
+    ./bluesky
     ./grain-social
     ./individual
+    ./mackuba
     ./whey-party
 
     # New organizational framework modules
-    ./atproto
     ./likeandscribe
 
     # Legacy atproto module (for remaining modules)

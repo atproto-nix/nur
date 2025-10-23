@@ -79,5 +79,17 @@ let
 
   packages = pkgs.lib.genAttrs members (member: buildPackage member);
 
+  # Create an "all" derivation to build all packages at once
+  allPackages = pkgs.symlinkJoin {
+    name = "microcosm-all";
+    paths = pkgs.lib.attrValues packages;
+    meta = {
+      description = "All Microcosm packages";
+      homepage = "https://microcosm.blue";
+    };
+  };
+
 in
-packages
+packages // {
+  all = allPackages;
+}

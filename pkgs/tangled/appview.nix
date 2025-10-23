@@ -4,8 +4,12 @@
 , pkg-config
 , sqlite
 , stdenv
+, callPackage
 }:
 
+let
+  appview-static-files = callPackage ./appview-static-files.nix { };
+in
 buildGoModule rec {
   pname = "tangled-appview";
   version = "0.1.0";
@@ -27,6 +31,14 @@ buildGoModule rec {
   buildInputs = [
     sqlite
   ];
+
+  # Copy static files before building (needed for Go embed)
+  postUnpack = ''
+    pushd source
+    mkdir -p appview/pages/static
+    cp -frv ${appview-static-files}/* appview/pages/static
+    popd
+  '';
 
   # Build only the appview binary
   subPackages = [ "cmd/appview" ];
