@@ -14,7 +14,6 @@
 , gdk-pixbuf
 , glib
 , dbus
-, libsoup
 , librsvg
 , wrapGAppsHook
 }:
@@ -76,13 +75,12 @@ stdenv.mkDerivation {
 
   buildInputs = [
     openssl
-webkitgtk_4_1
+    webkitgtk_4_1
     gtk3
     cairo
     gdk-pixbuf
     glib
     dbus
-    libsoup
     librsvg
   ];
 
