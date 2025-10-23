@@ -34,7 +34,7 @@ let
     pname = "atbackup-frontend";
     inherit version src;
     
-    npmDepsHash = lib.fakeHash; # Will be updated during build
+    yarnDepsHash = lib.fakeHash; # Will be updated during build
     
     nativeBuildInputs = [ nodejs yarn ];
     
@@ -178,11 +178,7 @@ stdenv.mkDerivation {
     platforms = platforms.linux; # Tauri supports multiple platforms but focus on Linux for NixOS
     maintainers = [ ];
     mainProgram = "atbackup";
-    knownVulnerabilities = [
-      "Depends on libsoup2 which is end-of-life with unfixed CVEs"
-      "Waiting for Tauri/WebKitGTK to migrate to libsoup3"
-    ];
-    
+
     organizationalContext = {
       organization = "atbackup-pages-dev";
       displayName = "ATBackup";
