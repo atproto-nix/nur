@@ -43,11 +43,11 @@ buildNpmPackage rec {
   src = fetchFromGitHub {
     owner = "witchcraft-systems";
     repo = "pds-dash";
-    rev = "main"; # TODO: Pin to specific commit hash when stable
-    hash = lib.fakeHash; # Will be updated during build
+    rev = "c348ed5d46a0d95422ea6f4925420be8ff3ce8f0";
+    hash = lib.fakeHash; # Will be calculated from build
   };
 
-  npmDepsHash = lib.fakeHash; # Will be updated during build
+  npmDepsHash = lib.fakeHash; # Will be calculated from build
 
   nativeBuildInputs = [ nodejs deno ];
 

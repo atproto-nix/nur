@@ -1,6 +1,6 @@
 { lib
 , buildGoModule
-, fetchFromGitHub
+, fetchFromTangled
 , pkg-config
 , sqlite
 , stdenv
@@ -10,10 +10,11 @@ buildGoModule rec {
   pname = "tangled-appview";
   version = "0.1.0";
 
-  src = fetchFromGitHub {
-    owner = "tangled-dev";
-    repo = "tangled-core";
-    rev = "main"; # TODO: Pin to specific commit
+  src = fetchFromTangled {
+    domain = "tangled.org";
+    owner = "@tangled.org";
+    repo = "core";
+    rev = "54a60448cf5c456650e9954ca9422276c5d73282";
     hash = lib.fakeHash; # Placeholder - needs real hash
   };
 
@@ -76,12 +77,12 @@ buildGoModule rec {
     };
     
     organization = {
-      name = "tangled-dev";
-      displayName = "Tangled Development";
-      website = "https://tangled.dev";
+      name = "tangled";
+      displayName = "Tangled";
+      website = "https://tangled.org";
       contact = null;
-      maintainer = "Tangled Development";
-      repository = "https://github.com/tangled-dev/tangled-core";
+      maintainer = "Tangled";
+      repository = "https://tangled.org/@tangled.org/core";
       packageCount = 5;
       atprotoFocus = [ "infrastructure" "tools" ];
     };
@@ -101,17 +102,17 @@ buildGoModule rec {
       - Integration with Knot git server and Jetstream events
       - Configurable endpoints for distributed deployment
       
-      Maintained by Tangled Development (https://tangled.dev)
+      Maintained by Tangled (https://tangled.org)
     '';
-    homepage = "https://tangled.dev";
+    homepage = "https://tangled.org";
     license = licenses.mit;
-    platforms = platforms.linux;
+    platforms = platforms.unix;  # Linux + macOS
     maintainers = [ ];
     mainProgram = "appview";
     
     organizationalContext = {
-      organization = "tangled-dev";
-      displayName = "Tangled Development";
+      organization = "tangled";
+      displayName = "Tangled";
       needsMigration = false;
       migrationPriority = "medium";
     };

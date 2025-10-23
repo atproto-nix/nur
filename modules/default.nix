@@ -15,7 +15,7 @@
     ./stream-place
     ./yoten-app
     ./red-dwarf-client
-    ./tangled-dev
+    ./tangled
     ./smokesignal-events
     ./microcosm-blue
     ./witchcraft-systems

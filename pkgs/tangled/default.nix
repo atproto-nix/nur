@@ -1,17 +1,17 @@
 { pkgs, lib, buildGoModule ? pkgs.buildGoModule, ... }:
 
-# Tangled Development ATProto packages
-# Organization: tangled-dev
-# Website: https://tangled.dev
+# Tangled ATProto packages
+# Organization: tangled
+# Website: https://tangled.org
 
 let
   # Organizational metadata
   organizationMeta = {
-    name = "tangled-dev";
-    displayName = "Tangled Development";
-    website = "https://tangled.dev";
+    name = "tangled";
+    displayName = "Tangled";
+    website = "https://tangled.org";
     contact = null;
-    maintainer = "Tangled Development";
+    maintainer = "Tangled";
     description = "Git forge and development tools for ATProto ecosystem";
     atprotoFocus = [ "tools" "infrastructure" "applications" ];
     packageCount = 5;

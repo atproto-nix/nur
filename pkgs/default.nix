@@ -21,7 +21,7 @@ let
     red-dwarf-client = pkgs.callPackage ./red-dwarf-client { inherit lib buildNpmPackage; fetchFromTangled = pkgs.fetchFromTangled; };
     
     # Development tools and infrastructure
-    tangled-dev = pkgs.callPackage ./tangled-dev { inherit lib; };
+    tangled = pkgs.callPackage ./tangled { inherit lib buildGoModule; fetchFromTangled = pkgs.fetchFromTangled; };
     
     # Identity and infrastructure services
     smokesignal-events = pkgs.callPackage ./smokesignal-events { inherit lib craneLib; };
