@@ -1,13 +1,14 @@
 # Frontpage/Bluesky official implementation
-{ lib, pkgs, craneLib, buildNpmPackage, fetchFromGitHub, atprotoCore, packaging, ... }:
+{ lib, pkgs, craneLib, buildNpmPackage, fetchFromTangled, atprotoCore, packaging, ... }:
 
 let
-  # Source from official GitHub repository
-  src = fetchFromGitHub {
-    owner = "bluesky-social";
+  # Source from Tangled repository
+  src = fetchFromTangled {
+    domain = "tangled.org";
+    owner = "@frontpage.fyi";
     repo = "frontpage";
-    rev = "main"; # TODO: Pin to specific commit
-    sha256 = lib.fakeHash; # TODO: Replace with actual hash
+    rev = "5c95747f9d10f40b99d89830afd63d54d9b90665";
+    hash = lib.fakeHash; # Calculate on Linux x86_64
   };
   
   # pnpm workspace configuration
