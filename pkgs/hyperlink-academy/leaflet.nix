@@ -13,7 +13,7 @@ buildNpmPackage rec {
     owner = "hyperlink-academy";
     repo = "leaflet";
     rev = "a1ee677f4499819b303348073a8da50100b9972b";
-    sha256 = "sha256-Gk6Pe826itrdi9uH3Ks0oHgKnOAGFDOEY8w+DRon3W8=";
+    sha256 = "sha256-5dXN+P3RGHqdb9PGi376VUiDt2CHOy9WdvMXmlNYJN0=";
   };
 
   npmDepsHash = "sha256-QvcEgUOQlHrmVzdDqsuAQbMQ9EEIlIUPM+WXZc+doi0=";
