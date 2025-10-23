@@ -34,7 +34,10 @@ let
     
     # Backup and archival tools
     atbackup-pages-dev = pkgs.callPackage ./atbackup-pages-dev { inherit lib; };
-    
+
+    # Bluesky client applications
+    whey-party = pkgs.callPackage ./whey-party { inherit lib buildNpmPackage; fetchFromTangled = pkgs.fetchFromTangled; };
+
     # Official Bluesky packages
     bluesky-social = pkgs.callPackage ./bluesky-social { inherit lib; };
 

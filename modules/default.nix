@@ -23,19 +23,16 @@
     ./bluesky-social
     ./grain-social
     ./individual
+    ./whey-party
 
     # New organizational framework modules
     ./atproto
-    ./individual
     ./likeandscribe
-    
+
     # Legacy atproto module (for remaining modules)
     # Note: This will be phased out as packages migrate to new structure
-    
+
     # Backward compatibility aliases
     ./compatibility.nix
-    
-    # Profiles
-    ../profiles
   ];
 }

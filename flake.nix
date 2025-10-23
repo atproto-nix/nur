@@ -62,7 +62,7 @@
           smokesignal-events = import ./modules/smokesignal-events;
 
           # Infrastructure services
-          tangled-dev = import ./modules/tangled-dev;
+          tangled = import ./modules/tangled;
 
           # Web applications / AppViews
           hyperlink-academy = import ./modules/hyperlink-academy;
@@ -73,6 +73,7 @@
           yoten-app = import ./modules/yoten-app;
           red-dwarf-client = import ./modules/red-dwarf-client;
           witchcraft-systems = import ./modules/witchcraft-systems;
+          whey-party = import ./modules/whey-party;
         };
 
         devShells.default = pkgs.mkShell {
