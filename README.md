@@ -10,7 +10,7 @@ Nix User Repository for ATProto (AT Protocol) and Bluesky ecosystem packages.
 This NUR provides Nix packages and NixOS modules for the AT Protocol ecosystem, including:
 
 - **Microcosm Services**: constellation, spacedust, slingshot, ufos, and more
-- **Bluesky Official**: indigo (Go) and grain (TypeScript) implementations
+- **Bluesky Official**: indigo (Go) implementation
 - **Blacksky/Rsky**: Community-maintained AT Protocol tools
 - **Third-party Apps**: leaflet, parakeet, teal, yoten, slices, and others
 - **Development Tools**: Tangled infrastructure, ATProto core libraries
@@ -78,7 +78,6 @@ Core ATProto infrastructure services:
 ### Bluesky Official
 
 - `bluesky-social-indigo` - Official Go implementation (placeholder)
-- `bluesky-social-grain` - Official TypeScript implementation (placeholder)
 
 ### Blacksky/Rsky (Community)
 
@@ -144,6 +143,20 @@ Community platform for ATProto:
   - OAuth components
   - Unravel utility
 
+### Grain Social
+
+Photo-sharing platform for ATProto (by Chad Miller):
+
+- `grain-social-grain` - Complete photo-sharing platform (placeholder)
+  - AppView: Main web application (Deno, TypeScript, HTMX)
+  - Darkroom: Image processing service (Rust)
+  - Notifications: Real-time notification system
+  - Labeler: Content moderation service
+  - CLI: Command-line management tools
+
+**Website**: https://grain.social
+**Repository**: https://tangled.org/@grain.social/grain
+
 ## NixOS Modules
 
 **Service packages** (servers/daemons/web apps) have corresponding NixOS modules for declarative server deployment.
@@ -175,7 +188,8 @@ Community platform for ATProto:
 Available module collections:
 - `atproto-nur.nixosModules.microcosm` - Microcosm services (constellation, slingshot, etc.)
 - `atproto-nur.nixosModules.blacksky` - Blacksky/rsky services (PDS, relay, etc.)
-- `atproto-nur.nixosModules.bluesky-social` - Official Bluesky services (indigo, grain)
+- `atproto-nur.nixosModules.bluesky-social` - Official Bluesky Indigo services
+- `atproto-nur.nixosModules.grain-social` - Grain Social photo-sharing platform
 - `atproto-nur.nixosModules.tangled` - Tangled infrastructure (appview, knot, spindle)
 - `atproto-nur.nixosModules.likeandscribe` - Frontpage and drainpipe services
 - `atproto-nur.nixosModules.hyperlink-academy` - Leaflet collaborative writing
@@ -294,7 +308,8 @@ Packages are organized by their maintainer/organization:
 
 - `microcosm/` - Microcosm Rust services
 - `blacksky/` - Community Blacksky/Rsky tools
-- `bluesky-social/` - Official Bluesky packages (indigo, grain)
+- `bluesky-social/` - Official Bluesky packages (indigo)
+- `grain-social/` - Grain Social photo-sharing platform
 - `atproto/` - Core ATProto TypeScript libraries
 - `tangled/` - Tangled git forge infrastructure
 - `likeandscribe/` - Frontpage community platform
@@ -307,6 +322,7 @@ This structure makes it easy to find packages by their maintainer and understand
 - Phase 1: Renamed `tangled-dev` → `tangled` (correct organization)
 - Phase 2: Pinned leaflet and slices to specific commits with hashes
 - Phase 3: Moved frontpage/drainpipe from atproto to `likeandscribe` (correct maintainer)
+- Phase 4: Moved grain from bluesky-social to `grain-social` (correct maintainer - Chad Miller)
 - **New**: Fixed `yoten-app/yoten` complex build (templ + Tailwind CSS v4 + frontend assets)
 
 ## License
