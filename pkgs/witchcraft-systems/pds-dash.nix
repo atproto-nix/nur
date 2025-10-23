@@ -36,7 +36,7 @@ let
   '';
 in
 
-buildNpmPackage rec {
+stdenv.mkDerivation rec {
   pname = "pds-dash";
   version = "0.1.0";
 
@@ -44,23 +44,21 @@ buildNpmPackage rec {
     owner = "witchcraft-systems";
     repo = "pds-dash";
     rev = "c348ed5d46a0d95422ea6f4925420be8ff3ce8f0";
-    hash = "sha256-9Geh8X5523tcZYyS7yONBjUW20ovej/5uGojyBBcMFI=";
+    hash = "sha256-0lihbh8ch8vap3wkyyig9bdicd86iliyz4lccmf7pnvrgvqs2rzl";
   };
 
-  npmDepsHash = lib.fakeHash; # Will be calculated from build
+  nativeBuildInputs = [ deno nodejs ];
 
-  nativeBuildInputs = [ nodejs deno ];
-
-  # Override build phase to use Deno instead of npm
+  # Deno uses deno.lock for dependencies, not package-lock.json
   buildPhase = ''
     runHook preBuild
-    
-    # Install Deno dependencies
-    ${deno}/bin/deno install
-    
-    # Build the application
+
+    # Deno will cache dependencies automatically
+    export DENO_DIR=$TMPDIR/deno
+
+    # Build the application using Deno
     ${deno}/bin/deno task build
-    
+
     runHook postBuild
   '';
 

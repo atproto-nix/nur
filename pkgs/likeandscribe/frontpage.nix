@@ -7,7 +7,7 @@ let
     owner = "likeandscribe";
     repo = "frontpage";
     rev = "5c95747f9d10f40b99d89830afd63d54d9b90665";
-    hash = lib.fakeHash; # Calculate on Linux x86_64
+    hash = "sha256-094gxnsicmp6wa5wb89c90zl8s94b4iq3arq91sk8idk0b2pcj8a";
   };
   
   # pnpm workspace configuration
