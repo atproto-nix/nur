@@ -44,7 +44,7 @@ buildNpmPackage rec {
     owner = "witchcraft-systems";
     repo = "pds-dash";
     rev = "c348ed5d46a0d95422ea6f4925420be8ff3ce8f0";
-    hash = lib.fakeHash; # Will be calculated from build
+    hash = "sha256-9Geh8X5523tcZYyS7yONBjUW20ovej/5uGojyBBcMFI=";
   };
 
   npmDepsHash = lib.fakeHash; # Will be calculated from build

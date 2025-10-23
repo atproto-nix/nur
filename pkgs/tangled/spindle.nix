@@ -15,10 +15,10 @@ buildGoModule rec {
     owner = "@tangled.org";
     repo = "core";
     rev = "54a60448cf5c456650e9954ca9422276c5d73282";
-    hash = lib.fakeHash; # Placeholder - needs real hash
+    hash = "sha256-OcTD732dTYT69smyDSI6oi0vXSwnpJfLGxq7MGNqOus=";
   };
 
-  vendorHash = lib.fakeHash; # Placeholder - needs real hash
+  vendorHash = "sha256-ppAAcayRboFCX1rB6FCYEqJi8crlCHBRuvUoZfmiuYY=";
 
   nativeBuildInputs = [
     pkg-config
