@@ -239,6 +239,15 @@ nix develop
 3. Create NixOS module in `modules/ORGANIZATION/`
 4. Test build and module configuration
 
+**Complex Builds:**
+Some packages require multi-stage builds with frontend tooling. See `pkgs/yoten-app/yoten.nix` for an example of:
+- Template generation (templ)
+- Frontend library fetching (htmx, lucide, alpinejs)
+- Tailwind CSS v4 (standalone binary with autoPatchelfHook)
+- Static asset preparation for Go embed directives
+
+See `CLAUDE.md` for detailed build patterns and best practices.
+
 ## Cachix
 
 Pre-built binaries are available via Cachix:
@@ -278,8 +287,9 @@ This structure makes it easy to find packages by their maintainer and understand
 
 **Recent Changes:**
 - Phase 1: Renamed `tangled-dev` → `tangled` (correct organization)
-- Phase 2: Pinned leaflet and slices to specific commits
+- Phase 2: Pinned leaflet and slices to specific commits with hashes
 - Phase 3: Moved frontpage/drainpipe from atproto to `likeandscribe` (correct maintainer)
+- **New**: Fixed `yoten-app/yoten` complex build (templ + Tailwind CSS v4 + frontend assets)
 
 ## License
 

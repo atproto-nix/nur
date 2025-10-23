@@ -171,6 +171,18 @@ Example workflow (microcosm):
 - Require pinned `vendorHash`
 - Helper function: `mkGoAtprotoApp`
 
+#### Complex Build Processes
+Some packages require multi-stage builds with frontend tooling:
+
+**Example: yoten (Go + templ + Tailwind CSS v4)**
+- Generate code from templ templates using `templ generate`
+- Fetch and minify frontend libraries (htmx, lucide, alpinejs)
+- Build Tailwind CSS v4 using standalone binary (nixpkgs has v3)
+- Use `autoPatchelfHook` to fix standalone binaries for NixOS
+- Create static files before Go embed directive evaluation
+
+See `pkgs/yoten-app/yoten.nix` for reference implementation.
+
 ### Tangled.org Integration
 Custom fetcher `fetchFromTangled` (in `lib/fetch-tangled.nix`) for Tangled repositories:
 ```nix
@@ -228,15 +240,18 @@ Fetcher for Tangled.org repositories (fork of `fetchFromGitHub`):
 - **Microcosm-blue** (1): allegedly (PLC tools)
 
 ### Known Issues
-See `PINNING_NEEDED.md` for ~8 packages needing version pinning:
-- tangled-dev/* (3 packages with fakeHash)
+See `PINNING_NEEDED.md` for 6 packages needing hash calculation:
+- tangled/* (3 packages: knot, appview, spindle)
 - witchcraft-systems/pds-dash
-- hyperlink-academy/leaflet
-- atproto/frontpage
-- slices-network/slices
+- likeandscribe/frontpage
 - atbackup-pages-dev/atbackup
 
 Packages with `lib.fakeHash` will fail to build until hashes are calculated.
+
+**Recently Fixed:**
+- ✅ yoten-app/yoten - Complex multi-stage build now working
+- ✅ hyperlink-academy/leaflet - Hash calculated
+- ✅ slices-network/slices - Hash calculated
 
 ## Development Workflow
 
@@ -337,5 +352,6 @@ deadnix .
 ✅ Multi-platform support (x86_64/aarch64 Linux/Darwin)
 ✅ NixOS modules for all services (except atbackup desktop app)
 ✅ Simplified structure maintained
-⚠️ 8 packages need version pinning (see PINNING_NEEDED.md)
+✅ All packages pinned to specific commits (no `rev = "main"`)
+⚠️ 6 packages need hash calculation on Linux x86_64 (see PINNING_NEEDED.md)
 ⚠️ Some packages are placeholders awaiting implementation

@@ -1,11 +1,44 @@
-{ pkgs, buildGoModule, fetchFromTangled, ... }:
+{ pkgs, lib, buildGoModule, fetchFromTangled, fetchurl, templ, esbuild, stdenv, autoPatchelfHook, ... }:
+
+let
+  # Fetch frontend libraries at build time (outside the sandbox)
+  htmx = fetchurl {
+    url = "https://cdn.jsdelivr.net/npm/htmx.org@2.0.6/dist/htmx.min.js";
+    sha256 = "05jn0kif1ralnbvbgwmf333wl5qfsqdp0m2hlxrmpy1s9znqwxmn";
+  };
+
+  lucide = fetchurl {
+    url = "https://unpkg.com/lucide@0.525.0/dist/umd/lucide.min.js";
+    sha256 = "03adq6md75sg7jph4lnjngppywjsmfvijyj959242kcx84f4p2rf";
+  };
+
+  alpinejs = fetchurl {
+    url = "https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js";
+    sha256 = "01pl6vx48klgdx291v568kagr6j0i9ixgn1n4zyb5rni76vg2hg0";
+  };
+
+  # Build a patched version of the standalone Tailwind CSS v4 CLI
+  tailwindcss-standalone = stdenv.mkDerivation {
+    name = "tailwindcss-standalone";
+    src = fetchurl {
+      url = "https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-x64";
+      sha256 = "sha256-d4SsikttfP7LHLT0HZ3zOz6DTdepXhStC1mGHNeAKQM=";
+    };
+    dontUnpack = true;
+    nativeBuildInputs = [ autoPatchelfHook ];
+    installPhase = ''
+      mkdir -p $out/bin
+      cp $src $out/bin/tailwindcss
+      chmod +x $out/bin/tailwindcss
+    '';
+  };
+in
 
 # Yoten - Language learning social platform using ATProto
-# Note: This is a basic build - the full implementation requires templ and tailwindcss
 buildGoModule rec {
   pname = "yoten";
   version = "0.1.0";
-  
+
   src = fetchFromTangled {
     domain = "tangled.org";
     owner = "@yoten.app";
@@ -13,21 +46,48 @@ buildGoModule rec {
     rev = "2de6115fc7b166148b7d9206809e0f4f0c6916d7";
     sha256 = "00lx7pkms1ycrbcmihqc5az98xvw0pb3107b107zikj8i08hygxz";
   };
-  
+
   vendorHash = "sha256-gjlwSBmyHy0SXTnOi+XNVBKm4t7HWRVNA19Utx3Eh/w=";
-  
+
+  # Build tools needed for frontend assets
+  nativeBuildInputs = [ templ esbuild ];
+
   # Build the main server binary
   subPackages = [ "cmd/server" ];
-  
+
   # Skip tests for now due to complex dependencies
   doCheck = false;
-  
-  # Note: This is a basic build that doesn't include templ generation or tailwind CSS
-  # For full functionality, additional build steps would be needed:
-  # 1. templ generate (requires templ tool)
-  # 2. tailwindcss build (requires tailwindcss and minify)
-  # 3. Static asset processing
-  
+
+  # Generate templ templates, build frontend assets, and prepare static files
+  preBuild = ''
+    # Generate Go code from templ templates
+    echo "Generating templ templates..."
+    templ generate
+
+    # Create static files directory
+    mkdir -p ./static/files
+
+    # Minify JS files using esbuild
+    echo "Minifying JavaScript files..."
+    for js in ./static/*.js; do
+      if [ -f "$js" ]; then
+        esbuild "$js" --minify --outfile="./static/files/$(basename "$js")"
+      fi
+    done
+
+    # Copy pre-fetched frontend libraries
+    echo "Copying frontend libraries..."
+    cp ${htmx} ./static/files/htmx.min.js
+    cp ${lucide} ./static/files/lucide.min.js
+    cp ${alpinejs} ./static/files/alpinejs.min.js
+
+    # Build Tailwind CSS using the standalone v4 binary
+    echo "Building Tailwind CSS..."
+    ${tailwindcss-standalone}/bin/tailwindcss -i ./input.css -o ./static/files/style.css --minify
+
+    echo "Frontend build complete. Static files ready."
+  '';
+
   postInstall = ''
     # Rename binary to yoten
     mv $out/bin/server $out/bin/yoten
@@ -58,11 +118,11 @@ buildGoModule rec {
     description = "Social platform for tracking language learning progress";
     longDescription = ''
       Social platform for tracking language learning progress built on ATProto.
-      
-      Note: This is a basic build that includes the core Go server but does not include
-      the full frontend build process (templ templates and tailwindcss). For full
-      functionality, additional build tools would be needed.
-      
+
+      Built with Go, templ templates, HTMX, Alpine.js, and Tailwind CSS.
+      Features include activity tracking, study sessions, notifications, and
+      social features like following other learners.
+
       Maintained by Yoten App (https://yoten.app)
     '';
     homepage = "https://yoten.app";
@@ -70,7 +130,7 @@ buildGoModule rec {
     platforms = platforms.unix;
     maintainers = [ ];
     mainProgram = "yoten";
-    
+
     organizationalContext = {
       organization = "yoten-app";
       displayName = "Yoten App";
