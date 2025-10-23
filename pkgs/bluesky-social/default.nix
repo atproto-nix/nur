@@ -14,13 +14,12 @@ let
     maintainer = "Bluesky Social";
     description = "Official Bluesky ATProto implementations and tools";
     atprotoFocus = [ "infrastructure" "servers" "libraries" ];
-    packageCount = 2;
+    packageCount = 1;
   };
 
   # Package naming pattern: use simple names within organization
   packages = {
     indigo = pkgs.callPackage ./indigo.nix { };
-    grain = pkgs.callPackage ./grain.nix { };
   };
 
   # Enhanced packages with organizational metadata

@@ -21,8 +21,9 @@
     ./witchcraft-systems
     ./atbackup-pages-dev
     ./bluesky-social
+    ./grain-social
     ./individual
-    
+
     # New organizational framework modules
     ./atproto
     ./individual

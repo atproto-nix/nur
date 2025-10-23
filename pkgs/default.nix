@@ -37,7 +37,10 @@ let
     
     # Official Bluesky packages
     bluesky-social = pkgs.callPackage ./bluesky-social { inherit lib; };
-    
+
+    # Photo-sharing platforms
+    grain-social = pkgs.callPackage ./grain-social { inherit lib; };
+
     # Individual developer packages
     individual = pkgs.callPackage ./individual { inherit lib craneLib; };
     

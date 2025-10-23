@@ -51,15 +51,17 @@ in
     # ATBackup modules (moved from atproto/)
     (mkRenamedOptionModule [ "services" "atproto-atbackup" ] [ "services" "atbackup-pages-dev-atbackup" ])
     
-    # Official Bluesky modules (moved from atproto/ to bluesky-social/)
+    # Official Bluesky Indigo modules (moved from atproto/ to bluesky-social/)
     (mkRenamedOptionModule [ "services" "atproto-indigo-hepa" ] [ "services" "bluesky-social-indigo-hepa" ])
     (mkRenamedOptionModule [ "services" "atproto-indigo-palomar" ] [ "services" "bluesky-social-indigo-palomar" ])
     (mkRenamedOptionModule [ "services" "atproto-indigo-rainbow" ] [ "services" "bluesky-social-indigo-rainbow" ])
     (mkRenamedOptionModule [ "services" "atproto-indigo-relay" ] [ "services" "bluesky-social-indigo-relay" ])
-    (mkRenamedOptionModule [ "services" "atproto-grain-appview" ] [ "services" "bluesky-social-grain-appview" ])
-    (mkRenamedOptionModule [ "services" "atproto-grain-darkroom" ] [ "services" "bluesky-social-grain-darkroom" ])
-    (mkRenamedOptionModule [ "services" "atproto-grain-labeler" ] [ "services" "bluesky-social-grain-labeler" ])
-    (mkRenamedOptionModule [ "services" "atproto-grain-notifications" ] [ "services" "bluesky-social-grain-notifications" ])
+
+    # Grain Social modules (moved from atproto/ to grain-social/)
+    (mkRenamedOptionModule [ "services" "atproto-grain-appview" ] [ "services" "grain-social-grain-appview" ])
+    (mkRenamedOptionModule [ "services" "atproto-grain-darkroom" ] [ "services" "grain-social-grain-darkroom" ])
+    (mkRenamedOptionModule [ "services" "atproto-grain-labeler" ] [ "services" "grain-social-grain-labeler" ])
+    (mkRenamedOptionModule [ "services" "atproto-grain-notifications" ] [ "services" "grain-social-grain-notifications" ])
     
     # Bluesky module aliases - services moved from bluesky/ to organizational directories
     
@@ -165,23 +167,25 @@ in
     (lib.optional (config.services.bluesky or {} ? pds-dash) 
       (mkDeprecationWarning "services.bluesky.pds-dash" "services.witchcraft-systems-pds-dash"))
       
-    # Official Bluesky service deprecation warnings
-    (lib.optional (config.services ? atproto-indigo-hepa) 
+    # Official Bluesky Indigo service deprecation warnings
+    (lib.optional (config.services ? atproto-indigo-hepa)
       (mkDeprecationWarning "services.atproto-indigo-hepa" "services.bluesky-social-indigo-hepa"))
-    (lib.optional (config.services ? atproto-indigo-palomar) 
+    (lib.optional (config.services ? atproto-indigo-palomar)
       (mkDeprecationWarning "services.atproto-indigo-palomar" "services.bluesky-social-indigo-palomar"))
-    (lib.optional (config.services ? atproto-indigo-rainbow) 
+    (lib.optional (config.services ? atproto-indigo-rainbow)
       (mkDeprecationWarning "services.atproto-indigo-rainbow" "services.bluesky-social-indigo-rainbow"))
-    (lib.optional (config.services ? atproto-indigo-relay) 
+    (lib.optional (config.services ? atproto-indigo-relay)
       (mkDeprecationWarning "services.atproto-indigo-relay" "services.bluesky-social-indigo-relay"))
-    (lib.optional (config.services ? atproto-grain-appview) 
-      (mkDeprecationWarning "services.atproto-grain-appview" "services.bluesky-social-grain-appview"))
-    (lib.optional (config.services ? atproto-grain-darkroom) 
-      (mkDeprecationWarning "services.atproto-grain-darkroom" "services.bluesky-social-grain-darkroom"))
-    (lib.optional (config.services ? atproto-grain-labeler) 
-      (mkDeprecationWarning "services.atproto-grain-labeler" "services.bluesky-social-grain-labeler"))
+
+    # Grain Social service deprecation warnings
+    (lib.optional (config.services ? atproto-grain-appview)
+      (mkDeprecationWarning "services.atproto-grain-appview" "services.grain-social-grain-appview"))
+    (lib.optional (config.services ? atproto-grain-darkroom)
+      (mkDeprecationWarning "services.atproto-grain-darkroom" "services.grain-social-grain-darkroom"))
+    (lib.optional (config.services ? atproto-grain-labeler)
+      (mkDeprecationWarning "services.atproto-grain-labeler" "services.grain-social-grain-labeler"))
     (lib.optional (config.services ? atproto-grain-notifications)
-      (mkDeprecationWarning "services.atproto-grain-notifications" "services.bluesky-social-grain-notifications"))
+      (mkDeprecationWarning "services.atproto-grain-notifications" "services.grain-social-grain-notifications"))
 
     # Phase 3 module consolidation deprecation warnings (2025-10-22)
     (lib.optional (config.services.atproto or {} ? frontpage)
