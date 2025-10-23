@@ -20,8 +20,9 @@ let
       domain = "tangled.org";
       owner = "@mackuba.eu";
       repo = "lycan";
-      rev = "ceea606e0b6f3ab8e89b7bfdc9e4b7e3c8c4e8df";
-      hash = lib.fakeHash;
+      rev = "ceea606fba2e03905dbb3be7997fc6a3298cda58";
+      hash = "sha256-3CutDYVYkfxuU1SrqtuBeocS+TIPUOM2W4BfIIfaNqs=";
+      forceFetchGit = true;  # Tangled doesn't support /archive endpoint
     };
 
     gemConfig = defaultGemConfig;
@@ -36,8 +37,9 @@ stdenv.mkDerivation rec {
     domain = "tangled.org";
     owner = "@mackuba.eu";
     repo = "lycan";
-    rev = "ceea606e0b6f3ab8e89b7bfdc9e4b7e3c8c4e8df";
-    hash = lib.fakeHash;
+    rev = "ceea606fba2e03905dbb3be7997fc6a3298cda58";
+    hash = "sha256-3CutDYVYkfxuU1SrqtuBeocS+TIPUOM2W4BfIIfaNqs=";
+    forceFetchGit = true;  # Tangled doesn't support /archive endpoint
   };
 
   nativeBuildInputs = [ makeWrapper ruby ];
