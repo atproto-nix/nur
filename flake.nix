@@ -86,6 +86,7 @@
           witchcraft-systems = import ./modules/witchcraft-systems;
           mackuba = import ./modules/mackuba;
           whey-party = import ./modules/whey-party;
+          whyrusleeping = import ./modules/whyrusleeping;
         };
 
         devShells.default = pkgs.mkShell {
@@ -93,6 +94,20 @@
             deadnix
             nixpkgs-fmt
           ];
+        };
+
+        checks = {
+          # Ruby packages
+          mackuba-lycan = pkgs.callPackage ./tests/mackuba-lycan.nix { };
+
+          # Rust packages (Microcosm)
+          microcosm-constellation = pkgs.callPackage ./tests/microcosm-constellation.nix { inherit craneLib; };
+
+          # Rust packages (Blacksky/rsky)
+          blacksky-pds = pkgs.callPackage ./tests/blacksky-pds.nix { inherit craneLib; };
+
+          # Go packages (Bluesky official)
+          bluesky-indigo = pkgs.callPackage ./tests/bluesky-indigo.nix { };
         };
       }
     );

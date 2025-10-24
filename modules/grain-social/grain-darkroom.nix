@@ -1,208 +1,148 @@
-# Defines the NixOS module for the Grain Darkroom image processing service
 { config, lib, pkgs, ... }:
 
 with lib;
 
 let
-  cfg = config.services.grain-darkroom;
+  cfg = config.services.grain-social-darkroom;
+
 in
 {
-  options.services.grain-darkroom = {
-    enable = mkEnableOption "Grain Darkroom image processing service";
+  options.services.grain-social-darkroom = {
+    enable = mkEnableOption "Grain Social Darkroom image processing service";
 
     package = mkOption {
       type = types.package;
-      default = pkgs.bluesky-social-grain-darkroom;
-      description = "The Grain Darkroom package to use.";
-    };
-
-    dataDir = mkOption {
-      type = types.str;
-      default = "/var/lib/grain-darkroom";
-      description = "The absolute path to the directory to store data in.";
+      default = pkgs.grain-social-darkroom;
+      defaultText = literalExpression "pkgs.grain-social-darkroom";
+      description = "The Darkroom package to use.";
     };
 
     user = mkOption {
       type = types.str;
       default = "grain-darkroom";
-      description = "User account for Grain Darkroom service.";
+      description = "User account under which Darkroom runs.";
     };
 
     group = mkOption {
       type = types.str;
       default = "grain-darkroom";
-      description = "Group for Grain Darkroom service.";
+      description = "Group under which Darkroom runs.";
+    };
+
+    port = mkOption {
+      type = types.port;
+      default = 8080;
+      description = "Port for the Darkroom HTTP server.";
+    };
+
+    baseUrl = mkOption {
+      type = types.str;
+      default = "http://localhost:${toString cfg.port}";
+      defaultText = literalExpression ''"http://localhost:''${toString cfg.port}"'';
+      description = "Base URL where Darkroom is accessible.";
+    };
+
+    grainBaseUrl = mkOption {
+      type = types.str;
+      description = "Base URL of the Grain AppView instance.";
+      example = "https://grain.social";
+    };
+
+    chromePath = mkOption {
+      type = types.path;
+      default = "${pkgs.chromium}/bin/chromium";
+      defaultText = literalExpression ''"''${pkgs.chromium}/bin/chromium"'';
+      readOnly = true;
+      description = "Path to Chromium browser executable.";
+    };
+
+    chromeDriverPath = mkOption {
+      type = types.path;
+      default = "${pkgs.chromedriver}/bin/chromedriver";
+      defaultText = literalExpression ''"''${pkgs.chromedriver}/bin/chromedriver"'';
+      readOnly = true;
+      description = "Path to ChromeDriver executable.";
+    };
+
+    chromeProfileDir = mkOption {
+      type = types.path;
+      default = "/var/lib/grain-darkroom/chrome-profile";
+      description = "Directory for Chromium profile data.";
+    };
+
+    logLevel = mkOption {
+      type = types.enum [ "error" "warn" "info" "debug" "trace" ];
+      default = "info";
+      description = "Rust log level for the service.";
+    };
+
+    openFirewall = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Open the firewall for the Darkroom port.";
     };
 
     settings = mkOption {
-      type = types.submodule {
-        options = {
-          port = mkOption {
-            type = types.port;
-            default = 3001;
-            description = "Port for the darkroom service to listen on.";
-          };
-
-          hostname = mkOption {
-            type = types.str;
-            default = "localhost";
-            description = "Hostname for the darkroom service.";
-          };
-
-          processing = {
-            maxWidth = mkOption {
-              type = types.int;
-              default = 2048;
-              description = "Maximum width for processed images.";
-            };
-
-            maxHeight = mkOption {
-              type = types.int;
-              default = 2048;
-              description = "Maximum height for processed images.";
-            };
-
-            quality = mkOption {
-              type = types.int;
-              default = 85;
-              description = "JPEG quality for processed images (1-100).";
-            };
-
-            workers = mkOption {
-              type = types.int;
-              default = 4;
-              description = "Number of image processing worker threads.";
-            };
-
-            timeout = mkOption {
-              type = types.int;
-              default = 30;
-              description = "Processing timeout in seconds.";
-            };
-          };
-
-          cache = {
-            enable = mkEnableOption "image caching";
-
-            directory = mkOption {
-              type = types.path;
-              default = "${cfg.dataDir}/cache";
-              description = "Cache directory for processed images.";
-            };
-
-            maxSize = mkOption {
-              type = types.str;
-              default = "1GB";
-              description = "Maximum cache size.";
-            };
-
-            ttl = mkOption {
-              type = types.int;
-              default = 86400;
-              description = "Cache TTL in seconds.";
-            };
-          };
-
-          screenshot = {
-            enable = mkEnableOption "screenshot generation for galleries";
-
-            chromeExecutable = mkOption {
-              type = types.nullOr types.path;
-              default = null;
-              description = "Path to Chrome/Chromium executable.";
-            };
-
-            viewport = {
-              width = mkOption {
-                type = types.int;
-                default = 1200;
-                description = "Screenshot viewport width.";
-              };
-
-              height = mkOption {
-                type = types.int;
-                default = 800;
-                description = "Screenshot viewport height.";
-              };
-            };
-
-            timeout = mkOption {
-              type = types.int;
-              default = 10;
-              description = "Screenshot timeout in seconds.";
-            };
-          };
-
-          logLevel = mkOption {
-            type = types.enum [ "trace" "debug" "info" "warn" "error" ];
-            default = "info";
-            description = "Logging level.";
-          };
-
-          metrics = {
-            enable = mkEnableOption "Prometheus metrics endpoint";
-            
-            port = mkOption {
-              type = types.port;
-              default = 3011;
-              description = "Port for metrics endpoint.";
-            };
-          };
-        };
-      };
+      type = types.attrs;
       default = {};
-      description = "Grain Darkroom service configuration.";
+      description = "Additional environment variables for Darkroom.";
+      example = literalExpression ''
+        {
+          SOME_CUSTOM_VAR = "value";
+        }
+      '';
     };
   };
 
   config = mkIf cfg.enable {
+    # Assertions
     assertions = [
       {
-        assertion = cfg.settings.processing.quality >= 1 && cfg.settings.processing.quality <= 100;
-        message = "services.grain-darkroom: processing quality must be between 1 and 100";
-      }
-      {
-        assertion = cfg.settings.screenshot.enable -> (cfg.settings.screenshot.chromeExecutable != null);
-        message = "services.grain-darkroom: chromeExecutable must be specified when screenshot is enabled";
+        assertion = cfg.grainBaseUrl != "";
+        message = "Darkroom requires grainBaseUrl to be configured.";
       }
     ];
 
-    # Create user and group
+    # User and group configuration
     users.users.${cfg.user} = {
       isSystemUser = true;
       group = cfg.group;
-      home = cfg.dataDir;
+      home = "/var/lib/grain-darkroom";
+      description = "Grain Darkroom service user";
     };
 
     users.groups.${cfg.group} = {};
 
     # Directory management
     systemd.tmpfiles.rules = [
-      "d '${cfg.dataDir}' 0750 ${cfg.user} ${cfg.group} - -"
-    ] ++ lib.optional (cfg.settings.cache.enable) [
-      "d '${cfg.settings.cache.directory}' 0750 ${cfg.user} ${cfg.group} - -"
+      "d '/var/lib/grain-darkroom' 0750 ${cfg.user} ${cfg.group} - -"
+      "d '${cfg.chromeProfileDir}' 0755 ${cfg.user} ${cfg.group} - -"
+      # Chromium needs writable /tmp
+      "d '/tmp/grain-darkroom' 1777 ${cfg.user} ${cfg.group} - -"
     ];
 
     # systemd service
     systemd.services.grain-darkroom = {
-      description = "Grain Darkroom image processing service";
-      wantedBy = [ "multi-user.target" ];
+      description = "Grain Social Darkroom - Image Processing Service";
+      documentation = [ "https://grain.social" ];
       after = [ "network.target" ];
-      wants = [ "network.target" ];
+      wantedBy = [ "multi-user.target" ];
 
       serviceConfig = {
-        Type = "exec";
+        Type = "simple";
         User = cfg.user;
         Group = cfg.group;
-        WorkingDirectory = cfg.dataDir;
+        WorkingDirectory = "/var/lib/grain-darkroom";
+        ExecStart = "${cfg.package}/bin/darkroom";
         Restart = "on-failure";
-        RestartSec = "10s";
+        RestartSec = "5s";
 
         # Security hardening
+        # Note: Cannot use DynamicUser because Chromium needs stable profile directory
         NoNewPrivileges = true;
         ProtectSystem = "strict";
         ProtectHome = true;
-        PrivateTmp = true;
+        PrivateTmp = false; # Chromium needs /tmp access
         ProtectKernelTunables = true;
         ProtectKernelModules = true;
         ProtectControlGroups = true;
@@ -210,46 +150,41 @@ in
         RestrictRealtime = true;
         RestrictNamespaces = true;
         LockPersonality = true;
-        # Note: MemoryDenyWriteExecute disabled for image processing libraries
-        # MemoryDenyWriteExecute = true;
+        RestrictAddressFamilies = [ "AF_UNIX" "AF_INET" "AF_INET6" ];
 
         # File system access
-        ReadWritePaths = [ cfg.dataDir ] 
-          ++ lib.optional (cfg.settings.cache.enable) cfg.settings.cache.directory;
+        ReadWritePaths = [
+          "/var/lib/grain-darkroom"
+          cfg.chromeProfileDir
+          "/tmp/grain-darkroom"
+        ];
         ReadOnlyPaths = [ "/nix/store" ];
+
+        # Resource limits
+        LimitNOFILE = 65536;
       };
 
       environment = {
-        RUST_LOG = cfg.settings.logLevel;
-        DARKROOM_HOSTNAME = cfg.settings.hostname;
-        DARKROOM_PORT = toString cfg.settings.port;
-        DARKROOM_PROCESSING_MAX_WIDTH = toString cfg.settings.processing.maxWidth;
-        DARKROOM_PROCESSING_MAX_HEIGHT = toString cfg.settings.processing.maxHeight;
-        DARKROOM_PROCESSING_QUALITY = toString cfg.settings.processing.quality;
-        DARKROOM_PROCESSING_WORKERS = toString cfg.settings.processing.workers;
-        DARKROOM_PROCESSING_TIMEOUT = toString cfg.settings.processing.timeout;
-      } // lib.optionalAttrs (cfg.settings.cache.enable) {
-        DARKROOM_CACHE_ENABLED = "true";
-        DARKROOM_CACHE_DIRECTORY = cfg.settings.cache.directory;
-        DARKROOM_CACHE_MAX_SIZE = cfg.settings.cache.maxSize;
-        DARKROOM_CACHE_TTL = toString cfg.settings.cache.ttl;
-      } // lib.optionalAttrs (cfg.settings.screenshot.enable) {
-        DARKROOM_SCREENSHOT_ENABLED = "true";
-        DARKROOM_CHROME_EXECUTABLE = cfg.settings.screenshot.chromeExecutable;
-        DARKROOM_SCREENSHOT_VIEWPORT_WIDTH = toString cfg.settings.screenshot.viewport.width;
-        DARKROOM_SCREENSHOT_VIEWPORT_HEIGHT = toString cfg.settings.screenshot.viewport.height;
-        DARKROOM_SCREENSHOT_TIMEOUT = toString cfg.settings.screenshot.timeout;
-      } // lib.optionalAttrs (cfg.settings.metrics.enable) {
-        DARKROOM_METRICS_PORT = toString cfg.settings.metrics.port;
-      };
+        RUST_LOG = cfg.logLevel;
+        RUST_BACKTRACE = "1";
+        CHROME_PATH = cfg.chromePath;
+        CHROMEDRIVER_PATH = cfg.chromeDriverPath;
+        BASE_URL = cfg.baseUrl;
+        GRAIN_BASE_URL = cfg.grainBaseUrl;
+        PORT = toString cfg.port;
 
-      script = ''
-        exec ${cfg.package}/bin/darkroom
-      '';
+        # Font configuration for Chromium rendering
+        FONTCONFIG_FILE = cfg.package.makeFontConfig;
+
+        # Chromium profile directory
+        CHROME_PROFILE_DIR = cfg.chromeProfileDir;
+
+        # Chromium flags for headless operation
+        CHROME_FLAGS = "--headless --disable-gpu --no-sandbox --disable-dev-shm-usage";
+      } // cfg.settings;
     };
 
-    # Open firewall ports
-    networking.firewall.allowedTCPPorts = [ cfg.settings.port ] 
-      ++ lib.optional cfg.settings.metrics.enable cfg.settings.metrics.port;
+    # Firewall
+    networking.firewall.allowedTCPPorts = mkIf cfg.openFirewall [ cfg.port ];
   };
 }

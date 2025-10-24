@@ -42,11 +42,12 @@ let
     bluesky = pkgs.callPackage ./bluesky { inherit lib; };
 
     # Photo-sharing platforms
-    grain-social = pkgs.callPackage ./grain-social { inherit lib; };
+    grain-social = pkgs.callPackage ./grain-social { inherit lib craneLib; };
 
     # Individual developer packages
     individual = pkgs.callPackage ./individual { inherit lib craneLib; };
     mackuba = pkgs.callPackage ./mackuba { inherit lib; };
+    whyrusleeping = pkgs.callPackage ./whyrusleeping { inherit lib; };
 
     # New organizational framework packages
     likeandscribe = pkgs.callPackage ./likeandscribe { inherit lib craneLib buildNpmPackage; };
@@ -54,7 +55,6 @@ let
     # Legacy package collections (for backward compatibility)
     microcosm = pkgs.callPackage ./microcosm { inherit craneLib; };
     blacksky = pkgs.callPackage ./blacksky { inherit craneLib; };
-    bluesky-legacy = pkgs.callPackage ./bluesky-legacy { inherit craneLib; };
   };
 
   # Helper function to check if something is a derivation

@@ -2,17 +2,18 @@
 
 buildGoModule rec {
   pname = "streamplace";
-  version = "0.1.0";
-  
+  version = "unstable-2025-01-23";
+
   src = fetchFromTangled {
     domain = "tangled.org";
     owner = "@stream.place";
     repo = "streamplace";
-    rev = "167ae0c640c8c338393f4c91409d5a0048b82bb6";
-    sha256 = "1yahp3qb2rzrrqbkgj6s8kbl9aaxwphagrd0ah4d7928kyfgq2dk";
+    rev = "a40860f005ba4da989cfe1a5c39d29fa3564fea6";
+    hash = pkgs.lib.fakeHash;
+    forceFetchGit = true;
   };
-  
-  vendorHash = "sha256-MeKpycGxUnYyGPhkoxH/rgdudBB+zY2YcVpoic8zPXA=";
+
+  vendorHash = pkgs.lib.fakeHash;
   
   # Complex multimedia dependencies
   nativeBuildInputs = with pkgs; [
@@ -69,18 +70,41 @@ buildGoModule rec {
   };
   
   meta = with pkgs.lib; {
-    description = "Video infrastructure platform with ATProto integration";
+    description = "Solving Video for Everybody Forever - ATProto-integrated video infrastructure";
     longDescription = ''
-      Video infrastructure platform with ATProto integration for multimedia streaming.
-      Note: Complex multimedia dependencies may require additional system setup.
-      
+      Streamplace is a comprehensive video infrastructure platform with deep
+      ATProto integration. It provides video streaming, processing, and
+      distribution capabilities for the Bluesky network.
+
+      Features:
+      - GStreamer-based video processing pipeline
+      - Livepeer integration for video transcoding
+      - WebRTC and RTSP support
+      - ATProto authentication and identity
+      - Multi-modal media support (video, audio, images)
+      - C2PA content authenticity support
+      - Distributed video infrastructure
+
+      Built with:
+      - Go backend with extensive video libraries
+      - GStreamer multimedia framework
+      - PostgreSQL database
+      - ATProto/Bluesky integration
+      - Rust components for performance-critical paths
+
+      Sponsored by Livepeer Treasury for open video infrastructure.
+
       Maintained by Stream.place (https://stream.place)
+
+      Note: Complex multimedia dependencies (GStreamer, FFmpeg, OpenCV) may
+      require additional system setup.
     '';
     homepage = "https://stream.place";
     license = licenses.mit;
     platforms = platforms.unix;
     maintainers = [ ];
-    
+    mainProgram = "streamplace";
+
     organizationalContext = {
       organization = "stream-place";
       displayName = "Stream.place";

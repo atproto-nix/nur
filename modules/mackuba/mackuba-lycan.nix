@@ -30,8 +30,9 @@ in
 
     database = {
       url = mkOption {
-        type = types.str;
-        description = "PostgreSQL database URL.";
+        type = types.nullOr types.str;
+        default = null;
+        description = "PostgreSQL database URL. Leave null when using createLocally.";
         example = "postgresql://lycan:password@localhost/lycan";
       };
 
@@ -118,8 +119,12 @@ in
   config = mkIf cfg.enable {
     assertions = [
       {
-        assertion = cfg.database.createLocally -> cfg.database.url == "";
+        assertion = cfg.database.createLocally -> cfg.database.url == null;
         message = "Cannot specify database.url when database.createLocally is true.";
+      }
+      {
+        assertion = !cfg.database.createLocally -> cfg.database.url != null;
+        message = "Must specify database.url when database.createLocally is false.";
       }
     ];
 
@@ -150,11 +155,13 @@ in
       description = "Lycan ATProto Feed Generator";
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" ] ++ optional cfg.database.createLocally "postgresql.service";
-      wants = optional cfg.database.createLocally [ "postgresql.service" ];
+      wants = optional cfg.database.createLocally "postgresql.service";
 
       preStart = mkIf cfg.database.createLocally ''
-        # Run database migrations
-        ${cfg.package}/bin/lycan-rake db:migrate
+        # Note: Database migrations should be run manually with:
+        # systemctl start lycan-migrate.service
+        # or: lycan-rake db:migrate
+        echo "Lycan starting. Run migrations with: lycan-rake db:migrate"
       '';
 
       serviceConfig = {

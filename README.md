@@ -16,7 +16,7 @@ This NUR provides Nix packages and NixOS modules for the AT Protocol ecosystem, 
 - **Development Tools**: Tangled infrastructure, ATProto core libraries
 - **NixOS Modules**: Declarative service configuration for all packages
 
-**Total Packages**: 48+ and growing
+**Total Packages**: 49+ and growing
 
 ## Quick Start
 
@@ -157,6 +157,18 @@ Photo-sharing platform for ATProto (by Chad Miller):
 **Website**: https://grain.social
 **Repository**: https://tangled.org/@grain.social/grain
 
+### Mackuba
+
+ATProto tools and feed generators by @mackuba.eu:
+
+- `mackuba-lycan` - Custom feed generator (Ruby/Sinatra)
+  - Firehose integration via Skyfall
+  - PostgreSQL database backend
+  - OAuth authentication support
+  - Uses minisky, didkit, and skyfall gems
+
+**Repository**: https://tangled.org/@mackuba.eu/lycan
+
 ## NixOS Modules
 
 **Service packages** (servers/daemons/web apps) have corresponding NixOS modules for declarative server deployment.
@@ -202,6 +214,7 @@ Available module collections:
 - `atproto-nur.nixosModules.witchcraft-systems` - PDS dashboard
 - `atproto-nur.nixosModules.smokesignal-events` - QuickDID service
 - `atproto-nur.nixosModules.individual` - PDS gatekeeper
+- `atproto-nur.nixosModules.mackuba` - Lycan feed generator
 
 ## AI-Assisted Development
 
@@ -229,7 +242,7 @@ EOF
 # Restart Claude Code to load the MCP server
 ```
 
-See [MCP_INTEGRATION.md](./MCP_INTEGRATION.md) for detailed setup instructions.
+See [MCP_INTEGRATION.md](./docs/MCP_INTEGRATION.md) for detailed setup instructions.
 
 ## Development
 
@@ -288,7 +301,13 @@ substituters = https://cache.nixos.org https://atproto.cachix.org
 trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= atproto.cachix.org-1:mgH0q9dt3ZI9puHEfIGDnkRBfT80I3vfEh4Wda2B0rk=
 ```
 
-**Note**: Binary cache is automatically populated by CI builds. 47/50 packages currently have pre-built binaries available.
+**Multi-Language Support:**
+- **Rust packages**: Crane caching for dependencies + Cachix for binaries
+- **Go packages**: Cachix caches vendored dependencies and final binaries
+- **Node.js packages**: Cachix caches npm dependencies and webpack outputs
+- **Ruby packages**: Cachix caches bundled gems and native extensions
+
+Binary cache is automatically populated by GitHub Actions CI on every push.
 
 ## Contributing
 
@@ -314,6 +333,7 @@ Packages are organized by their maintainer/organization:
 - `tangled/` - Tangled git forge infrastructure
 - `likeandscribe/` - Frontpage community platform
 - `hyperlink-academy/`, `parakeet-social/`, `teal-fm/`, etc. - Third-party apps
+- `mackuba/` - Feed generators and ATProto tools by @mackuba.eu
 - `individual/` - Individual developer packages
 
 This structure makes it easy to find packages by their maintainer and understand the ecosystem.
@@ -324,6 +344,7 @@ This structure makes it easy to find packages by their maintainer and understand
 - Phase 3: Moved frontpage/drainpipe from atproto to `likeandscribe` (correct maintainer)
 - Phase 4: Moved grain from bluesky-social to `grain-social` (correct maintainer - Chad Miller)
 - **New**: Fixed `yoten-app/yoten` complex build (templ + Tailwind CSS v4 + frontend assets)
+- **New**: Added `mackuba/lycan` - Ruby feed generator with bundlerEnv packaging
 
 ## License
 
@@ -340,15 +361,15 @@ Most packages are MIT or Apache-2.0 licensed.
 
 ## Status
 
-✅ 48 packages available
+✅ 49 packages available (8 Rust, 5 Go, 12 Node.js/TypeScript, 1 Ruby, 23 others)
 ✅ Multi-platform support (Linux x86_64/aarch64, macOS x86_64/aarch64)
 ✅ NixOS modules for all services (100% coverage)
 ✅ All packages pinned to specific commits
-⚠️  6 packages need hash calculation on Linux (see PINNING_NEEDED.md)
+✅ Binary cache via Cachix (instant downloads, no compilation)
 
 **Repository Health**: 🟡 90% Production Ready
 
-See [NEXT_STEPS.md](./NEXT_STEPS.md) for development roadmap.
+See [docs/ROADMAP.md](./docs/ROADMAP.md) for development roadmap and [docs/CACHIX.md](./docs/CACHIX.md) for binary cache setup.
 
 ---
 

@@ -25,6 +25,7 @@
     ./individual
     ./mackuba
     ./whey-party
+    ./whyrusleeping
 
     # New organizational framework modules
     ./likeandscribe
