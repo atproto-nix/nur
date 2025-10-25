@@ -13,7 +13,7 @@ let
     owner = "whyrusleeping";
     repo = "konbini";
     rev = "a803489e1b7fb366164f2df2e113528b30013358";
-    hash = lib.fakeHash;
+    hash = "sha256-Mk31H9ucrmFBmt1clPdp/xjIw+scEIDvaxYWIvWfl4A=";
   };
 
   # Build the React frontend
