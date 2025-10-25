@@ -23,7 +23,7 @@ let
     appview = pkgs.callPackage ./appview.nix { inherit buildGoModule; };
     knot = pkgs.callPackage ./knot.nix { inherit buildGoModule; };
     spindle = pkgs.callPackage ./spindle.nix { inherit buildGoModule; };
-    avatar = pkgs.callPackage ./avatar.nix { };
+    avatar = pkgs.callPackage ./avatar.nix { wrangler = pkgs.wrangler; };
     camo = pkgs.callPackage ./camo.nix { };
     genjwks = pkgs.callPackage ./genjwks.nix { };
     lexgen = pkgs.callPackage ./lexgen.nix { };

@@ -3,6 +3,7 @@
 , fetchFromTangled
 , makeWrapper
 , nodejs
+, wrangler
 }:
 
 buildNpmPackage rec {
@@ -21,15 +22,13 @@ buildNpmPackage rec {
 
   npmDepsHash = "sha256-AI9MJXRtcQ17FLi7Lh8b5Rz7d8QkFFtuF0u0LHXFoR4=";
 
-    nativeBuildInputs = [ makeWrapper ];
-    
-    # Skip optional dependencies that require network access
-    # sharp's native binaries are optional and will fall back to JS implementations
-    makeCacheDistDirs = true;
-    npmFlags = [ "--omit=optional" ];
-    
-    dontNpmBuild = true;
-  installPhase = ''
+          nativeBuildInputs = [ makeWrapper ];
+
+          buildInputs = [ wrangler ];
+
+          
+
+          dontNpmBuild = true;  installPhase = ''
     runHook preInstall
 
     mkdir -p $out/{lib/avatar,bin}
