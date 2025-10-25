@@ -13,7 +13,7 @@ buildGoModule rec {
     forceFetchGit = true;
   };
 
-  vendorHash = pkgs.lib.fakeHash;
+  vendorHash = "sha256-bElUNlQzk7+NcvZmEeo4P8H6UCrEGG/4VD7E7oIlQ38=";
   
   # Complex multimedia dependencies
   nativeBuildInputs = with pkgs; [
