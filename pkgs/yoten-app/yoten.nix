@@ -18,20 +18,20 @@ let
   };
 
   # Build a patched version of the standalone Tailwind CSS v4 CLI
-  tailwindcss-standalone-v2 = stdenv.mkDerivation {
+  tailwindcss-standalone = stdenv.mkDerivation {
     name = "tailwindcss-standalone-v2";
     src = let
       base = "https://github.com/tailwindlabs/tailwindcss/releases/latest/download";
       srcAttrs = 
         if stdenv.system == "x86_64-linux" then {
           url = "${base}/tailwindcss-linux-x64";
-          sha256 = lib.fakeHash;
+          sha256 = "sha256-CeaHamPOsJzNflhn49uystxlw6Ly4v4hDWjqO8BDIFA=";
         } else if stdenv.system == "aarch64-darwin" then {
           url = "${base}/tailwindcss-macos-arm64";
           sha256 = "sha256-5s1EuBZ/V0bKMuVPahQR3RpsDdFdJqnCc7Oy7Z2H330=";
         } else if stdenv.system == "x86_64-darwin" then {
           url = "${base}/tailwindcss-darwin-x64";
-          sha256 = lib.fakeHash;
+          sha256 = "sha256-8891f28257400aa862151fca222572385643a0b2261b35368ca6c6064e271877";
         } else { # Default to linux-x64 if system not explicitly handled
           url = "${base}/tailwindcss-linux-x64";
           sha256 = "sha256-CeaHamPOsJzNflhn49uystxlw6Ly4v4hDWjqO8BDIFA=";
@@ -96,7 +96,7 @@ buildGoModule rec {
 
     # Build Tailwind CSS using the standalone v4 binary
     echo "Building Tailwind CSS..."
-    ${tailwindcss-standalone-v2}/bin/tailwindcss -i ./input.css -o ./static/files/style.css --minify
+    ${tailwindcss-standalone}/bin/tailwindcss -i ./input.css -o ./static/files/style.css --minify
 
     echo "Frontend build complete. Static files ready."
   '';
