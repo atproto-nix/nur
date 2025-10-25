@@ -48,11 +48,11 @@ let
 in
 rec {
   buildPkgs = filter isBuildable (builtins.attrValues nurPkgs);
-  cachePkgs = filter isCacheable (builtins.attrValues buildPkgs);
+  cachePkgs = filter isCacheable buildPkgs;
 
   buildOutputs = concatMap outputsOf buildPkgs;
   cacheOutputs = pkgs.symlinkJoin {
     name = "nur-cache-outputs";
-    paths = builtins.attrValues cachePkgs;
+    paths = cachePkgs;
   };
 }
