@@ -9,7 +9,7 @@ buildGoModule rec {
     owner = "@stream.place";
     repo = "streamplace";
     rev = "a40860f005ba4da989cfe1a5c39d29fa3564fea6";
-    hash = pkgs.lib.fakeHash;
+    hash = "sha256-wfBeOrDGaY5+lHFGJ4fEUxA4ttMfECM7RByL9SSxF9I=";
     forceFetchGit = true;
   };
 
