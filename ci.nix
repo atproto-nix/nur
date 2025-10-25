@@ -51,5 +51,8 @@ rec {
   cachePkgs = filter isCacheable buildPkgs;
 
   buildOutputs = concatMap outputsOf buildPkgs;
-  cacheOutputs = cachePkgs;
+  cacheOutputs = pkgs.symlinkJoin {
+    name = "nur-cache-outputs";
+    paths = cachePkgs;
+  };
 }
