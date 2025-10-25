@@ -40,11 +40,10 @@ let
   nurAttrs = import ./default.nix { inherit pkgs craneLib; };
 
   nurPkgs =
-    flattenPkgs
-      (listToAttrs
-        (map (n: nameValuePair n nurAttrs.${n})
-          (filter (n: !isReserved n)
-            (attrNames nurAttrs))));
+    listToAttrs
+      (map (n: nameValuePair n nurAttrs.${n})
+        (filter (n: !isReserved n)
+          (attrNames nurAttrs)));
 
 in
 rec {
@@ -52,5 +51,5 @@ rec {
   cachePkgs = filter isCacheable buildPkgs;
 
   buildOutputs = concatMap outputsOf buildPkgs;
-  cacheOutputs = concatMap outputsOf cachePkgs;
+  cacheOutputs = cachePkgs;
 }
