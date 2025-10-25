@@ -1,18 +1,16 @@
 { pkgs, ... }:
 
-pkgs.writeTextFile {
-  name = "tangled-dev-lexgen-placeholder";
-  text = ''
-    # Tangled Lexicon Generator Placeholder
-    
-    This is a placeholder for Tangled lexicon generator.
-    The actual implementation can be built using the Nix files in:
-    code-references/tangled-core
-    
-    To build the real package, use:
-    nix build ./code-references/tangled-core#lexgen
-  '';
-  
+pkgs.writeScriptBin "lexgen" ''
+  #!${pkgs.bash}/bin/bash
+  echo "Tangled Lexicon Generator Placeholder"
+  echo "This is a placeholder for Tangled lexicon generator."
+  echo "The actual implementation can be built using the Nix files in:"
+  echo "code-references/tangled-core"
+  echo ""
+  echo "To build the real package, use:"
+  echo "nix build ./code-references/tangled-core#lexgen"
+  exit 1
+'' // {
   passthru = {
     atproto = {
       type = "tool";
@@ -51,6 +49,7 @@ pkgs.writeTextFile {
     license = licenses.mit;
     platforms = platforms.unix;
     maintainers = [ ];
+    mainProgram = "lexgen";
     
     organizationalContext = {
       organization = "tangled-dev";

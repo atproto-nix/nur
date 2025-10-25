@@ -19,7 +19,7 @@ buildNpmPackage rec {
 
   sourceRoot = "${src.name}/avatar";
 
-  npmDepsHash = "sha256-PLACEHOLDER";  # Will calculate when building
+  npmDepsHash = "sha256-AI9MJXRtcQ17FLi7Lh8b5Rz7d8QkFFtuF0u0LHXFoR4=";
 
   nativeBuildInputs = [ makeWrapper ];
 

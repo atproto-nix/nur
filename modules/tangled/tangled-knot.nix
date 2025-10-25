@@ -209,7 +209,7 @@ with lib;
       cfg.package
     ];
 
-    services.openssh = {
+    services.openssh = lib.mkIf pkgs.stdenv.isLinux {
       enable = true;
       extraConfig = ''
         Match User ${cfg.gitUser}

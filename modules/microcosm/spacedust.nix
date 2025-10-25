@@ -26,6 +26,27 @@ in
       default = false;
       description = "Don't request zstd-compressed jetstream events.";
     };
+
+    bind = mkOption {
+      type = types.str;
+      default = "0.0.0.0:9998";
+      description = "Spacedust server's listen address";
+    };
+
+    metrics = mkOption {
+      type = types.submodule {
+        options = {
+          enable = mkEnableOption "Prometheus metrics endpoint";
+          port = mkOption {
+            type = types.port;
+            default = 9091;
+            description = "Metrics endpoint port";
+          };
+        };
+      };
+      default = {};
+      description = "Metrics configuration";
+    };
   };
 
   config = mkIf cfg.enable (mkMerge [
@@ -44,7 +65,24 @@ in
     (microcosmLib.mkSystemdService cfg "Spacedust" {
       description = "ATProto service component";
       serviceConfig = {
-        ExecStart = "${cfg.package}/bin/spacedust --jetstream ${escapeShellArg cfg.jetstream} ${optionalString cfg.jetstreamNoZstd "--jetstream-no-zstd"}";
+        ExecStart = let
+          args = flatten [
+            [
+              "--jetstream"
+              (escapeShellArg cfg.jetstream)
+            ]
+            (optional cfg.jetstreamNoZstd [ "--jetstream-no-zstd" ])
+            [
+              "--bind"
+              (escapeShellArg cfg.bind)
+            ]
+            (optional cfg.metrics.enable [
+              "--bind-metrics"
+              (escapeShellArg "0.0.0.0:${toString cfg.metrics.port}")
+            ])
+          ];
+        in
+        "${cfg.package}/bin/spacedust ${concatStringsSep " " args}";
       };
     })
   ]);

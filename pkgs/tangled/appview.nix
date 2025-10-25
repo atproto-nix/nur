@@ -34,10 +34,8 @@ buildGoModule rec {
 
   # Copy static files before building (needed for Go embed)
   postUnpack = ''
-    pushd source
-    mkdir -p appview/pages/static
-    cp -frv ${appview-static-files}/* appview/pages/static
-    popd
+    mkdir -p $sourceRoot/appview/pages/static
+    cp -frv ${appview-static-files}/* $sourceRoot/appview/pages/static
   '';
 
   # Build only the appview binary
@@ -61,7 +59,7 @@ buildGoModule rec {
       # Configuration requirements
       configuration = {
         required = [ ];
-        optional = [ 
+        optional = [
           "TANGLED_DB_PATH"
           "TANGLED_COOKIE_SECRET"
           "TANGLED_HOST"

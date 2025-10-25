@@ -29,16 +29,6 @@ let
     lexgen = pkgs.callPackage ./lexgen.nix { };
   };
 
-  # Create an "all" derivation to build all packages at once
-  allPackages = pkgs.symlinkJoin {
-    name = "tangled-all";
-    paths = lib.filter (pkg: pkg != packages.appview-static-files) (lib.attrValues packages);
-    meta = {
-      description = "All Tangled packages";
-      homepage = "https://tangled.org";
-    };
-  };
-
   # Enhanced packages with organizational metadata
   enhancedPackages = lib.mapAttrs (name: pkg:
     pkg.overrideAttrs (oldAttrs: {
@@ -51,11 +41,21 @@ let
       meta = (oldAttrs.meta or {}) // {
         organizationalContext = {
           organization = organizationMeta.name;
-          displayName = organizationMeta.displayName;
+          displayName = organizationMeta.name;
         };
       };
     })
   ) packages;
+
+  # Create an "all" derivation to build all packages at once
+  allPackages = pkgs.symlinkJoin {
+    name = "tangled-all";
+    paths = lib.filter (pkg: pkg != packages.appview-static-files) (lib.attrValues packages);
+    meta = {
+      description = "All Tangled packages";
+      homepage = "https://tangled.org";
+    };
+  };
 
 in
 enhancedPackages // {

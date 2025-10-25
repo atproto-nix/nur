@@ -1,7 +1,0 @@
-{ ... }:
-
-{
-  imports = [
-    ./allegedly.nix
-  ];
-}

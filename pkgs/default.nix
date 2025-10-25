@@ -1,7 +1,6 @@
-{ pkgs, lib, craneLib, buildGoModule ? pkgs.buildGoModule, buildNpmPackage ? pkgs.buildNpmPackage, ... }:
+{ pkgs, lib, craneLib, fetchgit, buildGoModule ? pkgs.buildGoModule, buildNpmPackage ? pkgs.buildNpmPackage, ... }:
 
 let
-  # Import all organizational package collections
   organizationalPackages = {
     # Educational and collaborative platforms
     hyperlink-academy = pkgs.callPackage ./hyperlink-academy { inherit lib; };
@@ -9,7 +8,7 @@ let
     # Custom AppView and social platforms
     slices-network = pkgs.callPackage ./slices-network { inherit lib craneLib; fetchFromTangled = pkgs.fetchFromTangled; };
     teal-fm = pkgs.callPackage ./teal-fm { inherit lib; };
-    parakeet-social = pkgs.callPackage ./parakeet-social { inherit lib; };
+    parakeet-social = pkgs.callPackage ./parakeet-social { inherit lib craneLib fetchgit; };
     
     # Media and streaming platforms
     stream-place = pkgs.callPackage ./stream-place { inherit lib buildGoModule; fetchFromTangled = pkgs.fetchFromTangled; };
@@ -18,7 +17,6 @@ let
     yoten-app = pkgs.callPackage ./yoten-app { inherit lib buildGoModule; fetchFromTangled = pkgs.fetchFromTangled; };
     
     # Client applications
-    red-dwarf-client = pkgs.callPackage ./red-dwarf-client { inherit lib buildNpmPackage; fetchFromTangled = pkgs.fetchFromTangled; };
     
     # Development tools and infrastructure
     tangled = pkgs.callPackage ./tangled { inherit lib buildGoModule; fetchFromTangled = pkgs.fetchFromTangled; };
@@ -26,15 +24,11 @@ let
     # Identity and infrastructure services
     smokesignal-events = pkgs.callPackage ./smokesignal-events { inherit lib craneLib; };
     
-    # Microcosm ecosystem tools
-    microcosm-blue = pkgs.callPackage ./microcosm-blue { inherit lib craneLib; fetchFromTangled = pkgs.fetchFromTangled; };
+
     
     # System administration and monitoring
     witchcraft-systems = pkgs.callPackage ./witchcraft-systems { inherit lib; };
     
-    # Backup and archival tools
-    atbackup-pages-dev = pkgs.callPackage ./atbackup-pages-dev { inherit lib; };
-
     # Bluesky client applications
     whey-party = pkgs.callPackage ./whey-party { inherit lib buildNpmPackage; fetchFromTangled = pkgs.fetchFromTangled; };
 
@@ -54,7 +48,7 @@ let
 
     # Legacy package collections (for backward compatibility)
     microcosm = pkgs.callPackage ./microcosm { inherit craneLib; };
-    blacksky = pkgs.callPackage ./blacksky { inherit craneLib; };
+    blacksky = pkgs.callPackage ./blacksky { inherit lib craneLib; };
   };
 
   # Helper function to check if something is a derivation

@@ -19,7 +19,7 @@ buildNpmPackage rec {
 
   sourceRoot = "${src.name}/camo";
 
-  npmDepsHash = "sha256-PLACEHOLDER";  # Will calculate when building
+  npmDepsHash = "sha256-G0KDDl/TtWIVtbWAQ4SzcEXbbA+NvbzW+agFKckosCE=";  # Will calculate when building
 
   nativeBuildInputs = [ makeWrapper ];
 

@@ -1,6 +1,22 @@
-{ pkgs, craneLib }:
+{ pkgs, lib, craneLib, fetchFromTangled ? pkgs.fetchFromTangled, ... }:
+
+# Microcosm ATProto packages
+# Organization: microcosm-blue
+# Website: https://microcosm.blue
 
 let
+  # Organizational metadata
+  organizationMeta = {
+    name = "microcosm-blue";
+    displayName = "Microcosm";
+    website = null;
+    contact = null;
+    maintainer = "Microcosm";
+    description = "PLC tools and utilities for ATProto ecosystem";
+    atprotoFocus = [ "tools" "identity" ];
+    packageCount = 12; # Updated count to include all packages
+  };
+
   src = pkgs.fetchFromGitHub {
     owner = "at-microcosm";
     repo = "microcosm-rs";
@@ -13,83 +29,81 @@ let
     OPENSSL_NO_VENDOR = "1";
     OPENSSL_LIB_DIR = "${pkgs.lib.getLib pkgs.openssl}/lib";
     OPENSSL_INCLUDE_DIR = "${pkgs.lib.getDev pkgs.openssl}/include";
-    BINDGEN_EXTRA_CLANG_ARGS = pkgs.lib.concatStringsSep " " [
+    BINDGEN_EXTRA_CLANG_ARGS = pkgs.lib.concatStringsSep " " (
+      [
         "-I${pkgs.llvmPackages.libclang.lib}/lib/clang/${pkgs.lib.versions.major pkgs.llvmPackages.libclang.version}/include"
-        "-I${pkgs.glibc.dev}"
-    ];
+      ] ++ pkgs.lib.optionals pkgs.stdenv.isLinux [
+        "-I${pkgs.glibc.dev}/include"
+      ]
+    );
     ZSTD_SYS_USE_PKG_CONFIG = "1";
     CC = "${pkgs.llvmPackages.clang}/bin/clang";
     CXX = "${pkgs.llvmPackages.clang}/bin/clang++";
     PKG_CONFIG_PATH = "${pkgs.zstd.dev}/lib/pkgconfig:${pkgs.lz4.dev}/lib/pkgconfig:${pkgs.openssl.dev}/lib/pkgconfig";
   };
 
-  nativeInputs = with pkgs;
-[
-    pkg-config
-    perl
-    llvmPackages.libclang
-  ];
+  nativeBuildInputs = with pkgs;
+    [
+      pkg-config
+      perl
+      llvmPackages.libclang
+    ];
 
   buildInputs = with pkgs;
-[
-    zstd
-    lz4
-    rocksdb
-    openssl
-    sqlite
-    postgresql
-  ];
+    [
+      zstd
+      lz4
+      rocksdb
+      openssl
+      sqlite
+      postgresql
+    ];
+
   cargoArtifacts = craneLib.buildDepsOnly {
     inherit src;
     pname = "microcosm-rs-deps";
     version = "0.1.0";
-    nativeBuildInputs = nativeInputs;
+    nativeBuildInputs = nativeBuildInputs;
     buildInputs = buildInputs;
     env = commonEnv;
     tarFlags = "--no-same-owner";
   };
 
-  members = [
-    "links"
-    "constellation"
-    "jetstream"
-    "ufos"
-    "ufos/fuzz"
-    "spacedust"
-    "who-am-i"
-    "slingshot"
-    "quasar"
-    "pocket"
-    "reflector"
-  ];
-  buildPackage = member:
-    let
-      packageName = if member == "ufos/fuzz" then "ufos-fuzz" else member;
-    in
-    craneLib.buildPackage {
-      inherit src cargoArtifacts;
-      pname = packageName;
-      version = "0.1.0";
-      cargoExtraArgs = "--package ${packageName}";
-      nativeBuildInputs = nativeInputs;
-      buildInputs = buildInputs;
-      tarFlags = "--no-same-owner";
-      env = commonEnv;
-    };
-
-  packages = pkgs.lib.genAttrs members (member: buildPackage member);
-
-  # Create an "all" derivation to build all packages at once
-  allPackages = pkgs.symlinkJoin {
-    name = "microcosm-all";
-    paths = pkgs.lib.attrValues packages;
-    meta = {
-      description = "All Microcosm packages";
-      homepage = "https://microcosm.blue";
-    };
+  # Package naming pattern: use simple names within organization
+  packages = {
+    allegedly = pkgs.callPackage ./allegedly.nix { inherit craneLib fetchFromTangled; };
+    links = pkgs.callPackage ./links.nix { inherit craneLib src cargoArtifacts nativeBuildInputs buildInputs commonEnv; tarFlags = "--no-same-owner"; };
+    constellation = pkgs.callPackage ./constellation.nix { inherit craneLib src cargoArtifacts nativeBuildInputs buildInputs commonEnv; tarFlags = "--no-same-owner"; };
+    jetstream = pkgs.callPackage ./jetstream.nix { inherit craneLib src cargoArtifacts nativeBuildInputs buildInputs commonEnv; tarFlags = "--no-same-owner"; };
+    ufos = pkgs.callPackage ./ufos.nix { inherit craneLib src cargoArtifacts nativeBuildInputs buildInputs commonEnv; tarFlags = "--no-same-owner"; };
+    ufos-fuzz = pkgs.callPackage ./ufos-fuzz.nix { inherit craneLib src cargoArtifacts nativeBuildInputs buildInputs commonEnv; tarFlags = "--no-same-owner"; };
+    spacedust = pkgs.callPackage ./spacedust.nix { inherit craneLib src cargoArtifacts nativeBuildInputs buildInputs commonEnv; tarFlags = "--no-same-owner"; };
+    who-am-i = pkgs.callPackage ./who-am-i.nix { inherit craneLib src cargoArtifacts nativeBuildInputs buildInputs commonEnv; tarFlags = "--no-same-owner"; };
+    slingshot = pkgs.callPackage ./slingshot.nix { inherit craneLib src cargoArtifacts nativeBuildInputs buildInputs commonEnv; tarFlags = "--no-same-owner"; };
+    quasar = pkgs.callPackage ./quasar.nix { inherit craneLib src cargoArtifacts nativeBuildInputs buildInputs commonEnv; tarFlags = "--no-same-owner"; };
+    pocket = pkgs.callPackage ./pocket.nix { inherit craneLib src cargoArtifacts nativeBuildInputs buildInputs commonEnv; tarFlags = "--no-same-owner"; };
+    reflector = pkgs.callPackage ./reflector.nix { inherit craneLib src cargoArtifacts nativeBuildInputs buildInputs commonEnv; tarFlags = "--no-same-owner"; };
   };
 
+  # Enhanced packages with organizational metadata
+  enhancedPackages = lib.mapAttrs (name: pkg:
+    pkg.overrideAttrs (oldAttrs: {
+      passthru = (oldAttrs.passthru or {}) // {
+        organization = organizationMeta;
+        atproto = (oldAttrs.passthru.atproto or {}) // {
+          organization = organizationMeta;
+        };
+      };
+      meta = (oldAttrs.meta or {}) // {
+        organizationalContext = {
+          organization = organizationMeta.name;
+          displayName = organizationMeta.displayName;
+        };
+      };
+    })
+  ) packages;
 in
-packages // {
-  all = allPackages;
+enhancedPackages // {
+  # Export organizational metadata for external use
+  _organizationMeta = organizationMeta;
 }

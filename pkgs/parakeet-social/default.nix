@@ -1,4 +1,4 @@
-{ pkgs, lib, ... }:
+{ pkgs, lib, craneLib, fetchgit, ... }:
 
 # Parakeet Social ATProto packages
 # Organization: parakeet-social
@@ -19,7 +19,7 @@ let
 
   # Package naming pattern: use simple names within organization
   packages = {
-    parakeet = pkgs.callPackage ./parakeet.nix { };
+    parakeet = pkgs.callPackage ./parakeet.nix { inherit craneLib fetchgit; };
   };
 
   # Enhanced packages with organizational metadata

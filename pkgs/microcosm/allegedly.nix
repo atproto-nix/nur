@@ -17,7 +17,7 @@ craneLib.buildPackage rec {
     owner = "@microcosm.blue";
     repo = "Allegedly";
     rev = "v${version}";
-    hash = "sha256-0j68x62l6sx38k74s77hzswz97gjibvv71wbn4hx8sphs213wk5j";
+    hash = "sha256-skw+gtDwatQhsYuHs/eK8p30uf7wHE3ORKNrQ4XpyEg=";
   };
 
   # Standard Rust environment for ATProto services
@@ -97,7 +97,7 @@ craneLib.buildPackage rec {
     '';
     homepage = "https://tangled.org/@microcosm.blue/Allegedly";
     license = with licenses; [ mit asl20 ];
-    platforms = platforms.linux;
+    platforms = platforms.linux ++ platforms.darwin;
     maintainers = [ ];
     mainProgram = "allegedly";
     

@@ -1,11 +1,15 @@
-{ pkgs, lib, ... }:
+{ pkgs, lib, fetchFromTangled, ... }:
 
 # Whey Party - Bluesky client applications
 # Repository: https://tangled.org/@whey.party
 
 let
+  pnpm = pkgs.nodePackages.pnpm;
+
   packages = {
-    red-dwarf = pkgs.callPackage ./red-dwarf.nix { };
+    red-dwarf = pkgs.callPackage ./red-dwarf.nix {
+      inherit fetchFromTangled pnpm;
+    };
   };
 
   # Create an "all" derivation to build all packages at once

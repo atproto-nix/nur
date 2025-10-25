@@ -44,6 +44,21 @@ in
       default = null;
       description = "The web address to send healthcheck pings to.";
     };
+
+    metrics = mkOption {
+      type = types.submodule {
+        options = {
+          enable = mkEnableOption "Prometheus metrics endpoint";
+          port = mkOption {
+            type = types.port;
+            default = 9092;
+            description = "Metrics endpoint port";
+          };
+        };
+      };
+      default = {};
+      description = "Metrics configuration";
+    };
   };
 
   config = mkIf cfg.enable (mkMerge [
@@ -85,9 +100,9 @@ in
             ${optionalString (cfg.domain != null) "--domain ${escapeShellArg cfg.domain}"} \
             ${optionalString (cfg.acmeContact != null) "--acme-contact ${escapeShellArg cfg.acmeContact}"} \
             --certs ${cfg.dataDir}/certs \
-            ${optionalString (cfg.healthcheckUrl != null) "--healthcheck ${escapeShellArg cfg.healthcheckUrl}"}
-        '';
-      };
+            ${optionalString (cfg.healthcheckUrl != null) "--healthcheck ${escapeShellArg cfg.healthcheckUrl}"} \
+            ${optionalString cfg.metrics.enable "--bind-metrics 0.0.0.0:${toString cfg.metrics.port}"}
+        '';      };
     })
   ]);
 }

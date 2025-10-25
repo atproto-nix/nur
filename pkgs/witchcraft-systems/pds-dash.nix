@@ -5,6 +5,7 @@
 , nodejs
 , deno
 , writeShellScriptBin
+, pkgs
 }:
 
 let
@@ -44,10 +45,10 @@ stdenv.mkDerivation rec {
     owner = "witchcraft-systems";
     repo = "pds-dash";
     rev = "c348ed5d46a0d95422ea6f4925420be8ff3ce8f0";
-    hash = "sha256-0lihbh8ch8vap3wkyyig9bdicd86iliyz4lccmf7pnvrgvqs2rzl";
+    hash = "sha256-9Geh8X5523tcZYyS7yONBjUW20ovej/5uGojyBBcMFI=";
   };
 
-  nativeBuildInputs = [ deno nodejs ];
+  nativeBuildInputs = [ deno nodejs pkgs.nodePackages.pnpm pkgs.cacert ];
 
   # Deno uses deno.lock for dependencies, not package-lock.json
   buildPhase = ''
@@ -56,7 +57,15 @@ stdenv.mkDerivation rec {
     # Deno will cache dependencies automatically
     export DENO_DIR=$TMPDIR/deno
 
+    # Set temporary directories for npm/pnpm to avoid /homeless-shelter error
+    export HOME=$TMPDIR/home
+    mkdir -p $HOME
+    export NPM_CONFIG_CACHE=$TMPDIR/npm-cache
+    export NPM_CONFIG_USERCONFIG=$TMPDIR/npmrc
+
     # Build the application using Deno
+    pnpm add -D vite # Install vite locally using pnpm
+    cp config.ts.example config.ts # Provide a placeholder config for the build
     ${deno}/bin/deno task build
 
     runHook postBuild

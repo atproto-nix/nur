@@ -54,6 +54,21 @@ in
       default = [];
       description = "The hosts who are allowed to one-click auth.";
     };
+
+    metrics = mkOption {
+      type = types.submodule {
+        options = {
+          enable = mkEnableOption "Prometheus metrics endpoint";
+          port = mkOption {
+            type = types.port;
+            default = 9094;
+            description = "Metrics endpoint port";
+          };
+        };
+      };
+      default = {};
+      description = "Metrics configuration";
+    };
   };
 
   config = mkIf cfg.enable (mkMerge [
@@ -105,9 +120,9 @@ in
             --base-url ${escapeShellArg cfg.baseUrl} \
             --bind ${escapeShellArg cfg.bind} \
             ${optionalString cfg.dev "--dev"} \
-            ${concatStringsSep " " (map (host: "--allow-host ${escapeShellArg host}") cfg.allowedHosts)}
-        '';
-      };
+            ${concatStringsSep " " (map (host: "--allow-host ${escapeShellArg host}") cfg.allowedHosts)} \
+            ${optionalString cfg.metrics.enable "--bind-metrics 0.0.0.0:${toString cfg.metrics.port}"}
+        '';      };
     })
 
     # Firewall configuration

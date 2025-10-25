@@ -44,6 +44,27 @@ in
       default = false;
       description = "Reset the rollup cursor and backfill.";
     };
+
+    bind = mkOption {
+      type = types.str;
+      default = "0.0.0.0:9999";
+      description = "UFOs server's listen address";
+    };
+
+    metrics = mkOption {
+      type = types.submodule {
+        options = {
+          enable = mkEnableOption "Prometheus metrics endpoint";
+          port = mkOption {
+            type = types.port;
+            default = 9093;
+            description = "Metrics endpoint port";
+          };
+        };
+      };
+      default = {};
+      description = "Metrics configuration";
+    };
   };
 
   config = mkIf cfg.enable (mkMerge [
@@ -62,7 +83,31 @@ in
     (microcosmLib.mkSystemdService cfg "UFOs" {
       description = "ATProto service component";
       serviceConfig = {
-        ExecStart = "${cfg.package}/bin/ufos --jetstream ${escapeShellArg cfg.jetstream} ${optionalString cfg.jetstreamForce "--jetstream-force"} ${optionalString cfg.jetstreamNoZstd "--jetstream-no-zstd"} --data ${cfg.dataDir} ${optionalString cfg.backfill "--backfill"} ${optionalString cfg.reroll "--reroll"}";
+        ExecStart = let
+  args = flatten [
+    [
+      "--jetstream"
+      (escapeShellArg cfg.jetstream)
+    ]
+    (optional cfg.jetstreamForce [ "--jetstream-force" ])
+    (optional cfg.jetstreamNoZstd [ "--jetstream-no-zstd" ])
+    [
+      "--data"
+      (escapeShellArg cfg.dataDir)
+    ]
+    (optional cfg.backfill [ "--backfill" ])
+    (optional cfg.reroll [ "--reroll" ])
+    [
+      "--bind"
+      (escapeShellArg cfg.bind)
+    ]
+    (optional cfg.metrics.enable [
+      "--bind-metrics"
+      (escapeShellArg "0.0.0.0:${toString cfg.metrics.port}")
+    ])
+  ];
+in
+"${cfg.package}/bin/ufos ${concatStringsSep " " args}";
       };
     })
 

@@ -124,6 +124,35 @@ nix-prefetch-url --unpack https://github.com/OWNER/REPO/archive/COMMIT.tar.gz
 nix build .#tangled-dev-spindle 2>&1 | grep "got:"
 ```
 
+### Recent NixOS Build Fix (October 2025)
+
+A recent debugging session resolved a series of cascading build failures when using this NUR in a NixOS configuration. The root cause was a combination of incorrect module paths, package names, and outdated hashes.
+
+Here is a summary of the fixes applied, which should serve as a guide for similar issues:
+
+1.  **Corrected Module Path in `flake.nix`**:
+    *   **Problem**: The build failed with `attribute 'microcosm' missing` because the module path in the user's `flake.nix` was `nur.nixosModules.microcosm`.
+    *   **Analysis**: This NUR uses `flake-utils`, which structures all outputs by system. The `nix flake show` command confirmed this.
+    *   **Fix**: The path was corrected to be system-specific: `nur.nixosModules.x86_64-linux.microcosm`.
+
+2.  **Removed Redundant Module Import**:
+    *   **Problem**: The `microcosm` module was being imported in both `flake.nix` and `configuration.nix`.
+    *   **Fix**: The redundant import in `configuration.nix` was removed to avoid evaluation conflicts. Modules should be listed once in the top-level `flake.nix`.
+
+3.  **Corrected Package Names in `configuration.nix`**:
+    *   **Problem**: The build failed with `attribute 'spacedust' missing` and a similar error for `constellation`.
+    *   **Analysis**: The package names in this NUR are flattened with an organizational prefix (e.g., `microcosm-spacedust`).
+    *   **Fix**: The package references in `configuration.nix` were updated from `nur.packages.x86_64-linux.spacedust` to `nur.packages.x86_64-linux.microcosm-spacedust` (and similarly for `constellation`).
+
+4.  **Updated Caddy Plugin Hash**:
+    *   **Problem**: The build failed with a `hash mismatch` error for a Caddy plugin.
+    *   **Fix**: The specified hash in `configuration.nix` was updated to the new hash provided in the build error log.
+
+**Key Takeaway**: When debugging build failures with this NUR, always:
+- Use `nix flake show` to verify the exact output paths for modules and packages.
+- Remember that all outputs are nested under the system architecture (e.g., `x86_64-linux`).
+- Check for flattened package names that include the organization prefix.
+
 ## Architecture and Key Concepts
 
 ### Package Naming Convention
@@ -187,7 +216,7 @@ See `pkgs/yoten-app/yoten.nix` for reference implementation.
 Custom fetcher `fetchFromTangled` (in `lib/fetch-tangled.nix`) for Tangled repositories:
 ```nix
 fetchFromTangled {
-  owner = "microcosm-blue.org";
+  owner = "microcosm.blue";
   repo = "allegedly";
   rev = "abc123...";
   hash = "sha256-...";
@@ -237,13 +266,11 @@ Fetcher for Tangled.org repositories (fork of `fetchFromGitHub`):
 - **Bluesky official** (2): indigo (Go), grain (TypeScript) - placeholders
 - **Third-party apps** (10+): leaflet, parakeet, teal, yoten, red-dwarf, slices, streamplace, pds-dash, quickdid, atbackup
 - **Tangled infrastructure** (5): appview, knot, spindle, genjwks, lexgen
-- **Microcosm-blue** (1): allegedly (PLC tools)
+- **Microcosm** (1): allegedly (PLC tools)
 
 ### Known Issues
-See `PINNING_NEEDED.md` for 6 packages needing hash calculation:
+See `PINNING_NEEDED.md` for 4 packages needing hash calculation:
 - tangled/* (3 packages: knot, appview, spindle)
-- witchcraft-systems/pds-dash
-- likeandscribe/frontpage
 - atbackup-pages-dev/atbackup
 
 Packages with `lib.fakeHash` will fail to build until hashes are calculated.
@@ -252,6 +279,7 @@ Packages with `lib.fakeHash` will fail to build until hashes are calculated.
 - ✅ yoten-app/yoten - Complex multi-stage build now working
 - ✅ hyperlink-academy/leaflet - Hash calculated
 - ✅ slices-network/slices - Hash calculated
+- ✅ parakeet-social/parakeet - Hash calculated
 
 ## Development Workflow
 

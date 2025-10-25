@@ -15,7 +15,7 @@ let
 in
 lib.makeOverridable (
   {
-    domain ? "tangled.sh",
+    domain ? "tangled.org",
     owner,
     repo,
     rev ? null,

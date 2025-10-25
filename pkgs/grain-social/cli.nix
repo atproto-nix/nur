@@ -15,7 +15,7 @@ let
     owner = "@grain.social";
     repo = "grain";
     rev = "643445cfbfca683b3f17f8990f444405cff2165a";
-    hash = lib.fakeHash;
+    hash = "sha256-4gWb3WcWRcIRLTpU/W54NytGhXY6MdVB4hKWrTNdCqM=";
     forceFetchGit = true;
   };
 
@@ -41,8 +41,6 @@ let
       openssl.dev
     ] ++ lib.optionals stdenv.isDarwin [
       # macOS-specific frameworks required by CLI dependencies
-      darwin.apple_sdk.frameworks.Security
-      darwin.apple_sdk.frameworks.SystemConfiguration
     ];
 
     # Environment variables for OpenSSL

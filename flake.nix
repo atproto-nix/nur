@@ -61,7 +61,7 @@
 
         lib = nurPackages.lib or {};
 
-        nixosModules = {
+        nixosModules = pkgs.lib.mkIf pkgs.stdenv.isLinux {
           default = import ./modules;
 
           # Core service modules
@@ -96,7 +96,7 @@
           ];
         };
 
-        checks = {
+        checks = pkgs.lib.optionalAttrs pkgs.stdenv.isLinux {
           # Ruby packages
           mackuba-lycan = pkgs.callPackage ./tests/mackuba-lycan.nix { };
 
