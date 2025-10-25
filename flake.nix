@@ -61,6 +61,8 @@
 
         lib = nurPackages.lib or {};
 
+        cacheOutputs = nurPackages.cacheOutputs;
+
         nixosModules = pkgs.lib.mkIf pkgs.stdenv.isLinux {
           default = import ./modules;
 
