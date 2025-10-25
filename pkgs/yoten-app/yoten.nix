@@ -25,7 +25,7 @@ let
       sha256 = "sha256-CeaHamPOsJzNflhn49uystxlw6Ly4v4hDWjqO8BDIFA=";
     };
     dontUnpack = true;
-    nativeBuildInputs = [ autoPatchelfHook ];
+    nativeBuildInputs = [ ];
     installPhase = ''
       mkdir -p $out/bin
       cp $src $out/bin/tailwindcss

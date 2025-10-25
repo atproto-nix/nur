@@ -52,7 +52,7 @@ buildGoModule {
   pname = "konbini";
   inherit version src;
 
-  vendorHash = lib.fakeHash;
+  vendorHash = "sha256-sboHNGOy0P1w/LL5OwStrPP0f+kbYcent6FKXOCuX6Y=";
 
   nativeBuildInputs = [ makeWrapper ];
 
