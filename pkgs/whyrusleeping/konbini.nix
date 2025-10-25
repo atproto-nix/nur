@@ -23,7 +23,7 @@ let
 
     sourceRoot = "${src.name}/frontend";
 
-    npmDepsHash = lib.fakeHash;
+    npmDepsHash = "sha256-jqO9ll1KnbqsB9wxxjzVheZ3P+MXk63rRJL7vPdxKLs=";
 
     nativeBuildInputs = [ nodejs ];
 
