@@ -1,6 +1,7 @@
-{ pkgs, craneLib, ... }:
+{ pkgs, ... }:
 
 let
+  craneLib = pkgs.crane;
   # Import all packages
   allPackages = pkgs.callPackage ./pkgs { inherit craneLib; };
 
