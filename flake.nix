@@ -48,7 +48,7 @@
         # Extract organizational collections for nested access
         organizations = nurPackages.organizations or {};
 
-        ci = import ./ci.nix { inherit pkgs; };
+        ci = import ./ci.nix { inherit pkgs craneLib; };
 
       in
       {
