@@ -22,7 +22,7 @@ let
     name = "tailwindcss-standalone";
     src = fetchurl {
       url = "https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-x64";
-      sha256 = "sha256-d4SsikttfP7LHLT0HZ3zOz6DTdepXhStC1mGHNeAKQM=";
+      sha256 = "sha256-CeaHamPOsJzNflhn49uystxlw6Ly4v4hDWjqO8BDIFA=";
     };
     dontUnpack = true;
     nativeBuildInputs = [ autoPatchelfHook ];
