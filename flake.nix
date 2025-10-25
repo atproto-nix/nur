@@ -48,6 +48,8 @@
         # Extract organizational collections for nested access
         organizations = nurPackages.organizations or {};
 
+        ci = import ./ci.nix { inherit pkgs; };
+
       in
       {
         # Flattened packages (e.g., tangled-knot, tangled-appview)
@@ -61,7 +63,9 @@
 
         lib = nurPackages.lib or {};
 
-        cacheOutputs = nurPackages.cacheOutputs;
+        cacheOutputs = ci.cacheOutputs;
+
+
 
         nixosModules = pkgs.lib.mkIf pkgs.stdenv.isLinux {
           default = import ./modules;
