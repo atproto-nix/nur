@@ -29,7 +29,12 @@ let
     # This makes it a fixed-output derivation - network access allowed
     outputHashMode = "recursive";
     outputHashAlgo = "sha256";
-    outputHash = "sha256-CY/LJw82zBlNTmLALohhPHD9oQ/zWNRx9gkem8QPtV4=";
+    outputHash = if pkgs.stdenv.isLinux then
+      "sha256-CY/LJw82zBlNTmLALohhPHD9oQ/zWNRx9gkem8QPtV4="
+    else if pkgs.stdenv.isDarwin then
+      "sha256-MldkeLMQMfUlMUjUM3Gyh3fMEoYyncUJ8SjwmDEIjKg="
+    else
+      throw "Unsupported platform for pds-dash-deno-deps";
   };
 in
 pkgs.stdenv.mkDerivation {
