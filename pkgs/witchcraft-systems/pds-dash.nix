@@ -1,5 +1,10 @@
 { pkgs, lib, ... }:
 let
+  pinnedNixpkgs = import (pkgs.fetchTarball {
+    url = "https://github.com/NixOS/nixpkgs/archive/refs/heads/nixos-25.05.tar.gz";
+    sha256 = "1qbx5rir8c2hsx1wbn4s1bhi2cxxi7r6lsx3h233g5yzhmsv9mcv";
+  }) { system = pkgs.system };
+
   src = pkgs.fetchFromGitea {
     domain = "git.witchcraft.systems";
     owner = "scientific-witchery";
@@ -13,7 +18,7 @@ let
     name = "pds-dash-deno-deps";
     inherit src;
     
-    nativeBuildInputs = [ pkgs.deno ];
+    nativeBuildInputs = [ pinnedNixpkgs.deno ];
     
     buildPhase = ''
       echo "Building for system: ${pkgs.stdenv.system}"
@@ -30,12 +35,7 @@ let
     # This makes it a fixed-output derivation - network access allowed
     outputHashMode = "recursive";
     outputHashAlgo = "sha256";
-    outputHash = if pkgs.stdenv.isLinux then
-      "sha256-CY/LJw82zBlNTmLALohhPHD9oQ/zWNRx9gkem8QPtV4="
-    else if pkgs.stdenv.isDarwin then
-      "sha256-MldkeLMQMfUlMUjUM3Gyh3fMEoYyncUJ8SjwmDEIjKg="
-    else
-      throw "Unsupported platform for pds-dash-deno-deps";
+    outputHash = "sha256-PuztjdpEs8PlK4H97+lqP/pH7CxiQ8hXxqHR3PHZUoI=";
   };
 in
 pkgs.stdenv.mkDerivation {
@@ -44,7 +44,7 @@ pkgs.stdenv.mkDerivation {
   
   inherit src;
   
-  nativeBuildInputs = [ pkgs.deno ];
+  nativeBuildInputs = [ pinnedNixpkgs.deno ];
   
   buildPhase = ''
     runHook preBuild
