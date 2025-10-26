@@ -16,6 +16,7 @@ let
     nativeBuildInputs = [ pkgs.deno ];
     
     buildPhase = ''
+      echo "Building for system: ${pkgs.stdenv.system}"
       export DENO_DIR=$out
       export HOME=$TMPDIR
       export DENO_NO_UPDATE_CHECK=1
