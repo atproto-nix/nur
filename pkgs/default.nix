@@ -27,7 +27,10 @@ let
 
     
     # System administration and monitoring
-    witchcraft-systems = pkgs.callPackage ./witchcraft-systems { inherit lib atprotoLib; };
+    witchcraft-systems = pkgs.callPackage ./witchcraft-systems {
+      inherit lib atprotoLib;
+      packageLockJson = builtins.path { path = ./witchcraft-systems/package-lock-pds-dash.json; };
+    };
     
     # Bluesky client applications
     whey-party = pkgs.callPackage ./whey-party { inherit lib buildNpmPackage; fetchFromTangled = pkgs.fetchFromTangled; };
