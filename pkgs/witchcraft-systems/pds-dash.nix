@@ -29,7 +29,7 @@ let
     # This makes it a fixed-output derivation - network access allowed
     outputHashMode = "recursive";
     outputHashAlgo = "sha256";
-    outputHash = "sha256-X9gDFUDXs8kUdduW67ynDp2sD1sO+g/12ER2uKWbfPM=";
+    outputHash = "sha256-CY/LJw82zBlNTmLALohhPHD9oQ/zWNRx9gkem8QPtV4=";
   };
 in
 pkgs.stdenv.mkDerivation {
