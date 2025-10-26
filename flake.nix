@@ -5,6 +5,10 @@
     flake-utils.url = "github:numtide/flake-utils";
     crane.url = "github:ipetkov/crane";
     rust-overlay.url = "github:oxalica/rust-overlay";
+    deno = {
+      url = "github:nekowinston/nix-deno";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -14,6 +18,7 @@
       flake-utils,
       crane,
       rust-overlay,
+      deno,
       ...
     }:
     flake-utils.lib.eachSystem [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ] (
@@ -21,6 +26,7 @@
       let
         overlays = [
           (import rust-overlay)
+          deno.overlays.default
           (final: prev: {
             fetchFromTangled = final.callPackage ./lib/fetch-tangled.nix { };
           })

@@ -1,4 +1,4 @@
-{ pkgs, lib, callPackage, atprotoLib, packageLockJson, ... }:
+{ pkgs, lib, callPackage, atprotoLib, ... }:
 
 let
   # Organizational metadata
@@ -14,9 +14,7 @@ let
   };
 
   packages = {
-    pds-dash = callPackage ./pds-dash.nix {
-      inherit atprotoLib packageLockJson;
-    };
+    pds-dash = callPackage ./pds-dash.nix {};
   };
 
   # Enhanced packages with organizational metadata

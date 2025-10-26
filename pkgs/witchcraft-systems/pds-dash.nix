@@ -1,51 +1,42 @@
-{ pkgs, lib, atprotoLib, deno, nodejs, buildNpmPackage, packageLockJson, ... }:
-
-buildNpmPackage rec {
-  pname = "pds-dash";
-  version = "1.0";
-
+{ pkgs, ... }:
+let
   src = pkgs.fetchFromGitea {
     domain = "git.witchcraft.systems";
-    owner = "scientific-witchery";
+    owner = "witchcraft-systems";
     repo = "pds-dash";
-    rev = "1.0";
-    hash = "sha256-a4ECUtjeC2XW5YyOzV49V+ZhYtgL37Z+YiFH6BNpBbU=";
+    rev = "main";
+    sha256 = "sha256-9Geh8X5523tcZYyS7yONBjUW20ovej/5uGojyBBcMFI=";
   };
+in
+pkgs.stdenv.mkDerivation {
+  pname = "pds-dash";
+  version = "0.1.0";
+  
+  src = src;
+  
+  nativeBuildInputs = [ pkgs.deno ];
+  
+  buildPhase = ''
+    export DENO_DIR="$TMPDIR/deno"
+    export DENO_NO_UPDATE_CHECK=1
 
-  npmDepsHash = ""; # Placeholder, will be filled by Nix
-
-  # Use npm ci for reproducible installs and then npm run build
-  npmBuild = "npm ci && npm run build";
-
-  # We don't want buildNpmPackage to run its default build,
-  # as we're controlling it with npmBuild.
-  dontBuild = true;
-
-  nativeBuildInputs = [ deno nodejs ]; # Ensure deno and nodejs are available
-
-  postPatch = ''
-    cp ${packageLockJson} $src/package-lock.json
+    cp config.ts.example config.ts
+    
+    # Cache dependencies
+    deno cache --reload src/main.ts
+    
+    # Build the project
+    deno task build
   '';
-
+  
   installPhase = ''
-    echo "Running custom installPhase for copying build output"
-    mkdir -p $out/share/${pname}
-    cp -r dist/* $out/share/${pname}/
-    cp ${src}/config.ts.example $out/share/${pname}/
-    cp -r ${src}/themes $out/share/${pname}/
+    mkdir -p $out
+    cp -r dist/* $out/
   '';
-
-  # ATProto-specific metadata
-  passthru.atproto = atprotoLib.mkAtprotoPackage {
-    type = "application";
-    services = [];
-    protocols = ["com.atproto"];
-  };
-
-  meta = with lib; {
-    description = "A frontend dashboard with stats for your ATProto PDS.";
-    homepage = "https://git.witchcraft.systems/scientific-witchery/pds-dash";
+  
+  meta = with pkgs.lib; {
+    description = "A frontend dashboard with stats for your ATProto PDS";
+    homepage = "https://github.com/witchcraft-systems/pds-dash/";
     license = licenses.mit;
-    platforms = platforms.all;
   };
 }
