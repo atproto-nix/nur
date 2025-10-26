@@ -7,6 +7,30 @@ let
     rev = "main";
     sha256 = "sha256-9Geh8X5523tcZYyS7yONBjUW20ovej/5uGojyBBcMFI=";
   };
+  
+  # Fixed-output derivation to fetch Deno dependencies
+  denoDeps = pkgs.stdenv.mkDerivation {
+    name = "pds-dash-deno-deps";
+    inherit src;
+    
+    nativeBuildInputs = [ pkgs.deno ];
+    
+    buildPhase = ''
+      export DENO_DIR=$out
+      export HOME=$TMPDIR
+      export DENO_NO_UPDATE_CHECK=1
+      
+      # Install dependencies - this fetches from network
+      deno install --frozen
+    '';
+    
+    installPhase = "true";
+    
+    # This makes it a fixed-output derivation - network access allowed
+    outputHashMode = "recursive";
+    outputHashAlgo = "sha256";
+    outputHash = "sha256-X9gDFUDXs8kUdduW67ynDp2sD1sO+g/12ER2uKWbfPM=";
+  };
 in
 pkgs.stdenv.mkDerivation {
   pname = "pds-dash";
@@ -16,30 +40,24 @@ pkgs.stdenv.mkDerivation {
   
   nativeBuildInputs = [ pkgs.deno ];
   
-  configurePhase = ''
-    runHook preConfigure
-    
-    # Set up Deno environment
-    export DENO_DIR="$TMPDIR/deno"
-    export DENO_NO_UPDATE_CHECK=1
-    export HOME="$TMPDIR"
-    
-    # Copy the lockfile to ensure reproducible builds
-    cp ${src}/deno.lock ./deno.lock
-    
-    # Create config.ts from example (required for build)
-    cp ${src}/config.ts.example ./config.ts
-    
-    runHook postConfigure
-  '';
-  
   buildPhase = ''
     runHook preBuild
     
-    # Install dependencies (uses deno.lock for reproducibility)
+    # Copy the cached deps to a writable location
+    export DENO_DIR="$TMPDIR/deno_dir"
+    cp -r ${denoDeps} $DENO_DIR
+    chmod -R +w $DENO_DIR
+    
+    export DENO_NO_UPDATE_CHECK=1
+    export HOME="$TMPDIR"
+    
+    # Create config from example
+    cp config.ts.example config.ts
+    
+    # Install will now use the writable cache and set up node_modules
     deno install --frozen
     
-    # Build the Vite project
+    # Build using cached dependencies
     deno task build
     
     runHook postBuild
