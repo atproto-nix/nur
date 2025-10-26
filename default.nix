@@ -1,9 +1,13 @@
 { pkgs, craneLib, ... }:
 
 let
+  atprotoLib = pkgs.callPackage ./lib/atproto.nix {
+    inherit craneLib;
+    fetchFromTangled = pkgs.fetchFromTangled;
+  };
 
   # Import all packages
-  allPackages = pkgs.callPackage ./pkgs { inherit craneLib; };
+  allPackages = pkgs.callPackage ./pkgs { inherit craneLib atprotoLib; };
 
   # Helper to check if something is a derivation
   isDerivation = pkg:
@@ -21,10 +25,7 @@ let
 in
 packages // {
   # ATProto packaging utilities library
-  lib = pkgs.callPackage ./lib/atproto.nix {
-    inherit craneLib;
-    fetchFromTangled = pkgs.fetchFromTangled;
-  };
+  lib = atprotoLib;
 
   # NixOS modules
   modules = import ./modules;

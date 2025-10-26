@@ -4,3 +4,4 @@ result-*
 *.db
 *.db-shm
 *.db-wal
+./pds-dash/

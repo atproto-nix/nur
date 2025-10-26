@@ -1,4 +1,4 @@
-{ pkgs, lib, craneLib, fetchgit, buildGoModule ? pkgs.buildGoModule, buildNpmPackage ? pkgs.buildNpmPackage, ... }:
+{ pkgs, lib, craneLib, fetchgit, buildGoModule ? pkgs.buildGoModule, buildNpmPackage ? pkgs.buildNpmPackage, atprotoLib, ... }:
 
 let
   organizationalPackages = {
@@ -27,7 +27,7 @@ let
 
     
     # System administration and monitoring
-    witchcraft-systems = pkgs.callPackage ./witchcraft-systems { inherit lib; };
+    witchcraft-systems = pkgs.callPackage ./witchcraft-systems { inherit lib atprotoLib; };
     
     # Bluesky client applications
     whey-party = pkgs.callPackage ./whey-party { inherit lib buildNpmPackage; fetchFromTangled = pkgs.fetchFromTangled; };
@@ -39,7 +39,7 @@ let
     grain-social = pkgs.callPackage ./grain-social { inherit lib craneLib; };
 
     # Individual developer packages
-    individual = pkgs.callPackage ./individual { inherit lib craneLib; };
+    baileytownsend = pkgs.callPackage ./baileytownsend { inherit lib craneLib; };
     mackuba = pkgs.callPackage ./mackuba { inherit lib; };
     whyrusleeping = pkgs.callPackage ./whyrusleeping { inherit lib; };
 

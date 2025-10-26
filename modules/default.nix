@@ -15,7 +15,6 @@
     ./tangled
     ./smokesignal-events
     ./microcosm
-    ./witchcraft-systems
     ./atbackup-pages-dev
     ./bluesky
     ./grain-social

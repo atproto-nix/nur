@@ -1,145 +1,51 @@
-{ lib
-, stdenv
-, fetchFromGitHub
-, buildNpmPackage
-, nodejs
-, deno
-, writeShellScriptBin
-, pkgs
-}:
+{ pkgs, lib, atprotoLib, deno, nodejs, buildNpmPackage, packageLockJson, ... }:
 
-let
-  # Create a wrapper script that handles configuration
-  pds-dash-wrapper = writeShellScriptBin "pds-dash" ''
-    #!/bin/sh
-    
-    # Default configuration directory
-    CONFIG_DIR=''${PDS_DASH_CONFIG_DIR:-/etc/pds-dash}
-    
-    # Check if config.ts exists, if not create from template
-    if [ ! -f "$CONFIG_DIR/config.ts" ]; then
-      echo "Creating default configuration at $CONFIG_DIR/config.ts"
-      mkdir -p "$CONFIG_DIR"
-      cp ${placeholder "out"}/share/pds-dash/config.ts.example "$CONFIG_DIR/config.ts"
-      echo "Please edit $CONFIG_DIR/config.ts with your PDS configuration"
-      exit 1
-    fi
-    
-    # Copy config to working directory and start the application
-    WORK_DIR=$(mktemp -d)
-    trap "rm -rf $WORK_DIR" EXIT
-    
-    cp -r ${placeholder "out"}/share/pds-dash/* "$WORK_DIR/"
-    cp "$CONFIG_DIR/config.ts" "$WORK_DIR/"
-    
-    cd "$WORK_DIR"
-    exec ${deno}/bin/deno task preview "$@"
-  '';
-in
-
-stdenv.mkDerivation rec {
+buildNpmPackage rec {
   pname = "pds-dash";
-  version = "0.1.0";
+  version = "1.0";
 
-  src = fetchFromGitHub {
-    owner = "witchcraft-systems";
+  src = pkgs.fetchFromGitea {
+    domain = "git.witchcraft.systems";
+    owner = "scientific-witchery";
     repo = "pds-dash";
-    rev = "c348ed5d46a0d95422ea6f4925420be8ff3ce8f0";
-    hash = "sha256-9Geh8X5523tcZYyS7yONBjUW20ovej/5uGojyBBcMFI=";
+    rev = "1.0";
+    hash = "sha256-a4ECUtjeC2XW5YyOzV49V+ZhYtgL37Z+YiFH6BNpBbU=";
   };
 
-  nativeBuildInputs = [ deno nodejs pkgs.nodePackages.pnpm pkgs.cacert ];
+  npmDepsHash = ""; # Placeholder, will be filled by Nix
 
-  # Deno uses deno.lock for dependencies, not package-lock.json
-  buildPhase = ''
-    runHook preBuild
+  # Use npm ci for reproducible installs and then npm run build
+  npmBuild = "npm ci && npm run build";
 
-    # Deno will cache dependencies automatically
-    export DENO_DIR=$TMPDIR/deno
+  # We don't want buildNpmPackage to run its default build,
+  # as we're controlling it with npmBuild.
+  dontBuild = true;
 
-    # Set temporary directories for npm/pnpm to avoid /homeless-shelter error
-    export HOME=$TMPDIR/home
-    mkdir -p $HOME
-    export NPM_CONFIG_CACHE=$TMPDIR/npm-cache
-    export NPM_CONFIG_USERCONFIG=$TMPDIR/npmrc
+  nativeBuildInputs = [ deno nodejs ]; # Ensure deno and nodejs are available
 
-    # Build the application using Deno
-    pnpm add -D vite # Install vite locally using pnpm
-    cp config.ts.example config.ts # Provide a placeholder config for the build
-    ${deno}/bin/deno task build
-
-    runHook postBuild
+  postPatch = ''
+    cp ${packageLockJson} $src/package-lock.json
   '';
 
   installPhase = ''
-    runHook preInstall
-    
-    # Create output directories
-    mkdir -p $out/share/pds-dash
-    mkdir -p $out/bin
-    
-    # Copy built application
-    cp -r dist/* $out/share/pds-dash/
-    
-    # Copy configuration template and other assets
-    cp config.ts.example $out/share/pds-dash/
-    cp -r themes $out/share/pds-dash/
-    cp -r public $out/share/pds-dash/
-    cp package.json $out/share/pds-dash/
-    cp deno.lock $out/share/pds-dash/
-    
-    # Install wrapper script
-    cp ${pds-dash-wrapper}/bin/pds-dash $out/bin/
-    
-    runHook postInstall
+    echo "Running custom installPhase for copying build output"
+    mkdir -p $out/share/${pname}
+    cp -r dist/* $out/share/${pname}/
+    cp ${src}/config.ts.example $out/share/${pname}/
+    cp -r ${src}/themes $out/share/${pname}/
   '';
 
-  # ATProto metadata
-  passthru = {
-    atproto = {
-      type = "application";
-      services = [ "pds-dashboard" ];
-      protocols = [ "com.atproto" ];
-      schemaVersion = "1.0";
-      
-      # Configuration requirements
-      configuration = {
-        required = [ "PDS_URL" ];
-        optional = [ "THEME" "FRONTEND_URL" "MAX_POSTS" "FOOTER_TEXT" "SHOW_FUTURE_POSTS" ];
-      };
-    };
-    
-    organization = {
-      name = "witchcraft-systems";
-      displayName = "Witchcraft Systems";
-      website = null;
-      contact = null;
-      maintainer = "Witchcraft Systems";
-      repository = "https://github.com/witchcraft-systems/pds-dash";
-      packageCount = 1;
-      atprotoFocus = [ "applications" "tools" ];
-    };
+  # ATProto-specific metadata
+  passthru.atproto = atprotoLib.mkAtprotoPackage {
+    type = "application";
+    services = [];
+    protocols = ["com.atproto"];
   };
 
   meta = with lib; {
-    description = "Frontend dashboard with stats for ATProto PDS";
-    longDescription = ''
-      Frontend dashboard with statistics and management interface for ATProto PDS.
-      Built with Deno and provides a web interface for PDS monitoring.
-      
-      Maintained by Witchcraft Systems
-    '';
-    homepage = "https://github.com/witchcraft-systems/pds-dash";
+    description = "A frontend dashboard with stats for your ATProto PDS.";
+    homepage = "https://git.witchcraft.systems/scientific-witchery/pds-dash";
     license = licenses.mit;
     platforms = platforms.all;
-    maintainers = [ ];
-    mainProgram = "pds-dash";
-    
-    organizationalContext = {
-      organization = "witchcraft-systems";
-      displayName = "Witchcraft Systems";
-      needsMigration = false;
-      migrationPriority = "medium";
-    };
   };
 }

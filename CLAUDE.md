@@ -264,7 +264,7 @@ Fetcher for Tangled.org repositories (fork of `fetchFromGitHub`):
 - **Blacksky/Rsky** (13): Community PDS, relay, feedgen, firehose, labeler, satnav + libraries
 - **ATProto core** (8): TypeScript libraries (api, did, identity, lexicon, repo, syntax, xrpc)
 - **Bluesky official** (2): indigo (Go), grain (TypeScript) - placeholders
-- **Third-party apps** (10+): leaflet, parakeet, teal, yoten, red-dwarf, slices, streamplace, pds-dash, quickdid, atbackup
+- **Third-party apps** (10+): leaflet, parakeet, teal, yoten, red-dwarf, slices, streamplace, - `witchcraft-systems-pds-dash` - PDS monitoring dashboard (Deno), quickdid, atbackup
 - **Tangled infrastructure** (5): appview, knot, spindle, genjwks, lexgen
 - **Microcosm** (1): allegedly (PLC tools)
 

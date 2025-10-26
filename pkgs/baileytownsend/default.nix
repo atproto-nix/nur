@@ -9,11 +9,11 @@ let
   # Organizational metadata for individual developer packages
   _organizationMeta = {
     name = "individual";
-    displayName = "Individual Developers";
-    website = null;
+    displayName = "baileytownsend";
+    website = "https://baileytownsend.dev/";
     contact = null;
-    maintainer = "Individual Contributors";
-    description = "ATproto packages from individual developers without clear organizational ownership";
+    maintainer = "Bailey Townsend";
+    description = "ATproto packages by Bailey Townsend's";
     atprotoFocus = [ "tools" "applications" ];
     category = "community";
   };

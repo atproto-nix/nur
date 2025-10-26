@@ -1,25 +1,23 @@
-{ pkgs, lib, ... }:
-
-# Witchcraft Systems ATProto packages
-# Organization: witchcraft-systems
-# Description: PDS management and monitoring tools
+{ pkgs, lib, callPackage, atprotoLib, ... }:
 
 let
   # Organizational metadata
   organizationMeta = {
     name = "witchcraft-systems";
     displayName = "Witchcraft Systems";
-    website = null;
+    website = "https://witchcraft.systems";
     contact = null;
     maintainer = "Witchcraft Systems";
-    description = "PDS management and monitoring tools for ATProto ecosystem";
-    atprotoFocus = [ "tools" "infrastructure" ];
-    packageCount = 1;
+    description = "Packages from Witchcraft Systems for the ATProto ecosystem";
+    atprotoFocus = [ "tools" "applications" ];
+    packageCount = 1; # Will be updated as more packages are added
   };
 
-  # Package naming pattern: use simple names within organization
   packages = {
-    pds-dash = pkgs.callPackage ./pds-dash.nix { };
+    pds-dash = callPackage ./pds-dash.nix {
+      inherit atprotoLib;
+      packageLockJson = builtins.path { path = ../../package-lock-pds-dash.json; };
+    };
   };
 
   # Enhanced packages with organizational metadata
@@ -34,7 +32,7 @@ let
       meta = (oldAttrs.meta or {}) // {
         organizationalContext = {
           organization = organizationMeta.name;
-          displayName = organizationMeta.displayName;
+          displayName = organizationMeta.name;
         };
       };
     })
@@ -42,6 +40,5 @@ let
 
 in
 enhancedPackages // {
-  # Export organizational metadata for external use
   _organizationMeta = organizationMeta;
 }
