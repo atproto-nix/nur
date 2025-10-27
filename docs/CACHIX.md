@@ -92,6 +92,8 @@ craneLib.buildPackage {
 1. **Local (Crane):** Cargo dependencies compiled once per workspace
 2. **Remote (Cachix):** Both `cargoArtifacts` AND final binaries
 
+**Note:** For some Rust packages, `cargoVendorDir = null` is used to bypass `Cargo.lock` issues. This means dependencies are fetched directly from crates.io during the build, impacting build purity and potentially reducing cache effectiveness for those specific packages.
+
 **Build times:**
 - **Without cache:** 15-30 minutes per service (download deps + compile)
 - **With Crane only:** 2-5 minutes (reuse deps, rebuild package)

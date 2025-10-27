@@ -528,30 +528,29 @@ in
       # Remove Deno-specific arguments from stdenv args
       denoArgs = builtins.removeAttrs args [ "denoJson" "owner" "repo" "rev" "sha256" ];
       
-      # Enhanced Deno configuration processing
-      processDenoConfig = pkgs.runCommand "${appName}-config" {} ''
-        cp -r ${finalSrc} $out
-        chmod -R +w $out
-        
-        # Process deno.json/deno.jsonc configuration
-        if [ -f "$out/deno.json" ]; then
-          echo "Found deno.json configuration"
-          # Validate and process Deno configuration
-          ${pkgs.deno}/bin/deno check --config="$out/deno.json" "$out" || echo "Deno config validation failed, continuing"
-        elif [ -f "$out/deno.jsonc" ]; then
-          echo "Found deno.jsonc configuration"
-          ${pkgs.deno}/bin/deno check --config="$out/deno.jsonc" "$out" || echo "Deno config validation failed, continuing"
-        fi
-        
-        # Process import map if present
-        if [ -f "$out/import_map.json" ]; then
-          echo "Found import map configuration"
-        fi
-      '';
-    in
-    pkgs.stdenv.mkDerivation (denoArgs // {
-      src = processDenoConfig;
+            # Enhanced Deno configuration processing
+            # processDenoConfig = pkgs.runCommand "${appName}-config" {} ''
+            #   cp -r ${finalSrc} $out
+            #   chmod -R +w $out
       
+            #   # Process deno.json/deno.jsonc configuration
+            #   if [ -f "$out/deno.json" ]; then
+            #     echo "Found deno.json configuration"
+            #     # Validate and process Deno configuration
+            #     ${pkgs.deno}/bin/deno check --config="$out/deno.json" "$out" || echo "Deno config validation failed, continuing"
+            #   elif [ -f "$out/deno.jsonc" ]; then
+            #     echo "Found deno.jsonc configuration"
+            #     ${pkgs.deno}/bin/deno check --config="$out/deno.jsonc" "$out" || echo "Deno config validation failed, continuing"
+            #   fi
+      
+            #   # Process import map if present
+            #   if [ -f "$out/import_map.json" ]; then
+            #     echo "Found import map configuration"
+            #   fi
+            # ''
+          in
+          pkgs.stdenv.mkDerivation (denoArgs // {
+            src = finalSrc;      
       nativeBuildInputs = (args.nativeBuildInputs or []) ++ (with pkgs; [
         deno
         cacert # Required for HTTPS imports

@@ -14,6 +14,9 @@
 - **Binary Cache:** Cachix configured (awaiting GitHub secret)
 - **Repository Health:** 🟢 95% Production Ready
 
+### Recent Build Status
+- **Ongoing Fixes:** The build process has recently experienced instability, particularly with Rust and Deno packages, requiring fixes for hash mismatches, `Cargo.lock` issues, and Deno build task configurations. Work is ongoing to ensure all packages build reliably.
+
 ### Recent Completions ✅
 - **Phase 1:** Tangled ecosystem refactoring (tangled-dev → tangled)
 - **Phase 2:** Version pinning (leaflet, slices)

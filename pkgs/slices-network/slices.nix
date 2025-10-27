@@ -11,7 +11,7 @@ let
     owner = "@slices.network";
     repo = "slices";
     rev = "0a876a16d49c596d779d21a80a9ba0822f9d571f";
-    sha256 = "1qwcnc52x5nc7s7g4zkv36i5fbm63h1ggwwhk7cgxsj3qxkiczpg";
+    sha256 = "0wk6n082w9vdxfp549ylffnz0arwi78rlwai4jhdlvq3cr0547k8";
   };
 
   # Common environment for all components
@@ -35,6 +35,7 @@ let
     inherit src;
     pname = "slices-api";
     version = "0.2.0";
+    cargoVendorDir = null;
     
     # API is in the /api subdirectory
     sourceRoot = "${src.name}/api";
@@ -55,6 +56,7 @@ let
       sqlite
       zstd
       lz4
+      cacert
     ];
     
     # Copy migrations and other runtime assets
@@ -66,6 +68,13 @@ let
       if [ -f schema.sql ]; then
         cp schema.sql $out/share/slices-api/
       fi
+    '';
+
+    buildPhase = ''
+      runHook preBuild
+      cargoBuildLog=$(mktemp cargoBuildLogXXXX.json)
+      cargo build --release --message-format json-render-diagnostics >"$cargoBuildLog"
+      runHook postBuild
     '';
     
     meta = with lib; {
@@ -92,14 +101,33 @@ let
     inherit src;
     pname = "slices-frontend";
     version = "0.2.0";
-    
-    # Frontend is in the /frontend subdirectory
-    sourceRoot = "${src.name}/frontend";
-    
+
     buildInputs = with pkgs; [
       openssl
       sqlite
     ];
+
+    buildPhase = ''
+      runHook preBuild
+
+      # Set up Deno environment
+      export DENO_DIR="$PWD/.deno"
+      export DENO_CACHE_DIR="$PWD/.deno/cache"
+      export DENO_NO_UPDATE_CHECK=1
+      export DENO_NO_PROMPT=1
+
+      mkdir -p "$DENO_DIR" "$DENO_CACHE_DIR"
+
+      # Run codegen:frontend from the root of the workspace
+      echo "Running codegen:frontend..."
+      deno task codegen:frontend
+
+      # Compile the generated client
+      echo "Compiling frontend..."
+      deno compile --allow-all --no-check --output=app frontend/src/client.ts
+
+      runHook postBuild
+    '';
     
     # Frontend-specific environment
     env = commonEnv // {
