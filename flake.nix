@@ -56,8 +56,18 @@
 
         ci = import ./ci.nix { inherit pkgs craneLib; };
 
-      in
-      {
+    in
+    {
+      nixConfig = {
+        extra-substituters = [
+          "https://nix-community.cachix.org"
+          "https://crane.cachix.org"
+        ];
+        extra-trusted-public-keys = [
+          "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+          "crane.cachix.org-1:8Scfpmn9w+hGdXH/Q9tTLiYAE/2dnJYRJP7kl80GuRk="
+        ];
+      };
         # Flattened packages (e.g., tangled-knot, tangled-appview)
         packages = packages //
           # Also expose organizational attribute sets (e.g., tangled.knot, tangled.appview)
