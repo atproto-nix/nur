@@ -45,7 +45,7 @@ let
 
     outputHashMode = "recursive";
     outputHashAlgo = "sha256";
-    outputHash = lib.fakeHash;
+    outputHash = "sha256-ckpKh9FSA1LNcwx6gChNwZCVN4aRVFXjpeOMmCRk7iU=";
   };
 
 in
