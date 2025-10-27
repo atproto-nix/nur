@@ -14,7 +14,9 @@ let
   };
 
   packages = {
-    pds-dash = callPackage ./pds-dash.nix {};
+    pds-dash = callPackage ./pds-dash.nix {
+      inherit (pkgs) deno nodejs vite;
+    };
   };
 
   # Enhanced packages with organizational metadata
