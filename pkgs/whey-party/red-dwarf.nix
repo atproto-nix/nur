@@ -21,11 +21,17 @@ let
 
     SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
 
+    # Patch in our generated lockfile
+    postUnpack = ''
+      cp ${./red-dwarf-pnpm-lock.yaml} $sourceRoot/pnpm-lock.yaml
+    '';
+
     configurePhase = ''
       runHook preConfigure
 
       export HOME=$TMPDIR
       pnpm config set store-dir $TMPDIR/pnpm-store
+      # Now we can use frozen-lockfile since we patched it in!
       pnpm install --frozen-lockfile
 
       runHook postConfigure
@@ -45,7 +51,7 @@ let
 
     outputHashMode = "recursive";
     outputHashAlgo = "sha256";
-    outputHash = "sha256-HWRjG4Yiy7zDdCnKpwYdC3LYWVAl9IVV7xikbqcvYSM=";
+    outputHash = lib.fakeHash;  # Get the hash first, then update
   };
 
 in
