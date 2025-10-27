@@ -14,12 +14,15 @@ let
     maintainer = "Slices Network";
     description = "Custom AppView platform for ATProto ecosystem";
     atprotoFocus = [ "applications" "infrastructure" ];
-    packageCount = 1;
+    packageCount = 4;  # api, frontend, packages, slices
   };
 
-  # Package naming pattern: use simple names within organization
+  # Import slices.nix which returns { api, frontend, packages, slices }
+  slicesPackages = pkgs.callPackage ./slices.nix { inherit craneLib fetchFromTangled; };
+
+  # Package naming pattern: expose all components individually
   packages = {
-    slices = pkgs.callPackage ./slices.nix { inherit craneLib fetchFromTangled; };
+    inherit (slicesPackages) api frontend packages slices;
   };
 
   # Enhanced packages with organizational metadata
