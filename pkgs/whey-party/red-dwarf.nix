@@ -51,7 +51,7 @@ let
 
     outputHashMode = "recursive";
     outputHashAlgo = "sha256";
-    outputHash = lib.fakeHash;  # Get the hash first, then update
+    outputHash = "sha256-0UYoXGDPXkKgBap3FaM7lTb8ZeOnftzV9nxp7VPn4YY=";  # Get the hash first, then update
   };
 
 in
