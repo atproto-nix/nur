@@ -18,7 +18,7 @@ let
     inherit src;
 
     nativeBuildInputs = [ nodejs pnpm pkgs.cacert ];
-    
+
     SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
 
     configurePhase = ''
@@ -26,7 +26,7 @@ let
 
       export HOME=$TMPDIR
       pnpm config set store-dir $TMPDIR/pnpm-store
-      pnpm install --shamefully-hoist --frozen-lockfile=false
+      pnpm install --frozen-lockfile
 
       runHook postConfigure
     '';
@@ -45,7 +45,7 @@ let
 
     outputHashMode = "recursive";
     outputHashAlgo = "sha256";
-    outputHash = "sha256-zdX3UCnC/Wy0uOu4F/7BVOiYcBi02qzu/72MazJviaY=";
+    outputHash = "sha256-HWRjG4Yiy7zDdCnKpwYdC3LYWVAl9IVV7xikbqcvYSM=";
   };
 
 in
