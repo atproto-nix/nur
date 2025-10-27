@@ -3,6 +3,7 @@
 , fetchFromTangled
 , makeWrapper
 , nodejs
+, esbuild
 }:
 
 buildNpmPackage rec {
@@ -21,14 +22,22 @@ buildNpmPackage rec {
 
   npmDepsHash = "sha256-AI9MJXRtcQ17FLi7Lh8b5Rz7d8QkFFtuF0u0LHXFoR4=";
 
-  nativeBuildInputs = [ makeWrapper ];
+  nativeBuildInputs = [ makeWrapper esbuild ];
   
-  # Skip optional dependencies that require network access
-  # sharp's native binaries are optional and will fall back to JS implementations
-  makeCacheDistDirs = true;
-  npmFlags = [ "--omit=optional" ];
+  # KEY FIX: Prevent postinstall scripts during dependency fetching
+  # This stops esbuild from trying to download platform-specific binaries
+  npmFlags = [ "--ignore-scripts" ];
   
-  dontNpmBuild = true;  installPhase = ''
+  # After dependencies are installed, link to nixpkgs esbuild instead
+  postPatch = ''
+    # Replace esbuild binary with one from nixpkgs
+    mkdir -p node_modules/.bin
+    ln -sf ${esbuild}/bin/esbuild node_modules/.bin/esbuild
+  '';
+  
+  dontNpmBuild = true;
+
+  installPhase = ''
     runHook preInstall
 
     mkdir -p $out/{lib/avatar,bin}
@@ -72,7 +81,7 @@ buildNpmPackage rec {
     '';
     homepage = "https://tangled.org";
     license = licenses.mit;
-    platforms = platforms.unix;
+    platforms = platforms.linux ++ platforms.darwin;
     maintainers = [ ];
     mainProgram = "avatar";
   };
