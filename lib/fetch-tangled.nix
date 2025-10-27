@@ -12,6 +12,14 @@ let
     else
       "${repo}-${prefix}";
 
+  # Normalize owner to ensure it starts with @
+  # Tangled.org uses @username format for owners
+  normalizeOwner = owner:
+    if lib.hasPrefix "@" owner then
+      owner
+    else
+      "@${owner}";
+
 in
 lib.makeOverridable (
   {
@@ -47,7 +55,10 @@ lib.makeOverridable (
         builtins.unsafeGetAttrPos "rev" args
     );
 
-    baseUrl = "https://${domain}/${owner}/${repo}";
+    # Normalize owner to include @ prefix (Tangled.org format)
+    normalizedOwner = normalizeOwner owner;
+    
+    baseUrl = "https://${domain}/${normalizedOwner}/${repo}";
 
     newMeta = meta // {
       homepage = meta.homepage or baseUrl;
@@ -103,7 +114,9 @@ lib.makeOverridable (
   in
   fetcher fetcherArgs // {
     meta = newMeta;
-    inherit owner repo tag;
+    # Store the original owner for passthru
+    inherit repo tag;
+    owner = normalizedOwner;
     rev = revWithTag;
   }
 )

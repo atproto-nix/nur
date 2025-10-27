@@ -1,6 +1,9 @@
-{ stdenv, lib, fetchFromTangled, nodejs, pnpm, pkgs, ... }:
+{ lib
+, buildNpmPackage
+, fetchFromTangled
+}:
 
-let
+buildNpmPackage rec {
   pname = "red-dwarf";
   version = "0.1.0";
 
@@ -12,90 +15,34 @@ let
     forceFetchGit = true;
   };
 
-  # FOD to cache pnpm dependencies
-  pnpmDeps = stdenv.mkDerivation {
-    name = "${pname}-pnpm-deps-${version}";
-    inherit src;
-
-    nativeBuildInputs = [ nodejs pnpm pkgs.cacert ];
-
-    SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
-
-    # Patch in our generated lockfile
-    postUnpack = ''
-      cp ${./red-dwarf-pnpm-lock.yaml} $sourceRoot/pnpm-lock.yaml
-    '';
-
-    configurePhase = ''
-      runHook preConfigure
-
-      export HOME=$TMPDIR
-      pnpm config set store-dir $TMPDIR/pnpm-store
-      # Now we can use frozen-lockfile since we patched it in!
-      pnpm install --frozen-lockfile
-
-      runHook postConfigure
-    '';
-
-    installPhase = ''
-      runHook preInstall
-
-      mkdir -p $out
-      cp -R node_modules $out/
-
-      runHook postInstall
-    '';
-
-    dontBuild = true;
-    dontFixup = true;
-
-    outputHashMode = "recursive";
-    outputHashAlgo = "sha256";
-    outputHash = "sha256-iipEGO0MB2G6+4jZj3ZTqReZwQiWnlXzc0fKsl7IlNo=";  # Get the hash first, then update
-  };
-
-in
-stdenv.mkDerivation {
-  inherit pname version src;
-
-  nativeBuildInputs = [
-    nodejs
-    pnpm
-  ];
-
-  configurePhase = ''
-    runHook preConfigure
-
-    # Use cached node_modules from FOD
-    cp -R ${pnpmDeps}/node_modules .
-    chmod -R +w node_modules
-
-    runHook postConfigure
-  '';
-
+  npmDepsHash = "sha256-29EFrJASkRlvDOR9ZmjsBqOnoBA6hjl3TA/4qap+SnY=";
+  
+  # Skip npm's build script and run vite directly to avoid type checking
+  dontNpmBuild = true;
+  
   buildPhase = ''
     runHook preBuild
-
-    # Only run vite build, skip tsc type checking
-    pnpm exec vite build
-
+    
+    # Run vite build directly, skip tsc type checking
+    npx vite build
+    
     runHook postBuild
   '';
 
   installPhase = ''
     runHook preInstall
 
-    mkdir -p $out
-    cp -R dist/* $out
+    mkdir -p $out/share/red-dwarf
+    cp -r dist/* $out/share/red-dwarf/
 
     runHook postInstall
   '';
 
   meta = with lib; {
-    description = "A Bluesky client built with TanStack and Vite.";
+    description = "A Bluesky client built with TanStack and Vite";
     homepage = "https://github.com/whey-party/red-dwarf";
     license = licenses.mit;
-    maintainers = with maintainers; [ jack ];
+    maintainers = [ ];
     platforms = platforms.all;
   };
 }

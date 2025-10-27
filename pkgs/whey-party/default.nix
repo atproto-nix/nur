@@ -8,7 +8,6 @@ let
 
   packages = {
     red-dwarf = pkgs.callPackage ./red-dwarf.nix {
-      inherit fetchFromTangled pnpm;
     };
   };
 
