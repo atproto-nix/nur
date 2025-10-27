@@ -20,8 +20,8 @@ let
   src = pkgs.fetchFromGitHub {
     owner = "at-microcosm";
     repo = "microcosm-rs";
-    rev = "b0a66a102261d0b4e8a90d34cec3421073a7b728";
-    sha256 = "sha256-swdAcsjRWnj9abmnrce5LzeKRK+LHm8RubCEIuk+53c=";
+    rev = "af33a8464e7893c157f17a455d75551b284e97bd";
+    sha256 = "sha256-rjcd7yJIbMocx2BzvFkmvOV/8EjJixdrmcgdHvRqN5k=";
   };
 
   commonEnv = {
