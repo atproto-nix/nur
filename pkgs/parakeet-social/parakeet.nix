@@ -18,7 +18,7 @@ craneLib.buildPackage rec {
 
   nativeBuildInputs = with pkgs; [
     pkg-config
-    # Add other native build inputs if known
+    protobuf
   ];
 
   buildInputs = with pkgs; [
