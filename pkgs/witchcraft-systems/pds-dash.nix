@@ -8,6 +8,13 @@ let
     sha256 = "sha256-9Geh8X5523tcZYyS7yONBjUW20ovej/5uGojyBBcMFI=";
   };
   
+  # Platform-specific hashes for node_modules
+  nodeModulesHashes = {
+    x86_64-linux = "sha256-nArr6RtfzSLKY6bjT+UngD8G43ZjhR+Ev3KAlOahp50=";
+    x86_64-darwin = "sha256-yUeEN7Q6YdocvzALRBpKtJpZXMSgTmf6RMS5nmLh7kE=";
+    aarch64-darwin = "sha256-yUeEN7Q6YdocvzALRBpKtJpZXMSgTmf6RMS5nmLh7kE=";  # Assuming same as x86_64-darwin
+  };
+  
   # Fixed-output derivation to create node_modules
   nodeModules = pkgs.stdenv.mkDerivation {
     name = "pds-dash-node-modules";
@@ -33,7 +40,7 @@ let
     
     outputHashMode = "recursive";
     outputHashAlgo = "sha256";
-    outputHash = "sha256-yUeEN7Q6YdocvzALRBpKtJpZXMSgTmf6RMS5nmLh7kE=";
+    outputHash = nodeModulesHashes.${pkgs.stdenv.hostPlatform.system} or (throw "Unsupported platform: ${pkgs.stdenv.hostPlatform.system}");
   };
 in
 
