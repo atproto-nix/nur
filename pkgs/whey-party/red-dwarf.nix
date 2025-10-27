@@ -3,9 +3,6 @@
 let
   pname = "red-dwarf";
   version = "0.1.0";
-in
-stdenv.mkDerivation {
-  inherit pname version;
 
   src = fetchFromTangled {
     owner = "@whey.party";
@@ -15,20 +12,57 @@ stdenv.mkDerivation {
     forceFetchGit = true;
   };
 
+  # FOD to cache pnpm dependencies
+  pnpmDeps = stdenv.mkDerivation {
+    name = "${pname}-pnpm-deps-${version}";
+    inherit src;
+
+    nativeBuildInputs = [ nodejs pnpm pkgs.cacert ];
+    
+    SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
+
+    configurePhase = ''
+      runHook preConfigure
+
+      export HOME=$TMPDIR
+      pnpm config set store-dir $TMPDIR/pnpm-store
+      pnpm install --shamefully-hoist --frozen-lockfile=false
+
+      runHook postConfigure
+    '';
+
+    installPhase = ''
+      runHook preInstall
+
+      mkdir -p $out
+      cp -R node_modules $out/
+
+      runHook postInstall
+    '';
+
+    dontBuild = true;
+    dontFixup = true;
+
+    outputHashMode = "recursive";
+    outputHashAlgo = "sha256";
+    outputHash = lib.fakeHash;
+  };
+
+in
+stdenv.mkDerivation {
+  inherit pname version src;
+
   nativeBuildInputs = [
     nodejs
     pnpm
-    pkgs.cacert
   ];
-
-  SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
 
   configurePhase = ''
     runHook preConfigure
 
-    export HOME=$TMPDIR
-    pnpm config set store-dir $TMPDIR/pnpm-store
-    pnpm install --shamefully-hoist --frozen-lockfile=false
+    # Use cached node_modules from FOD
+    cp -R ${pnpmDeps}/node_modules .
+    chmod -R +w node_modules
 
     runHook postConfigure
   '';
