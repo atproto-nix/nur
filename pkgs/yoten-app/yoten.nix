@@ -22,7 +22,7 @@ let
     name = "tailwindcss-standalone-v2";
     src = let
       base = "https://github.com/tailwindlabs/tailwindcss/releases/latest/download";
-      srcAttrs = 
+      srcAttrs =
         if stdenv.system == "x86_64-linux" then {
           url = "${base}/tailwindcss-linux-x64";
           sha256 = "sha256-CeaHamPOsJzNflhn49uystxlw6Ly4v4hDWjqO8BDIFA=";
@@ -32,13 +32,13 @@ let
         } else if stdenv.system == "x86_64-darwin" then {
           url = "${base}/tailwindcss-darwin-x64";
           sha256 = "sha256-8891f28257400aa862151fca222572385643a0b2261b35368ca6c6064e271877";
-        } else { # Default to linux-x64 if system not explicitly handled
-          url = "${base}/tailwindcss-linux-x64";
-          sha256 = "sha256-CeaHamPOsJzNflhn49uystxlw6Ly4v4hDWjqO8BDIFA=";
-        };
+        } else if stdenv.system == "aarch64-linux" then {
+          url = "${base}/tailwindcss-linux-arm64";
+          sha256 = "sha256-REPLACE_WITH_CORRECT_HASH_FOR_AARCH64_LINUX";
+        } else throw "Unsupported system: ${stdenv.system}";
     in fetchurl srcAttrs;
     dontUnpack = true;
-    nativeBuildInputs = [ ];
+    nativeBuildInputs = lib.optional stdenv.isLinux autoPatchelfHook;
     installPhase = ''
       mkdir -p $out/bin
       cp $src $out/bin/tailwindcss
@@ -63,7 +63,7 @@ buildGoModule rec {
   vendorHash = "sha256-gjlwSBmyHy0SXTnOi+XNVBKm4t7HWRVNA19Utx3Eh/w=";
 
   # Build tools needed for frontend assets
-  nativeBuildInputs = [ templ esbuild ];
+  nativeBuildInputs = [ templ esbuild tailwindcss-standalone ];
 
   # Build the main server binary
   subPackages = [ "cmd/server" ];
@@ -71,7 +71,17 @@ buildGoModule rec {
   # Skip tests for now due to complex dependencies
   doCheck = false;
 
+  # KEY FIX: Override the Go modules derivation to skip frontend build
+  # Keep Go, but remove frontend tools to prevent them running during vendoring
+  overrideModAttrs = oldAttrs: {
+    # Don't run preBuild in the modules derivation
+    preBuild = "";
+    # Remove frontend tools from nativeBuildInputs but keep the Go toolchain
+    # (buildGoModule automatically adds Go to the modules derivation)
+  };
+
   # Generate templ templates, build frontend assets, and prepare static files
+  # This runs AFTER vendoring is complete, in the main build derivation
   preBuild = ''
     # Generate Go code from templ templates
     echo "Generating templ templates..."
@@ -96,7 +106,7 @@ buildGoModule rec {
 
     # Build Tailwind CSS using the standalone v4 binary
     echo "Building Tailwind CSS..."
-    ${tailwindcss-standalone}/bin/tailwindcss -i ./input.css -o ./static/files/style.css --minify
+    tailwindcss -i ./input.css -o ./static/files/style.css --minify
 
     echo "Frontend build complete. Static files ready."
   '';
@@ -105,7 +115,7 @@ buildGoModule rec {
     # Rename binary to yoten
     mv $out/bin/server $out/bin/yoten
   '';
-  
+
   passthru = {
     atproto = {
       type = "application";
@@ -114,7 +124,7 @@ buildGoModule rec {
       schemaVersion = "1.0";
       description = "Social platform for tracking language learning progress";
     };
-    
+
     organization = {
       name = "yoten-app";
       displayName = "Yoten App";
@@ -126,8 +136,8 @@ buildGoModule rec {
       atprotoFocus = [ "applications" ];
     };
   };
-  
-  meta = with pkgs.lib; {
+
+  meta = with lib; {
     description = "Social platform for tracking language learning progress";
     longDescription = ''
       Social platform for tracking language learning progress built on ATProto.
@@ -140,7 +150,7 @@ buildGoModule rec {
     '';
     homepage = "https://yoten.app";
     license = licenses.mit;
-    platforms = platforms.unix;
+    platforms = platforms.linux ++ platforms.darwin;
     maintainers = [ ];
     mainProgram = "yoten";
 
