@@ -11,29 +11,29 @@ rec {
     ProtectSystem = "strict";
     ProtectHome = true;
     PrivateTmp = true;
-    
+
     # Kernel and system protection
     ProtectKernelTunables = true;
     ProtectKernelModules = true;
     ProtectKernelLogs = true;
     ProtectControlGroups = true;
     ProtectClock = true;
-    
+
     # Process restrictions
     RestrictRealtime = true;
     RestrictSUIDSGID = true;
     RestrictNamespaces = true;
     LockPersonality = true;
     MemoryDenyWriteExecute = true;
-    
+
     # IPC and mount restrictions
     RemoveIPC = true;
     PrivateMounts = true;
     PrivateDevices = true;
-    
+
     # Network restrictions (can be overridden per service)
     RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
-    
+
     # Additional hardening
     SystemCallArchitectures = "native";
     UMask = "0077";
@@ -86,7 +86,14 @@ rec {
       default = false;
       description = "Whether to open the firewall for ${serviceName} service ports.";
     };
-  } // extraOptions;
+
+    # Allow bind option to be added by individual service modules
+    bind = mkOption {
+      type = types.str;
+      default = "";
+      description = "Listen address for the service. Can be overridden by individual service modules.";
+    };
+  } // removeAttrs extraOptions [ "bind" ];
 
   # Helper function to create standard user and group configuration
   mkUserConfig = cfg: {
@@ -120,11 +127,11 @@ rec {
         User = cfg.user;
         Group = cfg.group;
         WorkingDirectory = cfg.dataDir;
-        
+
         # Standard paths
         ReadWritePaths = [ cfg.dataDir ] ++ (serviceConfig.extraReadWritePaths or []);
         ReadOnlyPaths = [ "/nix/store" ];
-        
+
         # Environment
         Environment = [
           "RUST_LOG=${cfg.logLevel}"
@@ -178,11 +185,11 @@ rec {
   ];
 
   # Helper function to extract port from bind address
-  extractPortFromBind = bindAddr: 
+  extractPortFromBind = bindAddr:
     let
       parts = splitString ":" bindAddr;
     in
-    if length parts >= 2 
+    if length parts >= 2
     then toInt (last parts)
     else throw "Invalid bind address format: ${bindAddr}";
 
