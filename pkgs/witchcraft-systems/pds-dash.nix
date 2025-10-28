@@ -4,7 +4,7 @@ let
     domain = "git.witchcraft.systems";
     owner = "scientific-witchery";
     repo = "pds-dash";
-    rev = "main";
+    rev = "c348ed5d46a0d95422ea6f4925420be8ff3ce8f0";
     sha256 = "sha256-9Geh8X5523tcZYyS7yONBjUW20ovej/5uGojyBBcMFI=";
   };
   

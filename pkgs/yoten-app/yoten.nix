@@ -34,7 +34,7 @@ let
           sha256 = "sha256-8891f28257400aa862151fca222572385643a0b2261b35368ca6c6064e271877";
         } else if stdenv.system == "aarch64-linux" then {
           url = "${base}/tailwindcss-linux-arm64";
-          sha256 = "sha256-REPLACE_WITH_CORRECT_HASH_FOR_AARCH64_LINUX";
+          sha256 = "sha256-ln60NPTWocDf2hBt7MZGy3QuBNdFqkhHJgI83Ua6jto=";
         } else throw "Unsupported system: ${stdenv.system}";
     in fetchurl srcAttrs;
     dontUnpack = true;

@@ -31,7 +31,9 @@ let
   nodePackages = let
     # Common configuration for all workspace packages
     commonConfig = {
-      npmDepsHash = lib.fakeHash; # TODO: Generate actual hash
+      # TODO: Calculate on Linux x86_64 with: nix build .#likeandscribe-frontpage 2>&1 | grep "got:"
+      # See docs/JAVASCRIPT_DENO_BUILDS.md for FOD pattern explanation
+      npmDepsHash = lib.fakeHash; # TODO: pnpm monorepo requires special hash handling
       
       nativeBuildInputs = with pkgs; [
         nodejs_20
