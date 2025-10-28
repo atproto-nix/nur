@@ -1,0 +1,5 @@
+       note: build failure may have been caused by lack of free disk space
+error: Cannot build '/nix/store/kz0dgxh37gdhhf3bqy35gx0jqh23s7b5-pds-dash-0.1.0.drv'.
+       Reason: 1 dependency failed.
+       Output paths:
+         /nix/store/rrgzcmxd8b0xmf69v8nc3nzan353x13q-pds-dash-0.1.0

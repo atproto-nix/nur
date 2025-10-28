@@ -5,6 +5,8 @@
 { lib, pkgs, ... }:
 
 {
+  parseDenoLock = import ./lock-file.nix { inherit lib pkgs; };
+
   # Build a Deno application
   buildDenoApp = { owner ? null, repo ? null, rev ? null, sha256 ? null, src ? null, denoJson ? null, ... }@args:
     let

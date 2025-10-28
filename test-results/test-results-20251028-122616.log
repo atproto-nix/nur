@@ -1,0 +1,57 @@
+[2025-10-28 12:26:16] [INFO] Test suite started
+[2025-10-28 12:26:16] [INFO] Platform: Linux nixos 6.12.52 #1-NixOS SMP PREEMPT_DYNAMIC Sun Oct 12 10:57:19 UTC 2025 x86_64 GNU/Linux
+[2025-10-28 12:26:16] [INFO] Working directory: /home/atproto/nur
+[2025-10-28 12:26:16] [INFO] Log file: test-results/test-results-20251028-122616.log
+[2025-10-28 12:26:16] [TEST] === SECTION 1: Architecture & Structure Tests ===
+[2025-10-28 12:26:16] [TEST] Testing: Directory structure exists
+[2025-10-28 12:26:16] [RESULT] Directory structure: PASS (0s)
+[2025-10-28 12:26:16] [TEST] Testing: lib/packaging modules exist
+[2025-10-28 12:26:16] [RESULT] Module files exist: PASS (0s)
+[2025-10-28 12:26:16] [TEST] Testing: lib/packaging evaluates
+[2025-10-28 12:26:16] [RESULT] lib/packaging evaluates: PASS (0s)
+[2025-10-28 12:26:16] [TEST] Testing: standardEnv attribute exists
+[2025-10-28 12:26:16] [RESULT] standardEnv attribute exists: PASS (0s)
+[2025-10-28 12:26:16] [TEST] === SECTION 2: Flake Structure Tests ===
+[2025-10-28 12:26:16] [TEST] Testing: nix flake show
+[2025-10-28 12:26:17] [RESULT] nix flake show: PASS (1s)
+[2025-10-28 12:26:17] [TEST] Testing: nix flake check (all packages evaluate)
+[2025-10-28 12:26:25] [RESULT] nix flake check (all packages evaluate): FAIL (8s)
+[2025-10-28 12:26:25] [ERROR] Test failed with exit code 1: nix flake check (all packages evaluate)
+[2025-10-28 12:26:25] [TEST] Testing: Package count check
+[2025-10-28 12:26:26] [RESULT] Package count (expect ~49): FAIL (0s)
+[2025-10-28 12:26:26] [ERROR] Found only 0 systems, expected ~4
+[2025-10-28 12:26:26] [TEST] === SECTION 3: Critical Issue Fixes ===
+[2025-10-28 12:26:26] [TEST] Testing: pds-dash version is pinned
+[2025-10-28 12:26:26] [RESULT] pds-dash version pinned: PASS (0s)
+[2025-10-28 12:26:26] [TEST] Testing: yoten aarch64-linux hash
+[2025-10-28 12:26:26] [RESULT] yoten aarch64-linux hash: PASS (0s)
+[2025-10-28 12:26:26] [TEST] Testing: frontpage has hash TODO
+[2025-10-28 12:26:26] [RESULT] frontpage TODO documented: PASS (0s)
+[2025-10-28 12:26:26] [TEST] Testing: pds-dash builds (Deno + Vite)
+[2025-10-28 12:26:30] [RESULT] pds-dash builds (Deno + Vite): PASS (4s)
+[2025-10-28 12:26:30] [TEST] Testing: yoten builds (Go + multi-stage)
+[2025-10-28 12:26:34] [RESULT] yoten builds (Go + multi-stage): FAIL (4s)
+[2025-10-28 12:26:34] [ERROR] Test failed with exit code 1: yoten builds (Go + multi-stage)
+[2025-10-28 12:26:34] [TEST] Testing: frontpage evaluates
+[2025-10-28 12:26:35] [RESULT] frontpage evaluates: FAIL (1s)
+[2025-10-28 12:26:35] [ERROR] Test failed with exit code 1: frontpage evaluates
+[2025-10-28 12:26:35] [TEST] === SECTION 4: Rust Packages (Workspace Caching) ===
+[2025-10-28 12:26:35] [TEST] Testing: microcosm-constellation builds
+[2025-10-28 12:26:35] [RESULT] microcosm-constellation builds: FAIL (0s)
+[2025-10-28 12:26:35] [ERROR] Test failed with exit code 1: microcosm-constellation builds
+[2025-10-28 12:26:35] [TEST] Testing: microcosm-spacedust builds
+[2025-10-28 12:26:35] [RESULT] microcosm-spacedust builds: FAIL (0s)
+[2025-10-28 12:26:35] [ERROR] Test failed with exit code 1: microcosm-spacedust builds
+[2025-10-28 12:26:35] [TEST] Testing: microcosm-slingshot builds
+[2025-10-28 12:26:35] [RESULT] microcosm-slingshot builds: FAIL (0s)
+[2025-10-28 12:26:35] [ERROR] Test failed with exit code 1: microcosm-slingshot builds
+[2025-10-28 12:26:35] [TEST] Testing: smokesignal-events-quickdid builds
+[2025-10-28 12:26:35] [RESULT] smokesignal-events-quickdid builds: FAIL (0s)
+[2025-10-28 12:26:35] [ERROR] Test failed with exit code 1: smokesignal-events-quickdid builds
+[2025-10-28 12:26:35] [TEST] Testing: parakeet-social-parakeet builds
+[2025-10-28 12:26:35] [RESULT] parakeet-social-parakeet builds: FAIL (0s)
+[2025-10-28 12:26:35] [ERROR] Test failed with exit code 1: parakeet-social-parakeet builds
+[2025-10-28 12:26:35] [TEST] === SECTION 5: Go Packages ===
+[2025-10-28 12:26:35] [TEST] Testing: tangled-appview builds
+[2025-10-28 12:26:35] [RESULT] tangled-appview builds: FAIL (0s)
+[2025-10-28 12:26:35] [ERROR] Test failed with exit code 1: tangled-appvi

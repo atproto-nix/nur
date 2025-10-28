@@ -65,7 +65,8 @@
       "Bash(git mv /home/jack/nur/modules/red-dwarf-client/red-dwarf.nix /home/jack/nur/modules/whey-party/)",
       "Bash(git mv:*)",
       "Bash(test:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": [],
     "ask": []

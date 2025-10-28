@@ -42,7 +42,7 @@ let
 
     # Individual developer packages
     baileytownsend = pkgs.callPackage ./baileytownsend { inherit lib craneLib; };
-    mackuba = pkgs.callPackage ./mackuba { inherit lib; };
+    mackuba = pkgs.callPackage ./mackuba { inherit lib; fetchFromTangled = pkgs.fetchFromTangled; };
     whyrusleeping = pkgs.callPackage ./whyrusleeping { inherit lib; };
 
     # New organizational framework packages
