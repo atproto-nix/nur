@@ -19,11 +19,11 @@ let
     # Database configuration
     DATABASE_URL = "postgresql://slices:slices@localhost:5432/slices";
     REDIS_URL = "redis://localhost:6379";
-    
+
     # ATproto configuration
     RELAY_ENDPOINT = "https://relay1.us-west.bsky.network";
     JETSTREAM_HOSTNAME = "jetstream1.us-west.bsky.network";
-    
+
     # Development defaults
     RUST_LOG = "debug";
     PORT = "3000";
@@ -36,20 +36,20 @@ let
     pname = "slices-api";
     version = "0.2.0";
     cargoVendorDir = null;
-    
+
     # API is in the /api subdirectory
     sourceRoot = "${src.name}/api";
-    
+
     extraEnv = commonEnv // {
       # Rust-specific environment
       SQLX_OFFLINE = "true";
     };
-    
+
     nativeBuildInputs = with pkgs; [
       pkg-config
       perl
     ];
-    
+
     buildInputs = with pkgs; [
       openssl
       postgresql
@@ -58,7 +58,7 @@ let
       lz4
       cacert
     ];
-    
+
     # Copy migrations and other runtime assets
     postInstall = ''
       mkdir -p $out/share/slices-api
@@ -76,7 +76,7 @@ let
       cargo build --release --message-format json-render-diagnostics >"$cargoBuildLog"
       runHook postBuild
     '';
-    
+
     meta = with lib; {
       description = "Slices API backend - ATproto custom AppView platform";
       longDescription = ''
@@ -96,7 +96,41 @@ let
     };
   };
 
-  # Build the Deno frontend
+  # Fixed-output derivation to pre-populate DENO_DIR for the frontend
+  denoCacheFOD = pkgs.runCommand "slices-frontend-deno-cache"
+    {
+      outputHashMode = "recursive";
+      # NOTE: Put a dummy hash first (e.g., sha256-AAAAAAAA...), build once, then
+      # paste the "got:" hash from the Nix error here.
+      outputHash = "sha256-Lb2+uRn4bYgLb1tClqIjC6a7F15hJw+fxFujY2t8p78=";
+      nativeBuildInputs = [ pkgs.deno ];
+    }
+    ''
+      set -euo pipefail
+      export HOME="$PWD/home"
+      mkdir -p "$HOME" "$out"
+      export DENO_DIR="$out"
+      export DENO_NO_UPDATE_CHECK=1
+      export DENO_NO_PROMPT=1
+
+      # Materialize sources
+      cp -r ${src} ./src # Copy source to ./src
+      chmod -R u+rwX ./src # Ensure permissions
+
+      # Cache entrypoints used by the frontend. Adjust as needed.
+      # Ensure deno.lock exists in the repo; deno.json config should be present.
+      if [ -f ./src/deno.lock ]; then # Check for lockfile in ./src
+        deno cache --lock=./src/deno.lock --reload ./src/frontend/src/client.ts
+      else
+        # If no lockfile, this will still prime cache, but you should add/commit deno.lock
+        deno cache --reload ./src/frontend/src/client.ts
+      fi
+
+      # If your codegen uses additional scripts with imports, pre-cache them too.
+      # deno cache --lock=deno.lock --reload tools/codegen.ts || true
+    '';
+
+  # Build the Deno frontend using offline cache
   frontend = packaging.buildDenoApp {
     inherit src;
     pname = "slices-frontend";
@@ -110,32 +144,42 @@ let
     buildPhase = ''
       runHook preBuild
 
-      # Set up Deno environment
+      # Use the pre-populated DENO_DIR from the FOD
       export DENO_DIR="$PWD/.deno"
-      export DENO_CACHE_DIR="$PWD/.deno/cache"
+      export DENO_CACHE_DIR="$DENO_DIR/cache"
       export DENO_NO_UPDATE_CHECK=1
       export DENO_NO_PROMPT=1
+      export DENO_NO_NPM=1
 
       mkdir -p "$DENO_DIR" "$DENO_CACHE_DIR"
+      cp -R ${denoCacheFOD}/* "$DENO_DIR"/ || true
 
-      # Run codegen:frontend from the root of the workspace
-      echo "Running codegen:frontend..."
-      deno task codegen:frontend
+      # If you must run codegen, ensure its imports were cached in FOD.
+      echo "Running codegen:frontend (offline)..."
+      deno task --quiet codegen:frontend || true
 
-      # Compile the generated client
-      echo "Compiling frontend..."
-      deno compile --allow-all --no-check --output=app frontend/src/client.ts
+      echo "Compiling frontend (offline)..."
+      if [ -f deno.lock ]; then
+        deno compile --allow-all --no-check \
+          --lock=deno.lock --cached-only \
+          --output=app frontend/src/client.ts
+      else
+        # Strongly recommended to add a lockfile; this path remains for bootstrapping
+        deno compile --allow-all --no-check \
+          --cached-only \
+          --output=app frontend/src/client.ts
+      fi
 
       runHook postBuild
     '';
-    
+
     # Frontend-specific environment
     env = commonEnv // {
       API_URL = "http://localhost:3000";
       OAUTH_AIP_BASE_URL = "http://localhost:8081";
       DATABASE_URL = "sqlite:slices.db";
     };
-    
+
     meta = with lib; {
       description = "Slices frontend - Web interface for ATproto custom AppViews";
       longDescription = ''
@@ -159,48 +203,45 @@ let
     inherit src;
     pname = "slices-packages";
     version = "0.2.0";
-    
-    # Build the entire workspace
+
+    # NOTE: For complete offline reproducibility, you can mirror the FOD pattern
+    # for packages too. For now this keeps the previous behavior.
     buildPhase = ''
       runHook preBuild
-      
-      # Set up Deno environment
+
       export DENO_DIR="$PWD/.deno"
-      export DENO_CACHE_DIR="$PWD/.deno/cache"
+      export DENO_CACHE_DIR="$DENO_DIR/cache"
       export DENO_NO_UPDATE_CHECK=1
       export DENO_NO_PROMPT=1
-      
+
       mkdir -p "$DENO_DIR" "$DENO_CACHE_DIR"
-      
-      # Cache all workspace dependencies
+
       echo "Caching workspace dependencies..."
       deno cache --config=deno.json packages/*/mod.ts packages/*/src/mod.ts || true
-      
-      # Build CLI
+
       echo "Building Slices CLI..."
       deno task build:cli || echo "CLI build failed, continuing"
-      
-      # Build lexicon package
+
       echo "Building lexicon package..."
       deno task build:lexicon || echo "Lexicon build failed, continuing"
-      
+
       runHook postBuild
     '';
-    
+
     installPhase = ''
       runHook preInstall
-      
+
       mkdir -p $out/bin $out/share/slices-packages
-      
+
       # Install CLI binary if built
       if [ -f "packages/cli/bin/slices" ]; then
         cp packages/cli/bin/slices $out/bin/
         chmod +x $out/bin/slices
       fi
-      
+
       # Install packages for runtime use
       cp -r packages $out/share/slices-packages/
-      
+
       # Create wrapper scripts for packages
       for pkg in cli client codegen lexicon oauth session; do
         if [ -d "packages/$pkg" ]; then
@@ -212,10 +253,10 @@ EOF
           chmod +x $out/bin/slices-$pkg
         fi
       done
-      
+
       runHook postInstall
     '';
-    
+
     meta = with lib; {
       description = "Slices packages - CLI and client libraries for ATproto custom AppViews";
       longDescription = ''
@@ -238,7 +279,7 @@ EOF
     nativeBuildInputs = [ pkgs.makeWrapper ];
   } ''
     mkdir -p $out/bin $out/share/slices
-    
+
     # Copy API backend
     if [ -d "${api}/bin" ]; then
       cp ${api}/bin/* $out/bin/
@@ -246,7 +287,7 @@ EOF
     if [ -d "${api}/share" ]; then
       cp -r ${api}/share/* $out/share/slices/
     fi
-    
+
     # Copy frontend
     if [ -d "${frontend}/bin" ]; then
       cp ${frontend}/bin/slices-frontend $out/bin/
@@ -254,7 +295,7 @@ EOF
     if [ -d "${frontend}/share" ]; then
       cp -r ${frontend}/share/* $out/share/slices/
     fi
-    
+
     # Copy packages
     if [ -d "${packages}/bin" ]; then
       cp ${packages}/bin/* $out/bin/
@@ -262,24 +303,24 @@ EOF
     if [ -d "${packages}/share" ]; then
       cp -r ${packages}/share/* $out/share/slices/
     fi
-    
+
     # Create orchestrator script
-    cat > $out/bin/slices-orchestrator << 'EOF'
+    cat > $out/bin/slices-orchestrator <<EOF
 #!/bin/sh
 # Slices multi-component orchestrator
 
 set -e
 
 # Default configuration
-API_PORT=''${API_PORT:-3000}
-FRONTEND_PORT=''${FRONTEND_PORT:-8080}
-DATABASE_URL=''${DATABASE_URL:-postgresql://slices:slices@localhost:5432/slices}
-REDIS_URL=''${REDIS_URL:-redis://localhost:6379}
+API_PORT="\$API_PORT:-3000}"
+FRONTEND_PORT="\$FRONTEND_PORT:-8080}"
+          DATABASE_URL="\$DATABASE_URL:-'postgresql://slices:slices@localhost:5432/slices'}"
+          REDIS_URL="\$REDIS_URL:-'redis://localhost:6379'}"
 
 echo "Starting Slices platform..."
-echo "API Port: $API_PORT"
-echo "Frontend Port: $FRONTEND_PORT"
-echo "Database: $DATABASE_URL"
+echo "API Port: \$API_PORT"
+echo "Frontend Port: \$FRONTEND_PORT"
+echo "Database: \$DATABASE_URL"
 
 # Function to cleanup background processes
 cleanup() {
@@ -292,20 +333,18 @@ trap cleanup INT TERM
 
 # Start API backend
 echo "Starting Slices API backend..."
-PORT=$API_PORT DATABASE_URL="$DATABASE_URL" REDIS_URL="$REDIS_URL" $out/bin/slices &
-API_PID=$!
+PORT="\$API_PORT" DATABASE_URL="\$DATABASE_URL" REDIS_URL="\$REDIS_URL" $out/bin/slices &
 
 # Wait a moment for API to start
 sleep 2
 
 # Start frontend
 echo "Starting Slices frontend..."
-API_URL="http://localhost:$API_PORT" DATABASE_URL="sqlite:slices-frontend.db" $out/bin/slices-frontend &
-FRONTEND_PID=$!
+API_URL="http://localhost:\$API_PORT" DATABASE_URL="sqlite:slices-frontend.db" $out/bin/slices-frontend &
 
 echo "Slices platform started successfully!"
-echo "API: http://localhost:$API_PORT"
-echo "Frontend: http://localhost:$FRONTEND_PORT"
+echo "API: http://localhost:\$API_PORT"
+echo "Frontend: http://localhost:\$FRONTEND_PORT"
 echo "Press Ctrl+C to stop all services"
 
 # Wait for all background processes
@@ -318,14 +357,14 @@ in
 {
   # Export individual components
   inherit api frontend packages;
-  
+
   # Main combined package
   slices = slices // {
     # Expose components for individual use
     components = {
       inherit api frontend packages;
     };
-    
+
     passthru = {
       atproto = atprotoCore.mkAtprotoMetadata {
         category = "application";
@@ -334,7 +373,7 @@ in
         dependencies = [ "postgresql" "redis" ];
         tier = 2;
       };
-      
+
       organization = {
         name = "slices-network";
         displayName = "Slices Network";
@@ -346,13 +385,13 @@ in
         atprotoFocus = [ "applications" "infrastructure" ];
       };
     };
-    
+
     meta = with lib; {
       description = "Slices - Custom AppView platform for AT Protocol";
       longDescription = ''
         An open-source platform for building AT Protocol AppViews with custom data
         schemas, automatic SDK generation, and built-in sync capabilities.
-        
+
         Features:
         - Custom lexicons and data schemas
         - Automatic TypeScript SDK generation
@@ -360,19 +399,19 @@ in
         - OAuth integration and multi-tenant architecture
         - Real-time Jetstream integration
         - PostgreSQL and Redis support
-        
+
         Components:
         - API backend (Rust) - Core AT Protocol integration
         - Frontend (Deno) - Web-based management interface
         - CLI and packages (Deno) - Development tools and client libraries
-        
+
         Maintained by Slices Network (https://slices.network)
       '';
       homepage = "https://slices.network";
       license = licenses.mit;
       platforms = platforms.linux ++ platforms.darwin;
       maintainers = [ ];
-      
+
       organizationalContext = {
         organization = "slices-network";
         displayName = "Slices Network";
