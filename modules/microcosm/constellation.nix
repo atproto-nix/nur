@@ -32,6 +32,18 @@ in
       example = "wss://jetstream1.us-east.bsky.network/subscribe";
     };
 
+    bind = mkOption {
+      type = types.str;
+      default = "0.0.0.0:6789";
+      description = "Constellation server's listen address.";
+    };
+
+    bindMetrics = mkOption {
+      type = types.str;
+      default = "0.0.0.0:8765";
+      description = "Metrics server's listen address.";
+    };
+
     # Database configuration for postgres backend
     database = mkOption {
       type = types.submodule {
@@ -41,20 +53,20 @@ in
             default = "sqlite";
             description = "Database type to use";
           };
-          
+
           url = mkOption {
             type = types.str;
             default = "sqlite://${cfg.dataDir}/constellation.db";
             description = "Database connection URL";
             example = "postgresql://constellation:password@localhost/constellation";
           };
-          
+
           createDatabase = mkOption {
             type = types.bool;
             default = true;
             description = "Automatically create database and user for local PostgreSQL";
           };
-          
+
           passwordFile = mkOption {
             type = types.nullOr types.path;
             default = null;
@@ -71,18 +83,6 @@ in
       type = types.submodule {
         options = {
           enable = mkEnableOption "Prometheus metrics endpoint";
-          
-          port = mkOption {
-            type = types.port;
-            default = 9090;
-            description = "Metrics endpoint port";
-          };
-          
-          path = mkOption {
-            type = types.str;
-            default = "/metrics";
-            description = "Metrics endpoint path";
-          };
         };
       };
       default = {};
@@ -94,19 +94,19 @@ in
       type = types.submodule {
         options = {
           enable = mkEnableOption "Nginx reverse proxy";
-          
+
           serverName = mkOption {
             type = types.str;
             description = "Server name for nginx virtual host";
             example = "constellation.example.com";
           };
-          
+
           port = mkOption {
             type = types.port;
             default = cfg.port;
             description = "Upstream port for nginx proxy";
           };
-          
+
           ssl = {
             enable = mkEnableOption "SSL/TLS via ACME";
             force = mkOption {
@@ -143,17 +143,17 @@ in
         default = 7;
         description = "Keep at most this many backups, purging oldest first. Only used with interval.";
       };
-      
+
       # Enhanced backup options using NixOS ecosystem
       restic = {
         enable = mkEnableOption "Restic backup integration";
-        
+
         repository = mkOption {
           type = types.str;
           description = "Restic repository URL";
           example = "s3:s3.amazonaws.com/my-backup-bucket/constellation";
         };
-        
+
         passwordFile = mkOption {
           type = types.path;
           description = "File containing restic repository password";
@@ -173,7 +173,7 @@ in
               description = "Enforce AppArmor profile (vs complain mode)";
             };
           };
-          
+
           firewall = {
             enable = mkEnableOption "automatic firewall rules";
             allowedPorts = mkOption {
@@ -254,24 +254,24 @@ in
     }))
 
     # Service dependencies
-    (nixosIntegration.mkServiceDependencies "microcosm-constellation" 
+    (nixosIntegration.mkServiceDependencies "microcosm-constellation"
       nixosIntegration.atprotoServiceDependencies.indexer)
 
     # systemd service with enhanced configuration
     (microcosmLib.mkSystemdService cfg "Constellation" {
       description = "Global backlink index for AT Protocol";
       extraReadWritePaths = optional cfg.backup.enable cfg.backup.directory;
-      
+
       # Enhanced service dependencies
-      after = [ "network.target" ] 
+      after = [ "network.target" ]
         ++ optional (cfg.database.type == "postgres") [ "postgresql.service" ]
         ++ optional cfg.nginx.enable [ "nginx.service" ];
-      
+
       wants = [ "network.target" ]
         ++ optional (cfg.database.type == "postgres") [ "postgresql.service" ];
-      
+
       serviceConfig = {
-        ExecStart = 
+        ExecStart =
           let
             args = flatten [
               [
@@ -279,6 +279,8 @@ in
                 (escapeShellArg cfg.jetstream)
                 "--backend"
                 (escapeShellArg cfg.backend)
+                "--bind"
+                (escapeShellArg cfg.bind)
               ]
               (optional (cfg.backend == "rocks") [
                 "--data"
@@ -289,10 +291,8 @@ in
                 (escapeShellArg cfg.database.url)
               ])
               (optional cfg.metrics.enable [
-                "--metrics-port"
-                (escapeShellArg (toString cfg.metrics.port))
-                "--metrics-path"
-                (escapeShellArg cfg.metrics.path)
+                "--bind-metrics"
+                (escapeShellArg cfg.bindMetrics)
               ])
               (optional cfg.backup.enable [
                 "--backup"
@@ -309,18 +309,18 @@ in
             ];
           in
           "${cfg.package}/bin/main ${concatStringsSep " " args}";
-        
+
         # Enhanced environment variables
         Environment = [
           "RUST_LOG=${cfg.logLevel}"
           "LOG_FORMAT=json"
-        ] ++ optional (cfg.database.passwordFile != null) 
+        ] ++ optional (cfg.database.passwordFile != null)
           "DATABASE_PASSWORD_FILE=${cfg.database.passwordFile}";
-        
+
         # Health check configuration
-        ExecStartPre = mkIf (cfg.database.type == "postgres") 
+        ExecStartPre = mkIf (cfg.database.type == "postgres")
           "${pkgs.postgresql}/bin/pg_isready -h localhost -p 5432";
-        
+
         # Restart policy for better reliability
         Restart = "on-failure";
         RestartSec = "5s";
@@ -344,8 +344,8 @@ in
     # Firewall rules
     {
       networking.firewall.allowedTCPPorts = mkIf cfg.security.firewall.enable (
-        [ cfg.port ] 
-        ++ optional cfg.metrics.enable cfg.metrics.port
+        [ (microcosmLib.extractPortFromBind cfg.bind) ]
+        ++ optional cfg.metrics.enable (microcosmLib.extractPortFromBind cfg.bindMetrics)
         ++ cfg.security.firewall.allowedPorts
       );
     }
