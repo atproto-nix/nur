@@ -75,9 +75,4 @@ in
       }
     ];
   };
-
-  meta = {
-    maintainers = with lib.maintainers; [ ];
-    description = "Automatic pds-dash wrapper for nixpkgs bluesky-pds service";
-  };
 }

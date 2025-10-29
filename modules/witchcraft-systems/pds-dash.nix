@@ -116,9 +116,4 @@ in
       }
     ];
   };
-
-  meta = {
-    maintainers = with lib.maintainers; [ ];
-    doc = ./pds-dash.md;
-  };
 }

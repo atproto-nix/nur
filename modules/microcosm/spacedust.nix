@@ -27,15 +27,27 @@ in
       description = "Don't request zstd-compressed jetstream events.";
     };
 
+    # Note: spacedust binary doesn't currently support --bind or --bind-metrics options
+    # These options are retained for backwards compatibility but are not used
+    bind = mkOption {
+      type = types.str;
+      default = "0.0.0.0:9998";
+      description = "Spacedust server's listen address (currently unused - spacedust binary doesn't support this option)";
+    };
 
     metrics = mkOption {
       type = types.submodule {
         options = {
           enable = mkEnableOption "Prometheus metrics endpoint";
+          port = mkOption {
+            type = types.port;
+            default = 9091;
+            description = "Metrics endpoint port (currently unused - spacedust binary doesn't support this option)";
+          };
         };
       };
       default = {};
-      description = "Metrics configuration";
+      description = "Metrics configuration (currently unused - spacedust binary doesn't support this option)";
     };
   };
 
@@ -56,12 +68,15 @@ in
       description = "ATProto service component";
       serviceConfig = {
         ExecStart = let
+          # Only pass arguments that spacedust binary actually supports
           args = flatten [
             [
               "--jetstream"
               (escapeShellArg cfg.jetstream)
             ]
             (optional cfg.jetstreamNoZstd [ "--jetstream-no-zstd" ])
+            # Note: --bind and --bind-metrics are not supported by spacedust binary
+            # See: spacedust --help for supported options
           ];
         in
         "${cfg.package}/bin/spacedust ${concatStringsSep " " args}";
