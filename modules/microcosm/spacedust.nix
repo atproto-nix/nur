@@ -62,10 +62,6 @@ in
               (escapeShellArg cfg.jetstream)
             ]
             (optional cfg.jetstreamNoZstd [ "--jetstream-no-zstd" ])
-
-            (optional cfg.metrics.enable [
-              "--bind-metrics"
-            ])
           ];
         in
         "${cfg.package}/bin/spacedust ${concatStringsSep " " args}";
