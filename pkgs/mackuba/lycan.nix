@@ -637,34 +637,97 @@ let
       version = "0.1.5";
     };
   };
+
+  # Create gemdir with the inline gemset
+  gemdir = stdenv.mkDerivation {
+    name = "lycan-gemdir";
+    inherit src;
+    phases = [ "installPhase" ];
+    installPhase = ''
+      cp -r $src $out
+      chmod -R +w $out
+      cp $out/gemset.nix $out/gemset.nix.bak 2>/dev/null || true
+      cat > $out/gemset.nix <<'GEMSET_EOF'
+${lib.generators.toPretty {} gemset}
+GEMSET_EOF
+    '';
+  };
+  # Build the bundler environment
+  bundlerEnv = bundlerApp {
+    pname = "rackup";
+    inherit gemdir ruby;
+    exes = [ "rackup" "rake" ];
+  };
 in
 
-bundlerApp {
+# Wrap the bundler app with custom executables
+stdenv.mkDerivation {
   pname = "lycan";
-  inherit gemdir src ruby;
-  gemset = ./gemset.nix;  # We'll need to generate this properly
-  exes = [ "rackup" ];  # We'll wrap rackup to run the app
+  version = "0.1.0";
 
-  postBuild = ''
-    # Copy application files to the package
+  inherit src;
+
+  nativeBuildInputs = [ makeWrapper ];
+
+  dontBuild = true;
+
+  installPhase = ''
+    # Copy application files
     mkdir -p $out/share/lycan
-    cp -r ${src}/* $out/share/lycan/
+    cp -r $src/* $out/share/lycan/
+    chmod -R u+w $out/share/lycan
+
+    # Patch server.rb to configure Rack::Protection with allowed hosts from env
+    sed -i '/set :port, 3000/a\
+\
+  # Configure Rack::Protection to allow specified hosts\
+  if ENV["RACK_PROTECTION_ALLOWED_HOSTS"]\
+    allowed_hosts = ENV["RACK_PROTECTION_ALLOWED_HOSTS"].split(",").map(&:strip)\
+    set :protection, :host_authorization => { :permitted_hosts => allowed_hosts }\
+  end' $out/share/lycan/app/server.rb
+
+    # Patch init.rb to fix SSL certificate verification for NixOS
+    # Ruby's OpenSSL has issues with CRL checking in NixOS
+    sed -i '/RubyVM::YJIT.enable/a\
+\
+# Monkey patch Net::HTTP to fix SSL for NixOS\
+# See: https://github.com/NixOS/nixpkgs/issues/14369\
+require '"'"'net/http'"'"'\
+require '"'"'openssl'"'"'\
+\
+module Net\
+  class HTTP\
+    alias_method :original_start, :start\
+\
+    def start(&block)\
+      if use_ssl?\
+        self.cert_store = OpenSSL::X509::Store.new\
+        self.cert_store.set_default_paths\
+        self.verify_mode = OpenSSL::SSL::VERIFY_PEER\
+      end\
+      original_start(&block)\
+    end\
+  end\
+end' $out/share/lycan/app/init.rb
+
+    # Create bin directory
+    mkdir -p $out/bin
+
+    # Link bundler environment
+    ln -s ${bundlerEnv}/bin/rackup $out/bin/.rackup-wrapped
+    ln -s ${bundlerEnv}/bin/rake $out/bin/.rake-wrapped
 
     # Create custom lycan executable
-    cat > $out/bin/lycan <<'EOF'
-#!${ruby}/bin/ruby
-Dir.chdir("$out/share/lycan")
-load("${ruby}/bin/rackup")
-EOF
-    chmod +x $out/bin/lycan
+    makeWrapper $out/bin/.rackup-wrapped $out/bin/lycan \
+      --chdir "$out/share/lycan"
 
     # Create rake wrapper for db:migrate
-    makeWrapper ${ruby}/bin/rake $out/bin/lycan-rake \
+    makeWrapper $out/bin/.rake-wrapped $out/bin/lycan-rake \
       --chdir "$out/share/lycan"
   '';
 
   passthru = {
-    inherit ruby;
+    inherit ruby bundlerEnv;
   };
 
   meta = with lib; {
