@@ -16,7 +16,7 @@ This NUR provides Nix packages and NixOS modules for the AT Protocol ecosystem, 
 - **Development Tools**: Tangled infrastructure, ATProto core libraries
 - **NixOS Modules**: Declarative service configuration for all packages
 
-**Total Packages**: 49+ and growing
+**Total Packages**: 50+ and growing
 
 ## Quick Start
 
@@ -361,7 +361,7 @@ Most packages are MIT or Apache-2.0 licensed.
 
 ## Status
 
-✅ 49 packages available (8 Rust, 5 Go, 12 Node.js/TypeScript, 1 Ruby, 23 others)
+✅ 50+ packages available (8 Rust, 5 Go, 12 Node.js/TypeScript, 1 Ruby, 24+ others)
 ✅ Multi-platform support (Linux x86_64/aarch64, macOS x86_64/aarch64)
 ✅ NixOS modules for all services (100% coverage)
 ✅ All packages pinned to specific commits

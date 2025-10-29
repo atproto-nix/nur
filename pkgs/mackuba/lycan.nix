@@ -2,8 +2,7 @@
 , stdenv
 , fetchFromTangled
 , ruby_3_3
-, bundlerEnv
-, defaultGemConfig
+, bundlerApp
 , makeWrapper
 }:
 
@@ -638,60 +637,33 @@ let
       version = "0.1.5";
     };
   };
-  env = bundlerEnv {
-    name = "lycan-env";
-    inherit ruby;
-    gemdir = src;
-    gemset = gemset;
-  };
 in
 
-stdenv.mkDerivation rec {
+bundlerApp {
   pname = "lycan";
-  version = "unstable-2025-01-14";
+  inherit gemdir src ruby;
+  gemset = ./gemset.nix;  # We'll need to generate this properly
+  exes = [ "rackup" ];  # We'll wrap rackup to run the app
 
-  inherit src;
+  postBuild = ''
+    # Copy application files to the package
+    mkdir -p $out/share/lycan
+    cp -r ${src}/* $out/share/lycan/
 
-  nativeBuildInputs = [ makeWrapper ruby ];
+    # Create custom lycan executable
+    cat > $out/bin/lycan <<'EOF'
+#!${ruby}/bin/ruby
+Dir.chdir("$out/share/lycan")
+load("${ruby}/bin/rackup")
+EOF
+    chmod +x $out/bin/lycan
 
-  dontBuild = true;
-
-  installPhase = ''
-    runHook preInstall
-
-    mkdir -p $out/{share/lycan,bin}
-
-    # Copy all application files
-    cp -r . $out/share/lycan/
-
-    # Remove unnecessary files
-    rm -rf $out/share/lycan/.git
-
-    # Create wrapper script that sets up the Ruby environment
-    makeWrapper ${ruby}/bin/ruby $out/bin/lycan \
-      --set GEM_HOME ${env}/${ruby.gemPath} \
-      --set GEM_PATH ${env}/${ruby.gemPath} \
-      --add-flags "-I$out/share/lycan/lib" \
-      --add-flags "$out/share/lycan/config.ru" \
-      --add-flags "-p" \
-      --add-flags "3000" \
+    # Create rake wrapper for db:migrate
+    makeWrapper ${ruby}/bin/rake $out/bin/lycan-rake \
       --chdir "$out/share/lycan"
-
-    # Create db:migrate wrapper
-    makeWrapper ${env}/bin/rake $out/bin/lycan-rake \
-      --chdir "$out/share/lycan"
-
-    # Create console wrapper
-    makeWrapper ${env}/bin/irb $out/bin/lycan-console \
-      --add-flags "-I$out/share/lycan/lib" \
-      --add-flags "-r$out/share/lycan/app/init.rb" \
-      --chdir "$out/share/lycan"
-
-    runHook postInstall
   '';
 
   passthru = {
-    rubyEnv = env;
     inherit ruby;
   };
 

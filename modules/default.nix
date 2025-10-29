@@ -1,27 +1,19 @@
-{ pkgs, ... }:
+{ lib, ... }:
 
 let
-  # Enhanced module import with metadata and error handling
+  # Simply return the module path for NixOS to import
   importModule = name:
     let
       modulePath = ./. + "/${name}";
-      moduleImport =
-        if builtins.pathExists modulePath
-        then import modulePath
-        else {
-          imports = [];
-          __description = "Module '${name}' not found";
-        };
-    in moduleImport // {
-      # Add metadata to each module
-      __moduleName = name;
-      __importPath = modulePath;
-      __importTime = builtins.currentTime;
-    };
+    in
+      if builtins.pathExists modulePath
+      then modulePath
+      else throw "Module '${name}' not found at ${toString modulePath}";
 
   # Categorized module names with optional metadata
   moduleCategories = {
     core = [
+      "atproto"
       "microcosm"
       "blacksky"
       "bluesky"
@@ -36,7 +28,7 @@ let
 
     applications = [
       "hyperlink-academy"
-      "slices-network"
+      # "slices-network"  # TODO: Has infinite recursion issue with nested submodules
       "teal-fm"
       "parakeet-social"
       "yoten-app"
@@ -44,7 +36,6 @@ let
     ];
 
     misc = [
-      "atbackup-pages-dev"
       "grain-social"
       "mackuba"
       "whey-party"
@@ -55,48 +46,14 @@ let
   };
 
   # Flatten and deduplicate module names
-  moduleNames = pkgs.lib.unique (
+  moduleNames = lib.unique (
     builtins.concatLists (builtins.attrValues moduleCategories)
   );
 
-  # Import modules with error handling and metadata
+  # Import modules (returns list of paths)
   importedModules = builtins.map importModule moduleNames;
 
-  # Categorized module metadata
-  moduleMetadata = {
-    categories = moduleCategories;
-    total = builtins.length moduleNames;
-    imported = builtins.length importedModules;
-    availableModules = moduleNames;
-  };
-
 in {
-  # Enhanced module imports with comprehensive handling
+  # Import all module paths
   imports = importedModules;
-
-  # Expose rich module metadata
-  __moduleMetadata = moduleMetadata;
-
-  # Dynamic module accessor function
-  __functor = _: {
-    imports = importedModules;
-    inherit moduleMetadata;
-  };
-
-  # Attribute-based module access
-  core = builtins.filter
-    (m: builtins.elem m.__moduleName moduleCategories.core)
-    importedModules;
-
-  infrastructure = builtins.filter
-    (m: builtins.elem m.__moduleName moduleCategories.infrastructure)
-    importedModules;
-
-  applications = builtins.filter
-    (m: builtins.elem m.__moduleName moduleCategories.applications)
-    importedModules;
-
-  misc = builtins.filter
-    (m: builtins.elem m.__moduleName moduleCategories.misc)
-    importedModules;
 }

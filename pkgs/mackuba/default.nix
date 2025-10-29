@@ -1,4 +1,4 @@
-{ pkgs, lib, ... }:
+{ pkgs, lib, fetchFromTangled, ... }:
 
 # Mackuba - ATProto tools and applications
 # Organization: mackuba
@@ -19,7 +19,7 @@ let
 
   # Package naming pattern: use simple names within organization
   packages = {
-    lycan = pkgs.callPackage ./lycan.nix { };
+    lycan = pkgs.callPackage ./lycan.nix { inherit fetchFromTangled; };
   };
 
   # Enhanced packages with organizational metadata

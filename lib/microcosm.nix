@@ -86,14 +86,7 @@ rec {
       default = false;
       description = "Whether to open the firewall for ${serviceName} service ports.";
     };
-
-    # Allow bind option to be added by individual service modules
-    bind = mkOption {
-      type = types.str;
-      default = "";
-      description = "Listen address for the service. Can be overridden by individual service modules.";
-    };
-  } // removeAttrs extraOptions [ "bind" ];
+  } // extraOptions;
 
   # Helper function to create standard user and group configuration
   mkUserConfig = cfg: {

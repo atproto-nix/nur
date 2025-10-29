@@ -269,8 +269,8 @@ in
           staticFiles = {
             directory = mkOption {
               type = types.path;
-              default = "${cfg.dataDir}/www";
-              description = "Directory for serving static files.";
+              default = "${cfg.package}/share/quickdid/www";
+              description = "Directory for serving static files. Defaults to the package's bundled www directory.";
             };
           };
 
@@ -314,8 +314,9 @@ in
     # Directory management
     systemd.tmpfiles.rules = [
       "d '${cfg.dataDir}' 0750 ${cfg.user} ${cfg.group} - -"
-      "d '${cfg.settings.staticFiles.directory}' 0750 ${cfg.user} ${cfg.group} - -"
-    ];
+      # Note: staticFiles.directory defaults to nix store path, only create if it's not in /nix/store
+    ] ++ lib.optional (!lib.hasPrefix "/nix/store" (toString cfg.settings.staticFiles.directory))
+      "d '${cfg.settings.staticFiles.directory}' 0750 ${cfg.user} ${cfg.group} - -";
 
     # systemd service
     systemd.services.smokesignal-events-quickdid = {
@@ -348,7 +349,8 @@ in
         MemoryDenyWriteExecute = true;
 
         # File system access
-        ReadWritePaths = [ cfg.dataDir cfg.settings.staticFiles.directory ];
+        ReadWritePaths = [ cfg.dataDir ]
+          ++ lib.optional (!lib.hasPrefix "/nix/store" (toString cfg.settings.staticFiles.directory)) cfg.settings.staticFiles.directory;
         ReadOnlyPaths = [ "/nix/store" ];
       };
 

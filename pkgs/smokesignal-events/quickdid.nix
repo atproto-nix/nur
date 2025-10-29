@@ -5,22 +5,30 @@ let
   atprotoLib = pkgs.callPackage ../../lib/atproto.nix { inherit craneLib; };
 in
 
-atprotoLib.mkRustAtprotoService {
+atprotoLib.mkRustAtprotoService rec {
   pname = "quickdid";
   version = "1.0.0-rc.5";
-  
+
   src = fetchgit {
     url = "https://tangled.sh/@smokesignal.events/quickdid";
     rev = "eaebd066cf27ad6671a21652c5d7c66e8a2885be";
     sha256 = "1gmqqakc6ljndw3lgv8c6ggwy1ag577hlja1gqq5f77j862yxs7v";
   };
-  
+
   nativeBuildInputs = with pkgs; [ pkg-config ];
   buildInputs = with pkgs; [ openssl sqlite ];
-  
+
   # Build the main quickdid binary
   cargoExtraArgs = "--bin quickdid";
-  
+
+  # Install static web files (www directory)
+  postInstall = ''
+    mkdir -p $out/share/quickdid
+    cp -r $src/www $out/share/quickdid/
+    # Make files writable so the fixup phase can strip Rust toolchain references
+    chmod -R u+w $out/share/quickdid/www
+  '';
+
   passthru = {
     atproto = {
       type = "application";

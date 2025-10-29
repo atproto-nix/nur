@@ -11,7 +11,7 @@ in
 
     package = mkOption {
       type = types.package;
-      default = pkgs.mackuba-lycan or (pkgs.callPackage ../../pkgs/mackuba/lycan.nix { });
+      default = pkgs.mackuba-lycan or pkgs.lycan;
       description = "The lycan package to use.";
     };
 

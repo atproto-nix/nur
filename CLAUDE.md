@@ -124,34 +124,62 @@ nix-prefetch-url --unpack https://github.com/OWNER/REPO/archive/COMMIT.tar.gz
 nix build .#tangled-dev-spindle 2>&1 | grep "got:"
 ```
 
-### Recent NixOS Build Fix (October 2025)
+### Recent Module System Fixes (October 2025)
 
-A recent debugging session resolved a series of cascading build failures when using this NUR in a NixOS configuration. The root cause was a combination of incorrect module paths, package names, and outdated hashes.
+**Major refactor resolved critical module import issues that prevented NixOS configurations from building.**
 
-Here is a summary of the fixes applied, which should serve as a guide for similar issues:
+#### Issues Fixed
 
-1.  **Corrected Module Path in `flake.nix`**:
-    *   **Problem**: The build failed with `attribute 'microcosm' missing` because the module path in the user's `flake.nix` was `nur.nixosModules.microcosm`.
-    *   **Analysis**: This NUR uses `flake-utils`, which structures all outputs by system. The `nix flake show` command confirmed this.
-    *   **Fix**: The path was corrected to be system-specific: `nur.nixosModules.x86_64-linux.microcosm`.
+1. **Module System Architecture Problems**
+   - **Problem**: `modules/default.nix` used `pkgs` parameter causing infinite recursion
+   - **Root Cause**: NixOS modules shouldn't require `pkgs` at import-time in the aggregator
+   - **Fix**: Changed to use `lib` only, simplified to return module paths instead of evaluating them
+   - **Impact**: Eliminated infinite recursion errors during `nixos-rebuild`
 
-2.  **Removed Redundant Module Import**:
-    *   **Problem**: The `microcosm` module was being imported in both `flake.nix` and `configuration.nix`.
-    *   **Fix**: The redundant import in `configuration.nix` was removed to avoid evaluation conflicts. Modules should be listed once in the top-level `flake.nix`.
+2. **Missing Module Files**
+   - **Problem**: `red-dwarf-client/default.nix` imported non-existent `red-dwarf.nix`
+   - **Fix**: Created complete NixOS module for Red Dwarf (Bluesky web client with nginx integration)
+   - **Features**: SSL support, proper caching headers, static site serving
 
-3.  **Corrected Package Names in `configuration.nix`**:
-    *   **Problem**: The build failed with `attribute 'spacedust' missing` and a similar error for `constellation`.
-    *   **Analysis**: The package names in this NUR are flattened with an organizational prefix (e.g., `microcosm-spacedust`).
-    *   **Fix**: The package references in `configuration.nix` were updated from `nur.packages.x86_64-linux.spacedust` to `nur.packages.x86_64-linux.microcosm-spacedust` (and similarly for `constellation`).
+3. **Module List Mismatch**
+   - **Problem**: `modules/default.nix` listed `atbackup-pages-dev` which doesn't exist, missing `atproto`
+   - **Fix**: Updated module list to match actual directory structure
+   - **Modules removed**: `atbackup-pages-dev`
+   - **Modules added**: `atproto`
 
-4.  **Updated Caddy Plugin Hash**:
-    *   **Problem**: The build failed with a `hash mismatch` error for a Caddy plugin.
-    *   **Fix**: The specified hash in `configuration.nix` was updated to the new hash provided in the build error log.
+4. **Module Export Structure**
+   - **Problem**: Modules were being imported as functions instead of paths
+   - **Fix**: `importModule` function now returns paths for NixOS to import, not evaluated modules
+   - **Result**: Proper lazy evaluation, no premature function calls
 
-**Key Takeaway**: When debugging build failures with this NUR, always:
-- Use `nix flake show` to verify the exact output paths for modules and packages.
-- Remember that all outputs are nested under the system architecture (e.g., `x86_64-linux`).
-- Check for flattened package names that include the organization prefix.
+#### Usage in NixOS Configurations
+
+To use NUR modules in your NixOS configuration:
+
+```nix
+# flake.nix
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nur.url = "github:atproto-nix/nur/big-refactor";
+  };
+
+  outputs = { nixpkgs, nur, ... }: {
+    nixosConfigurations.hostname = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      modules = [
+        # IMPORTANT: Must import NUR modules
+        nur.nixosModules.default
+
+        # Your configuration
+        ./configuration.nix
+      ];
+    };
+  };
+}
+```
+
+**Key Takeaway**: The `nur.nixosModules.default` import is REQUIRED for service options like `services.microcosm-constellation` to be available. Without it, you'll get "option does not exist" errors.
 
 ## Architecture and Key Concepts
 
@@ -316,6 +344,13 @@ Fetcher for Tangled.org repositories (fork of `fetchFromGitHub`):
 - ✅ hyperlink-academy/leaflet - Hash calculated
 - ✅ slices-network/slices - Hash calculated
 - ✅ parakeet-social/parakeet - Hash calculated
+- ✅ smokesignal-events/quickdid - File permission issue in postInstall (October 2025)
+
+**Known Issues - Needs Fixing:**
+- ❌ mackuba/lycan - Git gem dependencies (didkit) not loading in bundlerEnv
+  - Error: `cannot load such file -- didkit (LoadError)`
+  - Root cause: bundlerEnv doesn't properly handle git-sourced gems
+  - Solution needed: Custom gemConfig for didkit or alternative packaging approach
 
 **Package Review Status (October 2025):**
 - Total packages: ~45 across 18 organizations
@@ -405,6 +440,92 @@ nixpkgs-fmt .
 
 # Check for unused code
 deadnix .
+```
+
+## Troubleshooting
+
+### Module Import Errors
+
+**Error**: `The option 'services.microcosm-constellation' does not exist`
+
+**Cause**: NUR modules not imported in NixOS configuration
+
+**Solution**:
+```nix
+# flake.nix - Add to modules list
+modules = [
+  nur.nixosModules.default  # ← Add this
+  ./configuration.nix
+];
+```
+
+### Infinite Recursion During Evaluation
+
+**Error**: `error: infinite recursion encountered`
+
+**Common Causes**:
+1. Module `default.nix` files using `pkgs` parameter incorrectly
+2. Circular dependencies in module imports
+3. Config referenced in imports list
+
+**Solution**: Check that module aggregators (`modules/default.nix`, `modules/ORGANIZATION/default.nix`) only use `lib` parameter and return paths, not evaluated modules.
+
+### Module File Not Found
+
+**Error**: `error: path '/nix/store/.../modules/ORGANIZATION/service.nix' does not exist`
+
+**Solution**:
+1. Verify file exists in `modules/ORGANIZATION/service.nix`
+2. Check imports in `modules/ORGANIZATION/default.nix`
+3. Update `modules/default.nix` module list if directory was added/removed
+4. Run `nix flake lock --update-input nur` to refresh
+
+### Hash Mismatch Errors
+
+**Error**: `hash mismatch in fixed-output derivation`
+
+**Solution**:
+1. Build the package and note the "got:" hash from error
+2. Update the hash in the package `.nix` file
+3. Rebuild to verify
+
+### Build Failures - File Permission Issues
+
+**Error**: `sed: couldn't open temporary file /nix/store/.../PATH/sedXXXXXX: Permission denied`
+
+**Cause**: Files copied in `postInstall` from `$src` are read-only, but the fixup phase (which strips toolchain references) needs write access.
+
+**Solution**: Add `chmod -R u+w $out/PATH` after copying files:
+```nix
+postInstall = ''
+  mkdir -p $out/share/package
+  cp -r $src/static $out/share/package/
+  # Make files writable for fixup phase
+  chmod -R u+w $out/share/package/static
+'';
+```
+
+**Real-world example**: Fixed in `pkgs/smokesignal-events/quickdid.nix` (October 2025)
+
+### Package Attribute Not Found
+
+**Error**: `attribute 'spacedust' missing`
+
+**Solution**: Use full flattened name: `nur.packages.x86_64-linux.microcosm-spacedust`
+
+Remember: Package names are prefixed with organization (e.g., `microcosm-constellation`, not just `constellation`)
+
+### Local Development with NUR
+
+When testing local NUR changes:
+```bash
+# In your NixOS config flake.nix
+nur.url = "path:/home/atproto/nur";
+
+# After making changes to NUR
+cd /path/to/nixos-config
+nix flake lock --update-input nur
+sudo nixos-rebuild switch --flake .#hostname
 ```
 
 ## Resources
