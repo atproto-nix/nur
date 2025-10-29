@@ -4,7 +4,7 @@
 let
   # Import ATproto core libraries
   atprotoCore = import ../../lib/atproto-core.nix { inherit lib pkgs craneLib; };
-  packaging = import ../../lib/packaging.nix { inherit lib pkgs craneLib; };
+  packaging = pkgs.callPackage ../../lib/packaging { inherit craneLib; };
 
   # Organizational metadata for individual developer packages
   _organizationMeta = {

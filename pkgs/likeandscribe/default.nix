@@ -3,7 +3,7 @@
 
 let
   # Import packaging utilities
-  packaging = import ../../lib/packaging.nix { inherit lib pkgs craneLib buildNpmPackage; buildGoModule = null; };
+  packaging = pkgs.callPackage ../../lib/packaging { inherit craneLib buildNpmPackage; };
   atprotoCore = import ../../lib/atproto-core.nix { inherit lib pkgs craneLib; };
 
   # Organizational metadata

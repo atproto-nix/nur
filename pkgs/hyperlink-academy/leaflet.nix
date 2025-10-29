@@ -2,7 +2,7 @@
 
 let
   # Import packaging utilities
-  packaging = import ../../lib/packaging.nix { inherit lib pkgs; craneLib = null; buildGoModule = null; buildNpmPackage = buildNpmPackage; };
+  packaging = pkgs.callPackage ../../lib/packaging { inherit buildNpmPackage; };
 
 in
 buildNpmPackage rec {

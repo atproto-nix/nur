@@ -119,7 +119,7 @@ let
     outputHashMode = "recursive";
     outputHashAlgo = "sha256";
     # Update this hash after first build with lib.fakeHash
-    outputHash = "sha256-VN2pCnjqw8IpguSpBABS2DFU++uEVdwy++ATIghCppk=";
+    outputHash = "sha256-b4CzGsVgXS87y04wtVZ8yAvqxReAd+xeGE8IO0JVJUY=";
 
     buildPhase = ''
       export HOME="$PWD/home"
@@ -129,20 +129,6 @@ let
       export SSL_CERT_FILE="${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
 
       mkdir -p "$HOME" "$DENO_DIR"
-
-      # Pre-download the denort binary FIRST
-      echo "=== Pre-downloading denort binary ==="
-      DENO_VERSION=$(deno --version | head -n1 | awk '{print $2}')
-      DENORT_URL="https://dl.deno.land/release/v$DENO_VERSION/denort-x86_64-unknown-linux-gnu.zip"
-
-      mkdir -p "$DENO_DIR/dl"
-      cd "$DENO_DIR/dl"
-
-      curl -L "$DENORT_URL" -o denort.zip
-      unzip -q denort.zip
-      rm denort.zip
-      ls -la
-      cd -
 
       # Cache the main entrypoint and all its dependencies
       echo "Caching frontend entrypoint..."
@@ -177,8 +163,6 @@ let
     installPhase = ''
       mkdir -p $out
       cp -R "$DENO_DIR"/* $out/
-      echo "=== Verifying denort was cached ==="
-      ls -la $out/dl/ || echo "ERROR: No dl directory!"
     '';
   };
 
@@ -285,8 +269,8 @@ let
 
     outputHashMode = "recursive";
     outputHashAlgo = "sha256";
-    # Update this hash after first build with lib.fakeHash
-    outputHash = "sha256-l3xu+bikvR9WfDgGTHAYXa/Ow6z6lV300E2b7PsaDn4=";
+    # Temporary fake hash - will calculate correct platform-independent hash
+    outputHash = "sha256-0GB33BIOSs721oykIDL//G/2KbhtQEt97Cd+JmO8tIg=";
 
     buildPhase = ''
       export HOME="$PWD/home"
@@ -296,20 +280,6 @@ let
       export SSL_CERT_FILE="${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
 
       mkdir -p "$HOME" "$DENO_DIR"
-
-      # Pre-download the denort binary for packages
-      echo "=== Pre-downloading denort binary for packages ==="
-      DENO_VERSION=$(deno --version | head -n1 | awk '{print $2}')
-      DENORT_URL="https://dl.deno.land/release/v$DENO_VERSION/denort-x86_64-unknown-linux-gnu.zip"
-
-      mkdir -p "$DENO_DIR/dl"
-      cd "$DENO_DIR/dl"
-
-      curl -L "$DENORT_URL" -o denort.zip
-      unzip -q denort.zip
-      rm denort.zip
-      ls -la
-      cd -
 
       # Cache workspace dependencies
       echo "Caching packages workspace..."
@@ -325,8 +295,6 @@ let
     installPhase = ''
       mkdir -p $out
       cp -R "$DENO_DIR"/* $out/
-      echo "=== Verifying denort was cached ==="
-      ls -la $out/dl/ || echo "ERROR: No dl directory!"
     '';
   };
 
@@ -352,12 +320,6 @@ let
       echo "Copying cache from ${packagesCacheFOD}..."
       cp -rv ${packagesCacheFOD}/* "$DENO_DIR"/
       chmod -R u+w "$DENO_DIR"
-
-      # Verify denort exists
-      echo "=== Contents of DENO_DIR ==="
-      ls -la "$DENO_DIR"
-      echo "=== Contents of dl directory ==="
-      ls -lah "$DENO_DIR/dl/" 2>&1 || echo "ERROR: No dl directory found!"
 
       echo "Building Slices CLI..."
       if [ -f packages/cli/src/main.ts ]; then

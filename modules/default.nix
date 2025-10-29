@@ -50,6 +50,7 @@ let
       "whey-party"
       "whyrusleeping"
       "likeandscribe"
+      "witchcraft-systems"
     ];
   };
 

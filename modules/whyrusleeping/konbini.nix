@@ -3,14 +3,14 @@
 with lib;
 
 let
-  cfg = config.services.whyrusleeping-konbini;
+  cfg = config.services.whyrusleeping.konbini;
 
   # Sync configuration file
   syncConfigFile = pkgs.writeText "sync-config.json" (builtins.toJSON cfg.syncConfig);
 
 in
 {
-  options.services.whyrusleeping-konbini = {
+  options.services.whyrusleeping.konbini = {
     enable = mkEnableOption "Konbini - Friends of Friends Bluesky AppView";
 
     package = mkOption {
@@ -44,10 +44,11 @@ in
       description = "Port for the Konbini API server.";
     };
 
-    frontendPort = mkOption {
-      type = types.port;
-      default = 3000;
-      description = "Port for serving the frontend (optional, can use reverse proxy).";
+    hostname = mkOption {
+      type = types.str;
+      default = "localhost";
+      example = "konbini.example.com";
+      description = "Hostname for the Konbini AppView.";
     };
 
     database = {
@@ -65,16 +66,24 @@ in
     };
 
     bluesky = {
-      handle = mkOption {
-        type = types.str;
-        description = "Bluesky handle for initial authentication.";
-        example = "username.bsky.social";
+      handleFile = mkOption {
+        type = types.nullOr types.path;
+        default = null;
+        example = "/run/secrets/konbini-handle";
+        description = ''
+          Path to file containing Bluesky handle (e.g., user.bsky.social).
+          Used for authenticating with Bluesky to access the firehose.
+        '';
       };
 
       passwordFile = mkOption {
-        type = types.path;
-        description = "Path to file containing Bluesky app password.";
-        example = "/run/secrets/konbini-bsky-password";
+        type = types.nullOr types.path;
+        default = null;
+        example = "/run/secrets/konbini-password";
+        description = ''
+          Path to file containing Bluesky app password.
+          Create an app password at https://bsky.app/settings/app-passwords
+        '';
       };
     };
 
@@ -104,21 +113,32 @@ in
       '';
     };
 
-    openFirewall = mkOption {
-      type = types.bool;
-      default = false;
-      description = "Open the firewall for the Konbini API port.";
+    environmentFile = mkOption {
+      type = types.nullOr types.path;
+      default = null;
+      example = "/run/secrets/konbini-env";
+      description = ''
+        Path to environment file containing additional configuration.
+        This file can contain DATABASE_URL, BSKY_HANDLE, BSKY_PASSWORD, etc.
+        Format: KEY=value (one per line).
+      '';
     };
 
-    settings = mkOption {
-      type = types.attrs;
-      default = {};
-      description = "Additional environment variables for Konbini.";
+    extraEnv = mkOption {
+      type = types.attrsOf types.str;
+      default = { };
       example = literalExpression ''
         {
           LOG_LEVEL = "debug";
         }
       '';
+      description = "Additional environment variables to set.";
+    };
+
+    openFirewall = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Open the firewall for the Konbini API port.";
     };
   };
 
@@ -126,12 +146,16 @@ in
     # Assertions
     assertions = [
       {
-        assertion = cfg.bluesky.handle != "";
-        message = "Konbini requires a Bluesky handle to be configured.";
+        assertion = cfg.bluesky.handleFile != null || cfg.environmentFile != null;
+        message = "services.whyrusleeping.konbini: either bluesky.handleFile or environmentFile must be set";
       }
       {
-        assertion = cfg.database.url != "" || cfg.database.createLocally;
-        message = "Konbini requires either a database URL or createLocally = true.";
+        assertion = cfg.bluesky.passwordFile != null || cfg.environmentFile != null;
+        message = "services.whyrusleeping.konbini: either bluesky.passwordFile or environmentFile must be set";
+      }
+      {
+        assertion = cfg.database.createLocally -> (cfg.database.url == "postgresql://konbini@localhost/konbini" || cfg.database.url == "postgresql://${cfg.user}@localhost/${cfg.user}");
+        message = "services.whyrusleeping.konbini: database.createLocally requires database.url to use local socket authentication";
       }
     ];
 
@@ -157,63 +181,80 @@ in
       ];
     };
 
-    # Directory management
-    systemd.tmpfiles.rules = [
-      "d '${cfg.dataDir}' 0750 ${cfg.user} ${cfg.group} - -"
-      "d '${cfg.dataDir}/logs' 0750 ${cfg.user} ${cfg.group} - -"
-    ];
-
     # systemd service
     systemd.services.konbini = {
       description = "Konbini - Friends of Friends Bluesky AppView";
       documentation = [ "https://github.com/whyrusleeping/konbini" ];
       after = [ "network.target" ] ++ optional cfg.database.createLocally "postgresql.service";
-      wants = optional cfg.database.createLocally "postgresql.service";
+      requires = optional cfg.database.createLocally "postgresql.service";
       wantedBy = [ "multi-user.target" ];
 
+      environment = {
+        # Database URL (can be overridden by environmentFile)
+        DATABASE_URL = if cfg.database.createLocally
+          then "postgresql:///${cfg.user}?host=/run/postgresql"
+          else cfg.database.url;
+
+        # Port and hostname
+        PORT = toString cfg.port;
+        KONBINI_HOSTNAME = cfg.hostname;
+
+        # Sync configuration
+        SYNC_CONFIG = syncConfigFile;
+      } // cfg.extraEnv;
+
       serviceConfig = {
-        Type = "exec";
+        Type = "simple";
         User = cfg.user;
         Group = cfg.group;
-        WorkingDirectory = cfg.dataDir;
         ExecStart = "${cfg.package}/bin/konbini";
         Restart = "on-failure";
-        RestartSec = "5s";
+        RestartSec = "10s";
+
+        # Load credentials from files
+        LoadCredential = flatten [
+          (optional (cfg.bluesky.handleFile != null) "bsky-handle:${cfg.bluesky.handleFile}")
+          (optional (cfg.bluesky.passwordFile != null) "bsky-password:${cfg.bluesky.passwordFile}")
+        ];
+
+        # Environment file for secrets
+        EnvironmentFile = mkIf (cfg.environmentFile != null) cfg.environmentFile;
 
         # Security hardening
         NoNewPrivileges = true;
+        PrivateTmp = true;
+        PrivateDevices = true;
         ProtectSystem = "strict";
         ProtectHome = true;
-        PrivateTmp = true;
         ProtectKernelTunables = true;
         ProtectKernelModules = true;
         ProtectControlGroups = true;
-        RestrictSUIDSGID = true;
-        RestrictRealtime = true;
+        RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
         RestrictNamespaces = true;
         LockPersonality = true;
-        RestrictAddressFamilies = [ "AF_UNIX" "AF_INET" "AF_INET6" ];
+        RestrictRealtime = true;
+        RestrictSUIDSGID = true;
+        RemoveIPC = true;
+        SystemCallFilter = [ "@system-service" "~@privileged" ];
+        PrivateNetwork = false;
 
-        # File system access
-        ReadWritePaths = [ cfg.dataDir ];
-        ReadOnlyPaths = [ "/nix/store" ];
+        # Working directory
+        WorkingDirectory = "/var/lib/konbini";
+        StateDirectory = "konbini";
+        StateDirectoryMode = "0750";
 
         # Resource limits
         LimitNOFILE = 65536;
       };
 
-      environment = {
-        DATABASE_URL = if cfg.database.createLocally
-          then "postgresql:///${cfg.user}?host=/run/postgresql"
-          else cfg.database.url;
-        BSKY_HANDLE = cfg.bluesky.handle;
-        PORT = toString cfg.port;
-        SYNC_CONFIG = syncConfigFile;
-      } // cfg.settings;
-
-      # Load password from file
-      script = ''
-        export BSKY_PASSWORD=$(cat ${cfg.bluesky.passwordFile})
+      # Set credentials as environment variables if provided
+      script = mkIf (cfg.bluesky.handleFile != null || cfg.bluesky.passwordFile != null) ''
+        ${optionalString (cfg.bluesky.handleFile != null) ''
+          export BSKY_HANDLE="$(cat $CREDENTIALS_DIRECTORY/bsky-handle)"
+        ''}
+        ${optionalString (cfg.bluesky.passwordFile != null) ''
+          export BSKY_PASSWORD="$(cat $CREDENTIALS_DIRECTORY/bsky-password)"
+        ''}
         exec ${cfg.package}/bin/konbini
       '';
     };

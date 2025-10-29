@@ -99,7 +99,13 @@
           "red-dwarf-client"
           "tangled"
           "smokesignal-events"
-	  "mackuba"
+          "mackuba"
+          "whyrusleeping"
+          "witchcraft-systems"
+          "likeandscribe"
+          "grain-social"
+          "atbackup-pages-dev"
+          "whey-party"
         ];
         moduleImports =
           builtins.listToAttrs

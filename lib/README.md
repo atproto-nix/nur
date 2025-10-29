@@ -2,6 +2,8 @@
 
 This library provides standardized helper functions for packaging AT Protocol applications in Nix. It includes utilities for different language ecosystems, package metadata validation, and service configuration helpers.
 
+**Note:** This library is being modernized. The new modular packaging system is in `lib/packaging/`. Legacy utilities in `lib/atproto.nix` are maintained for backward compatibility.
+
 ## Core Functions
 
 ### `mkAtprotoPackage`
@@ -107,14 +109,6 @@ Validates ATProto package metadata schema.
 
 ```nix
 validatePackageMetadata myPackage
-```
-
-### `resolveDependencies`
-
-Resolves ATProto package dependencies recursively.
-
-```nix
-resolveDependencies atprotoPackages "my-package"
 ```
 
 ## Standard Environments
