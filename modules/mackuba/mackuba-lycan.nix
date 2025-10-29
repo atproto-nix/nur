@@ -28,6 +28,13 @@ in
       example = "feeds.example.com";
     };
 
+    allowedHosts = mkOption {
+      type = types.listOf types.str;
+      default = [];
+      description = "Allowed hosts for the Lycan server.";
+      example = "lycan.example.com";
+    };
+
     database = {
       url = mkOption {
         type = types.nullOr types.str;
@@ -183,7 +190,9 @@ in
         ++ optional (cfg.relay.jetstreamHost != null)
           "JETSTREAM_HOST=${cfg.relay.jetstreamHost}"
         ++ optional (cfg.firehose.userAgent != null)
-          "FIREHOSE_USER_AGENT=${cfg.firehose.userAgent}";
+          "FIREHOSE_USER_AGENT=${cfg.firehose.userAgent}"
+        ++ optional (cfg.allowedHosts != [])
+          "RACK_PROTECTION_ALLOWED_HOSTS=${concatStringsSep "," cfg.allowedHosts}";
 
         EnvironmentFile = mkIf (cfg.environmentFile != null) cfg.environmentFile;
 

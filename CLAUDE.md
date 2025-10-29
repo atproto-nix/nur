@@ -528,6 +528,36 @@ nix flake lock --update-input nur
 sudo nixos-rebuild switch --flake .#hostname
 ```
 
+### Sinatra/Rack: "Host Not Permitted" Errors
+
+**Error**: HTTP requests fail with "Host not permitted" or similar host validation errors in Sinatra-based services (e.g., mackuba-lycan)
+
+**Root Cause**: Sinatra automatically includes the `rack-protection` middleware, which enables `Rack::Protection::HostAuthorization` by default. This validates the `Host` header against a whitelist of allowed hosts. If you access the service via a hostname not in the whitelist, the request is rejected.
+
+**Affected Services**: Any Sinatra-based service (currently `mackuba-lycan` in NUR)
+
+**Solution**: Configure the `allowedHosts` option in the NixOS module:
+
+```nix
+services.mackuba-lycan = {
+  enable = true;
+  hostname = "lycan.example.com";
+  allowedHosts = [
+    "lycan.example.com"
+    "localhost"         # for local development
+    "127.0.0.1"        # optional: for IP-based access
+  ];
+};
+```
+
+This sets the `RACK_PROTECTION_ALLOWED_HOSTS` environment variable, which Sinatra/Rack reads at startup. The value is a comma-separated list of hostnames to allow.
+
+**Technical Details**:
+- `rack-protection` gem (included by Sinatra) provides host validation
+- Environment variable: `RACK_PROTECTION_ALLOWED_HOSTS`
+- Format: comma-separated list of hostnames (no spaces)
+- Empty list disables the check (but not recommended)
+
 ## Resources
 
 - [AT Protocol Docs](https://atproto.com) - Protocol specifications

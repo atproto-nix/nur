@@ -4,6 +4,8 @@ This directory contains guides and references for working with the ATProto NUR.
 
 ## Quick Links by Task
 
+- **Configuring NixOS modules?** → [NIXOS_MODULES_CONFIG.md](./NIXOS_MODULES_CONFIG.md)
+- **Getting "Host not permitted" errors?** → [NIXOS_MODULES_CONFIG.md](./NIXOS_MODULES_CONFIG.md#sinatra-host-validation-via-rackprotection)
 - **Packaging Deno/JS projects?** → [JAVASCRIPT_DENO_BUILDS.md](./JAVASCRIPT_DENO_BUILDS.md)
 - **Using lib/packaging.nix?** → [LIB_PACKAGING_IMPROVEMENTS.md](./LIB_PACKAGING_IMPROVEMENTS.md)
 - **Improving packaging.nix?** → [LIB_PACKAGING_IMPROVEMENTS.md](./LIB_PACKAGING_IMPROVEMENTS.md)
@@ -13,6 +15,21 @@ This directory contains guides and references for working with the ATProto NUR.
 - **NixOS integration?** → [MCP_INTEGRATION.md](./MCP_INTEGRATION.md)
 
 ## Core Documentation
+
+### [NIXOS_MODULES_CONFIG.md](./NIXOS_MODULES_CONFIG.md)
+Best practices and common patterns for configuring NixOS modules in the ATProto NUR.
+
+**Key Topics**:
+- Environment variables for application configuration
+- Sinatra/Rack host validation issues and solutions
+- Web framework integration patterns
+- Module development best practices
+- Troubleshooting common configuration issues
+
+**Related Services**:
+- `services.mackuba-lycan` - Lycan custom feed generator (Sinatra + Rack::Protection)
+
+**Read this if**: You're creating NixOS modules for web services, dealing with host validation errors, or implementing framework-specific configuration patterns.
 
 ### [JAVASCRIPT_DENO_BUILDS.md](./JAVASCRIPT_DENO_BUILDS.md)
 Comprehensive guide to building JavaScript and Deno projects with external build tools (Vite, esbuild, etc.).

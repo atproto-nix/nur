@@ -101,6 +101,14 @@ mkServiceConfig {
 }
 ```
 
+### `mackuba-lycan` module `allowedHosts` option
+
+To configure the allowed hosts for the `mackuba-lycan` service, set the `services.mackuba-lycan.allowedHosts` option in your NixOS configuration. This option expects a list of strings, where each string is an allowed hostname.
+
+```nix
+services.mackuba-lycan.allowedHosts = [ "lycan.example.com" "localhost" ];
+```
+
 ## Validation Utilities
 
 ### `validatePackageMetadata`
