@@ -13,6 +13,7 @@ let
   # Categorized module names with optional metadata
   moduleCategories = {
     core = [
+      "common"
       "atproto"
       "microcosm"
       "blacksky"

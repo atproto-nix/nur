@@ -10,12 +10,12 @@ buildNpmPackage rec {
   src = fetchFromTangled {
     owner = "@whey.party";
     repo = "red-dwarf";
-    rev = "78b41734545fd9fadd048c0dfcddc848a8b4e68a";
-    hash = "sha256-QDuRXTKZyth8U57PCWOjro6YYO4aCEOProMPYSZt3Nw=";
+    rev = "27ceeb9b32d304033aa46d24d0ec7622a884e240";
+    hash = "sha256-UsOt84NsOYxLRlFwWkfFDphRNc4bO7OntcPp7S1jpNI=";
     forceFetchGit = true;
   };
 
-  npmDepsHash = "sha256-29EFrJASkRlvDOR9ZmjsBqOnoBA6hjl3TA/4qap+SnY=";
+  npmDepsHash = "sha256-jE/HtHGlZeqgLJZMmGg4X05k/nXaCYKZUILUrMAnB+0=";
   
   # Skip npm's build script and run vite directly to avoid type checking
   dontNpmBuild = true;

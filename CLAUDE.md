@@ -205,6 +205,52 @@ Examples:
 - Service configuration follows declarative NixOS style with validation
 - **Exception**: `atbackup` (desktop app) has no module - only package
 
+#### Common Utility Modules
+
+The `common` module collection (`modules/common/`) provides reusable utilities for NixOS deployments:
+
+**static-site-deploy** - Deploy static websites from Nix packages to web directories
+- Declarative configuration for multiple static sites
+- Automatic rsync deployment with proper ownership
+- Service reload/restart hooks after deployment
+- Systemd integration with proper ordering (before/after)
+
+Usage example:
+```nix
+services.static-site-deploy.sites.my-app = {
+  enable = true;
+  package = pkgs.my-static-site;
+  sourceDir = "share/my-app";          # Path within package
+  targetDir = "/var/www/example.com";  # Deployment destination
+  user = "caddy";
+  group = "caddy";
+  before = [ "caddy.service" ];        # Deploy before Caddy starts
+  reloadServices = [ "caddy.service" ]; # Reload Caddy after deployment
+};
+```
+
+This creates a systemd service `deploy-my-app.service` that:
+1. Syncs files from Nix store to web root using rsync
+2. Sets correct ownership and permissions
+3. Runs before specified services (e.g., web server)
+4. Reloads/restarts services after deployment
+
+Real-world example: `whey-party-red-dwarf` deployment
+```nix
+services.static-site-deploy.sites.red-dwarf = {
+  enable = true;
+  package = pkgs.whey-party-red-dwarf;
+  sourceDir = "share/red-dwarf";
+  targetDir = "/var/www/snek.cc/red-dwarf";
+  user = "caddy";
+  group = "caddy";
+  before = [ "caddy.service" ];
+  reloadServices = [ "caddy.service" ];
+};
+```
+
+See `modules/common/README.md` for full documentation.
+
 ### Build System Patterns
 
 #### Rust Packages (via Crane)

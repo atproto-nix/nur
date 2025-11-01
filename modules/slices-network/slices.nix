@@ -111,7 +111,7 @@ in
 
     package = mkOption {
       type = types.package;
-      default = pkgs.slices-network.slices;
+      default = pkgs.slices-network-slices;
       description = "The Slices package to use.";
     };
 
@@ -652,7 +652,7 @@ in
     systemd.services.slices-network-slices-frontend = mkIf cfg.settings.frontend.enable {
       description = "Slices frontend server";
       wantedBy = [ "multi-user.target" ];
-      after = [ "network.target" "atproto-slices-api.service" ];
+      after = [ "network.target" "slices-network-slices-api.service" ];
       wants = [ "network.target" ];
 
       serviceConfig = {
@@ -743,7 +743,7 @@ in
       systemd.services."atproto-slices-tenant-${tenantName}" = {
           description = "Slices tenant service for ${tenantName}";
           wantedBy = [ "multi-user.target" ];
-          after = [ "network.target" "postgresql.service" "atproto-slices-api.service" ];
+          after = [ "network.target" "postgresql.service" "slices-network-slices-api.service" ];
           wants = [ "network.target" ];
           
           serviceConfig = {

@@ -18,7 +18,7 @@ let
   # This caches all Deno dependencies offline before the main build
   denoCacheFOD = packaging.determinism.createValidatedFOD {
     name = "slices-frontend-deno-cache";
-    outputHash = "sha256-b4CzGsVgXS87y04wtVZ8yAvqxReAd+xeGE8IO0JVJUY=";
+    outputHash = "sha256-t7F+DRGJbxrSk40gknHUxk1+m/rt1HSMtxq1bVN8e8E=";
     nativeBuildInputs = with pkgs; [ deno cacert curl unzip ];
 
     script = ''

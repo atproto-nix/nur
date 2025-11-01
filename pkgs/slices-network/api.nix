@@ -76,6 +76,8 @@ let
       if [ -f schema.sql ]; then
         cp schema.sql $out/share/slices-api/
       fi
+      # Make files writable so the fixup phase can strip references
+      chmod -R u+w $out/share/slices-api
     '';
 
     # Custom build phase to capture logs

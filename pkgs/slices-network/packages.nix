@@ -17,7 +17,7 @@ let
   # Fixed-output derivation for packages cache
   packagesCacheFOD = packaging.determinism.createValidatedFOD {
     name = "slices-packages-deno-cache";
-    outputHash = "sha256-0GB33BIOSs721oykIDL//G/2KbhtQEt97Cd+JmO8tIg=";
+    outputHash = "sha256-U0dhXo7O7OX1FCxa5HFGVIZCXPfDrMK+cT1R1veDvpw=";
     nativeBuildInputs = with pkgs; [ deno cacert curl unzip ];
 
     script = ''
@@ -64,16 +64,9 @@ let
       cp -rv ${packagesCacheFOD}/* "$DENO_DIR"/
       chmod -R u+w "$DENO_DIR"
 
-      echo "Building Slices CLI..."
-      if [ -f packages/cli/src/main.ts ]; then
-        deno compile \
-          --allow-all \
-          --no-check \
-          --cached-only \
-          ${lib.optionalString (builtins.pathExists (src + "/deno.lock")) "--lock=deno.lock"} \
-          --output=slices-cli \
-          packages/cli/src/main.ts || echo "CLI build failed"
-      fi
+      echo "Preparing Slices CLI (will use wrapper script)..."
+      # Don't use deno compile - it requires downloading denort binary
+      # We'll create a wrapper script in installPhase instead
 
       runHook postBuild
     '';
@@ -83,22 +76,35 @@ let
 
       mkdir -p $out/bin $out/share/slices-packages
 
-      # Install CLI binary if built
-      if [ -f slices-cli ]; then
-        cp slices-cli $out/bin/slices
-        chmod +x $out/bin/slices
+      # Install packages and Deno cache for runtime use
+      cp -r packages $out/share/slices-packages/
+      cp -r "$DENO_DIR" $out/share/slices-packages/.deno
+
+      # Copy config files if they exist
+      [ -f deno.json ] && cp deno.json $out/share/slices-packages/ || true
+      [ -f deno.jsonc ] && cp deno.jsonc $out/share/slices-packages/ || true
+      [ -f deno.lock ] && cp deno.lock $out/share/slices-packages/ || true
+
+      # Create main slices CLI wrapper
+      if [ -f packages/cli/src/main.ts ]; then
+        makeWrapper ${pkgs.deno}/bin/deno $out/bin/slices \
+          --add-flags "run" \
+          --add-flags "--allow-all" \
+          --add-flags "--no-check" \
+          --add-flags "--cached-only" \
+          --add-flags "$out/share/slices-packages/packages/cli/src/main.ts" \
+          --set DENO_DIR "$out/share/slices-packages/.deno" \
+          --set DENO_NO_UPDATE_CHECK "1" \
+          --set DENO_NO_PROMPT "1"
       fi
 
-      # Install packages for runtime use
-      cp -r packages $out/share/slices-packages/
-
-      # Create wrapper scripts for packages that can be run as scripts
-      for pkg in cli client codegen lexicon oauth session; do
+      # Create wrapper scripts for other packages that can be run as scripts
+      for pkg in client codegen lexicon oauth session; do
         if [ -d "packages/$pkg" ] && [ -f "packages/$pkg/mod.ts" ]; then
           makeWrapper ${pkgs.deno}/bin/deno $out/bin/slices-$pkg \
             --add-flags "run --allow-all --no-check --cached-only" \
             --add-flags "$out/share/slices-packages/packages/$pkg/mod.ts" \
-            --set DENO_DIR "${packagesCacheFOD}" \
+            --set DENO_DIR "$out/share/slices-packages/.deno" \
             --set DENO_NO_UPDATE_CHECK "1" \
             --set DENO_NO_PROMPT "1"
         fi

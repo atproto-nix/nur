@@ -108,7 +108,7 @@ Community-maintained Rust implementations:
 - `hyperlink-academy-leaflet` - Collaborative writing platform (Next.js)
 - `teal-fm-teal` - Music social platform
 - `yoten-app-yoten` - Language learning platform
-- `red-dwarf-client-red-dwarf` - Constellation-based Bluesky client
+- `whey-party-red-dwarf` - Appview-less Bluesky client using Constellation (Vite/React)
 - `witchcraft-systems-pds-dash` - PDS monitoring dashboard (Deno)
 - `parakeet-social-parakeet` - Full-featured AppView (placeholder)
 - `slices-network-slices` - Custom AppView with SDK generation
@@ -194,10 +194,22 @@ ATProto tools and feed generators by @mackuba.eu:
       port = 3000;
     };
   };
+
+  # Deploy static sites from Nix packages
+  services.static-site-deploy.sites.my-app = {
+    enable = true;
+    package = pkgs.my-static-site;
+    sourceDir = "share/my-app";
+    targetDir = "/var/www/example.com";
+    user = "caddy";
+    group = "caddy";
+    reloadServices = [ "caddy.service" ];
+  };
 }
 ```
 
 Available module collections:
+- `atproto-nur.nixosModules.common` - **Common utilities** (static-site-deploy, nixos-integration)
 - `atproto-nur.nixosModules.microcosm` - Microcosm services (constellation, slingshot, etc.)
 - `atproto-nur.nixosModules.blacksky` - Blacksky/rsky services (PDS, relay, etc.)
 - `atproto-nur.nixosModules.bluesky-social` - Official Bluesky Indigo services
@@ -215,6 +227,30 @@ Available module collections:
 - `atproto-nur.nixosModules.smokesignal-events` - QuickDID service
 - `atproto-nur.nixosModules.individual` - PDS gatekeeper
 - `atproto-nur.nixosModules.mackuba` - Lycan feed generator
+
+### Common Utility Modules
+
+The `common` module collection provides reusable utilities:
+
+**static-site-deploy** - Deploy static sites from Nix packages to web directories
+- Automatic rsync deployment with proper ownership
+- Service reload/restart hooks after deployment
+- Support for multiple sites with different configurations
+- See `modules/common/README.md` for detailed documentation
+
+Example: Deploying Red Dwarf static site
+```nix
+services.static-site-deploy.sites.red-dwarf = {
+  enable = true;
+  package = pkgs.whey-party-red-dwarf;
+  sourceDir = "share/red-dwarf";
+  targetDir = "/var/www/example.com/red-dwarf";
+  user = "caddy";
+  group = "caddy";
+  before = [ "caddy.service" ];
+  reloadServices = [ "caddy.service" ];
+};
+```
 
 ## AI-Assisted Development
 
@@ -333,6 +369,7 @@ Packages are organized by their maintainer/organization:
 - `tangled/` - Tangled git forge infrastructure
 - `likeandscribe/` - Frontpage community platform
 - `hyperlink-academy/`, `parakeet-social/`, `teal-fm/`, etc. - Third-party apps
+- `whey-party/` - Bluesky client applications (Red Dwarf)
 - `mackuba/` - Feed generators and ATProto tools by @mackuba.eu
 - `individual/` - Individual developer packages
 
@@ -345,6 +382,8 @@ This structure makes it easy to find packages by their maintainer and understand
 - Phase 4: Moved grain from bluesky-social to `grain-social` (correct maintainer - Chad Miller)
 - **New**: Fixed `yoten-app/yoten` complex build (templ + Tailwind CSS v4 + frontend assets)
 - **New**: Added `mackuba/lycan` - Ruby feed generator with bundlerEnv packaging
+- **New**: Added `whey-party/red-dwarf` - Appview-less Bluesky client (Vite/React)
+- **New**: Added `common/static-site-deploy` - Reusable module for deploying static sites
 
 ## License
 
