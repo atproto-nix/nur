@@ -1,7 +1,7 @@
 { config, lib, pkgs, ... }:
 
 let
-  cfg = config.services.tangled-dev.knot;
+  cfg = config.services.tangled.knot;
 in
 
 with lib;
