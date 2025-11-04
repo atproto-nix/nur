@@ -51,7 +51,7 @@ let
 
     # Media and streaming platforms
     # Video, audio, and media delivery services
-    stream-place = pkgs.callPackage ./stream-place { inherit lib buildGoModule; fetchFromTangled = pkgs.fetchFromTangled; };
+    stream-place = pkgs.callPackage ./stream-place { inherit lib buildGoModule; fetchFromTangled = pkgs.fetchFromTangled; fetchurl = pkgs.fetchurl; };
 
     # Language learning and specialized apps
     # Educational tools and specialized applications

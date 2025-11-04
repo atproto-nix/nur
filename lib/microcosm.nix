@@ -112,8 +112,8 @@ rec {
     systemd.services."microcosm-${toLower serviceName}" = {
       description = "${serviceName} Service - ${serviceConfig.description or "Microcosm ATProto service"}";
       wantedBy = [ "multi-user.target" ];
-      after = [ "network.target" ];
-      wants = [ "network.target" ];
+      after = [ "network.target" "systemd-tmpfiles-setup.service" ];
+      wants = [ "network.target" "systemd-tmpfiles-setup.service" ];
 
       serviceConfig = standardSecurityConfig // standardRestartConfig // {
         Type = "exec";

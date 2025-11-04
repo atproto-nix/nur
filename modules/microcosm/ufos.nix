@@ -6,6 +6,7 @@ with lib;
 let
   cfg = config.services.microcosm-ufos;
   microcosmLib = import ../../lib/microcosm.nix { inherit lib; };
+  nixosIntegration = import ../../lib/nixos-integration.nix { inherit lib config; };
 in
 {
   options.services.microcosm-ufos = microcosmLib.mkMicrocosmServiceOptions "UFOs" {
@@ -45,11 +46,11 @@ in
       description = "Reset the rollup cursor and backfill.";
     };
 
-    bind = mkOption {
-      type = types.str;
-      default = "0.0.0.0:9999";
-      description = "UFOs server's listen address";
-    };
+    # bind = mkOption {
+    #   type = types.str;
+    #   default = "0.0.0.0:9999";
+    #   description = "UFOs server's listen address";
+    # }; # Not supported yet
 
     metrics = mkOption {
       type = types.submodule {
@@ -79,6 +80,12 @@ in
     # Directory management
     (microcosmLib.mkDirectoryConfig cfg [])
 
+    # Prometheus metrics integration
+    (nixosIntegration.mkPrometheusIntegration "microcosm-ufos" cfg {
+      enable = cfg.metrics.enable;
+      port = cfg.metrics.port;
+    })
+
     # systemd service
     (microcosmLib.mkSystemdService cfg "UFOs" {
       description = "ATProto service component";
@@ -97,10 +104,10 @@ in
     ]
     (optional cfg.backfill [ "--backfill" ])
     (optional cfg.reroll [ "--reroll" ])
-    [
-      "--bind"
-      (escapeShellArg cfg.bind)
-    ]
+    # [
+    #   "--bind"
+    #   (escapeShellArg cfg.bind)
+    # ] # Not supported yet
     (optional cfg.metrics.enable [
       "--bind-metrics"
       (escapeShellArg "0.0.0.0:${toString cfg.metrics.port}")
@@ -110,6 +117,16 @@ in
 "${cfg.package}/bin/ufos ${concatStringsSep " " args}";
       };
     })
+
+    # Enable global integration features based on service configuration
+    {
+      atproto.integration.monitoring.prometheus.enable = mkIf cfg.metrics.enable true;
+    }
+
+    # Firewall rules
+    {
+      networking.firewall.allowedTCPPorts = mkIf cfg.metrics.enable [ cfg.metrics.port ];
+    }
 
     # Warnings for potentially destructive operations
     {

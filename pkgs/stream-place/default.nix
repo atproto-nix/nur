@@ -1,8 +1,12 @@
-{ pkgs, lib, buildGoModule, fetchFromTangled, ... }:
+{ pkgs, lib, buildGoModule, fetchFromTangled, fetchurl, ... }:
 
 # Stream.place ATProto packages
 # Organization: stream-place
 # Website: https://stream.place
+#
+# Provides both source and binary build variants of Streamplace:
+# - streamplace: Source build (recommended for customization)
+# - streamplace-binary: Prebuilt binary (recommended for quick installation)
 
 let
   # Organizational metadata
@@ -14,12 +18,20 @@ let
     maintainer = "Stream.place";
     description = "Video infrastructure platform with ATProto integration";
     atprotoFocus = [ "applications" "infrastructure" ];
-    packageCount = 1;
+    packageCount = 2;
   };
 
   # Package naming pattern: use simple names within organization
   packages = {
-    streamplace = pkgs.callPackage ./streamplace.nix { inherit buildGoModule fetchFromTangled; };
+    # Source build variant - full compilation from tangled.org
+    streamplace = pkgs.callPackage ./streamplace.nix {
+      inherit buildGoModule fetchFromTangled;
+    };
+
+    # Binary variant - prebuilt release from git.stream.place
+    streamplace-binary = pkgs.callPackage ./binary.nix {
+      inherit fetchurl;
+    };
   };
 
   # Enhanced packages with organizational metadata
@@ -44,4 +56,8 @@ in
 enhancedPackages // {
   # Export organizational metadata for external use
   _organizationMeta = organizationMeta;
+
+  # Convenience aliases
+  source = packages.streamplace;          # Full source build
+  binary = packages.streamplace-binary;   # Prebuilt binary
 }
