@@ -18,6 +18,9 @@
   indigo-services = import ./indigo-services.nix { inherit pkgs; lib = pkgs.lib; };
   all-service-modules = import ./all-service-modules.nix { inherit pkgs; };
   organizations-services = import ./organizations-services.nix { inherit pkgs; };
+  plcbundle-basic = import ./plcbundle-basic.nix { inherit pkgs; lib = pkgs.lib; };
+  plcbundle-integration = import ./plcbundle-integration.nix { inherit pkgs; lib = pkgs.lib; };
+  plcbundle-security = import ./plcbundle-security.nix { inherit pkgs; lib = pkgs.lib; };
 
   # Infrastructure tests
   pds-ecosystem = import ./pds-ecosystem.nix { inherit pkgs; };

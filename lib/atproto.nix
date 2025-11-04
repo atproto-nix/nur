@@ -1,3 +1,37 @@
+# ==============================================================================
+# ATProto Shared Library - Build System Helpers and Utilities
+# ==============================================================================
+#
+# BEST PRACTICES:
+#
+# 1. SHARED FUNCTIONALITY
+#    - Provides helpers for Rust, Go, Node.js, Deno builds
+#    - Reduces duplication across 48+ packages
+#    - Ensures consistent environment and dependencies
+#
+# 2. METADATA VALIDATION
+#    - Validates ATProto metadata at package creation time
+#    - Catches configuration errors early
+#    - Provides clear error messages for debugging
+#
+# 3. LANGUAGE-SPECIFIC HELPERS
+#    - mkRustAtprotoService: Rust packages with standard env
+#    - mkGoAtprotoApp: Go packages with standard config
+#    - mkNodeAtprotoApp: Node.js packages with standard build
+#    - Each includes ATProto metadata injection
+#
+# 4. WORKSPACE SUPPORT
+#    - mkRustWorkspace: Efficiently build Rust workspaces
+#    - Shared dependency caching
+#    - Per-member builds with minimal rebuilds
+#
+# 5. ORGANIZATION FRAMEWORK
+#    - Maps packages to organizations
+#    - Validates package placement
+#    - Tracks metadata and migration status
+#
+# ==============================================================================
+
 {
   lib,
   pkgs,
@@ -7,9 +41,13 @@
 }:
 
 let
-  # Import organizational framework
+  # BEST PRACTICE: Import helper frameworks
+  # Makes organizational utilities available to all packages
   organizationalFramework = import ./organizational-framework.nix { inherit lib; };
-  # ATProto package metadata schema validation
+
+  # BEST PRACTICE: Validate metadata schema at definition time
+  # Catches configuration errors before building
+  # Provides clear error messages for debugging
   validateAtprotoMetadata =
     metadata:
     let

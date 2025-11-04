@@ -4,6 +4,23 @@ with lib;
 
 let
   cfg = config.services.witchcraft-systems.pds-dash;
+
+  # Available themes
+  availableThemes = [ "default" "express" "sunset" "witchcraft" ];
+
+  # Build themed package if theme is specified and no custom package provided
+  defaultPackage =
+    if cfg.buildTheme then
+      pkgs.callPackage ../../pkgs/witchcraft-systems/pds-dash-themed.nix {
+        theme = cfg.theme;
+        pdsUrl = cfg.pdsUrl;
+        frontendUrl = cfg.frontendUrl;
+        maxPosts = cfg.maxPosts;
+        footerText = cfg.footerText;
+        showFuturePosts = cfg.showFuturePosts;
+      }
+    else
+      pkgs.witchcraft-systems-pds-dash or (throw "witchcraft-systems-pds-dash package not found");
 in
 {
   options.services.witchcraft-systems.pds-dash = {
@@ -11,9 +28,26 @@ in
 
     package = mkOption {
       type = types.package;
-      default = pkgs.witchcraft-systems-pds-dash or (throw "witchcraft-systems-pds-dash package not found");
-      defaultText = literalExpression "pkgs.witchcraft-systems-pds-dash";
-      description = "The pds-dash package to use.";
+      default = defaultPackage;
+      defaultText = "Generated themed package if buildTheme=true, else witchcraft-systems-pds-dash";
+      description = "The pds-dash package to use. Can be auto-generated from configuration if buildTheme is true.";
+    };
+
+    buildTheme = mkOption {
+      type = types.bool;
+      default = false;
+      description = ''
+        Whether to build pds-dash with theme and configuration at build time.
+        When enabled, configuration options (theme, pdsUrl, frontendUrl, etc.) are
+        built into the dashboard. When disabled, uses pre-built package.
+      '';
+    };
+
+    theme = mkOption {
+      type = types.enum availableThemes;
+      default = "default";
+      description = "pds-dash theme to use (only used if buildTheme is true).";
+      example = "sunset";
     };
 
     virtualHost = mkOption {
@@ -28,6 +62,32 @@ in
       default = "http://127.0.0.1:3000";
       description = "The URL of the PDS instance to monitor.";
       example = "http://pds.example.com:3000";
+    };
+
+    frontendUrl = mkOption {
+      type = types.str;
+      default = "https://deer.social";
+      description = "The URL of the frontend service for linking to replies/quotes/accounts.";
+      example = "https://bsky.app";
+    };
+
+    maxPosts = mkOption {
+      type = types.int;
+      default = 20;
+      description = "Maximum number of posts to fetch from the PDS per request.";
+    };
+
+    footerText = mkOption {
+      type = types.str;
+      default = "<a href='https://git.witchcraft.systems/scientific-witchery/pds-dash' target='_blank'>Source</a> (<a href='https://github.com/witchcraft-systems/pds-dash/' target='_blank'>github mirror</a>)";
+      description = "Footer text for the dashboard. Supports HTML.";
+      example = "Powered by my PDS";
+    };
+
+    showFuturePosts = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Whether to show posts with timestamps that are in the future.";
     };
 
     enableSSL = mkOption {

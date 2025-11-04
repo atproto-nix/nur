@@ -1,26 +1,73 @@
+# ==============================================================================
+# Package Collection Aggregator - All Organizations
+# ==============================================================================
+#
+# BEST PRACTICES:
+#
+# 1. ORGANIZATIONAL STRUCTURE
+#    - Each organization in separate directory with its own default.nix
+#    - Each organization collects related packages
+#    - Metadata attached automatically to all packages
+#
+# 2. CONTEXT PASSING
+#    - Pass lib, craneLib, buildGoModule, buildNpmPackage, atprotoLib
+#    - Each organization's default.nix receives full context
+#    - Reduces boilerplate in package definitions
+#
+# 3. PACKAGE FILTERING
+#    - Filter out non-package attributes (like _organizationMeta)
+#    - Check for actual derivations (outPath or drvPath)
+#    - Ensures clean package export
+#
+# 4. NAMESPACE FLATTENING
+#    - Convert org/package to org-package naming
+#    - Provides flat namespace for flake outputs
+#    - Legacy collections (microcosm, blacksky, bluesky) keep old naming
+#
+# 5. METADATA EXPORT
+#    - Export both packages and organizational metadata
+#    - Metadata available for tooling without evaluating all packages
+#    - Useful for CI and documentation generation
+#
+# ==============================================================================
+
 { pkgs, lib, craneLib, fetchgit, buildGoModule ? pkgs.buildGoModule, buildNpmPackage ? pkgs.buildNpmPackage, atprotoLib, ... }:
 
 let
+  # BEST PRACTICE: Organize packages by category and purpose
+  # Each sub-organization in ORGANIZATION/default.nix returns:
+  # - Named packages (e.g., { mypackage = {...}; })
+  # - _organizationMeta attribute with metadata
   organizationalPackages = {
     # Educational and collaborative platforms
+    # Packages for learning, collaboration, and knowledge sharing
     hyperlink-academy = pkgs.callPackage ./hyperlink-academy { inherit lib; };
-    
+
     # Custom AppView and social platforms
+    # Alternative social media frontends and social experiences
     slices-network = pkgs.callPackage ./slices-network { inherit lib craneLib; fetchFromTangled = pkgs.fetchFromTangled; };
     teal-fm = pkgs.callPackage ./teal-fm { inherit lib; };
     parakeet-social = pkgs.callPackage ./parakeet-social { inherit lib craneLib fetchgit; };
-    
+
     # Media and streaming platforms
+    # Video, audio, and media delivery services
     stream-place = pkgs.callPackage ./stream-place { inherit lib buildGoModule; fetchFromTangled = pkgs.fetchFromTangled; };
-    
+
     # Language learning and specialized apps
+    # Educational tools and specialized applications
     yoten-app = pkgs.callPackage ./yoten-app { inherit lib buildGoModule; fetchFromTangled = pkgs.fetchFromTangled; };
-    
+
     # Client applications
-    
+    # (Space for future client application packages)
+
     # Development tools and infrastructure
+    # Core infrastructure tools, build systems, and development utilities
     tangled = pkgs.callPackage ./tangled { inherit lib buildGoModule; fetchFromTangled = pkgs.fetchFromTangled; };
-    
+
+    # PLC Bundle - DID operation archiving and distribution (atscan.net)
+    # Cryptographic archiving of AT Protocol DID operations
+    plcbundle = pkgs.callPackage ./plcbundle { inherit lib buildGoModule; fetchFromTangled = pkgs.fetchFromTangled; };
+
     # Identity and infrastructure services
     smokesignal-events = pkgs.callPackage ./smokesignal-events { inherit lib craneLib; };
     
@@ -53,45 +100,66 @@ let
     blacksky = pkgs.callPackage ./blacksky { inherit lib craneLib; };
   };
 
-  # Helper function to check if something is a derivation
-  isDerivation = pkg: 
-    (pkg.type or "") == "derivation" ||
+  # BEST PRACTICE: Robust derivation detection
+  # Checks multiple properties to identify buildable packages
+  # Filters out metadata and non-derivation attributes
+  isDerivation = pkg:
+    # Standard Nix derivation (has type field)
+    (pkg.type or "" == "derivation") ||
+    # Has Nix store path properties (indicates derivation-like)
     (builtins.isAttrs pkg && pkg ? outPath) ||
     (builtins.isAttrs pkg && pkg ? drvPath);
 
-  # Flatten organizational packages into a single namespace with prefixes
-  flattenedPackages = 
+  # BEST PRACTICE: Flatten organizational packages into unified namespace
+  # Converts nested org/package structure to flat org-package naming
+  # Legacy organizations keep their existing naming for backward compatibility
+  flattenedPackages =
     let
-      # Helper function to add organizational prefix to package names
+      # BEST PRACTICE: Prefix addition helper
+      # Adds organization name prefix to all package names
+      # Filters out metadata and non-derivations
       addOrgPrefix = orgName: packages:
-        lib.mapAttrs' (pkgName: pkg: 
+        lib.mapAttrs' (pkgName: pkg:
+          # Skip metadata and non-derivations
           lib.nameValuePair "${orgName}-${pkgName}" pkg
         ) (lib.filterAttrs (n: v: n != "_organizationMeta" && isDerivation v) packages);
-      
-      # Process each organizational collection
+
+      # BEST PRACTICE: Process each organizational collection
+      # Handle legacy collections specially (microcosm, blacksky, bluesky)
+      # Use standard org-package naming for new organizations
       orgCollections = lib.mapAttrsToList (orgName: packages:
         if orgName == "microcosm" || orgName == "blacksky" || orgName == "bluesky"
-        then 
-          # Legacy collections keep their existing prefixes
-          lib.mapAttrs' (pkgName: pkg: 
+        then
+          # Legacy collections keep their existing prefixes for backward compatibility
+          lib.mapAttrs' (pkgName: pkg:
             lib.nameValuePair "${orgName}-${pkgName}" pkg
           ) (lib.filterAttrs (n: v: n != "_organizationMeta" && isDerivation v) packages)
         else
-          # New organizational collections use org-package naming
+          # New organizational collections use consistent org-package naming
           addOrgPrefix orgName packages
       ) organizationalPackages;
-      
+
     in
+    # BEST PRACTICE: Merge all collections into single namespace
+    # Use foldl' for efficiency, starts with empty set, merges each collection
     lib.foldl' (acc: collection: acc // collection) {} orgCollections;
 
 in
 
+# BEST PRACTICE: Export both flat packages and organizational collections
+# Flat packages go to flake outputs
+# Organizational structure and metadata available for tooling
 flattenedPackages // {
-  # Export organizational collections for direct access (not in flake packages)
+  # Export organizational collections for direct access
+  # Useful for accessing packages by organization
+  # Not included in flake packages output, only in legacyPackages
   organizations = organizationalPackages;
-  
-  # Export organizational metadata for tooling (not in flake packages)
-  _organizationalMetadata = lib.mapAttrs (orgName: packages: 
+
+  # Export organizational metadata for tooling and CI
+  # Metadata can be accessed without evaluating all packages
+  # Useful for: package discovery, documentation generation, CI organization
+  # Filters out legacy collections to avoid duplication
+  _organizationalMetadata = lib.mapAttrs (orgName: packages:
     packages._organizationMeta or null
   ) (lib.filterAttrs (n: v: n != "microcosm" && n != "blacksky" && n != "bluesky") organizationalPackages);
 }

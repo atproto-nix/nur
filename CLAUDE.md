@@ -50,7 +50,8 @@ nur/
 │   ├── blacksky/          # Community ATProto tools (PDS, relay, etc.)
 │   ├── bluesky-social/    # Official Bluesky packages (indigo, grain)
 │   ├── atproto/           # Core TypeScript libraries
-│   ├── tangled-dev/       # Tangled infrastructure (appview, knot, spindle)
+│   ├── tangled/           # Tangled infrastructure (appview, knot, spindle, etc.)
+│   ├── plcbundle/         # PLC Bundle - DID operation archiving and distribution
 │   └── [other orgs]/      # Third-party apps (leaflet, teal, yoten, etc.)
 ├── modules/               # NixOS service modules (mirror pkgs/ structure)
 ├── lib/                   # Build utilities and packaging helpers
@@ -189,7 +190,8 @@ Format: `{organization}-{package-name}`
 Examples:
 - `microcosm-constellation`
 - `blacksky-pds`
-- `tangled-dev-spindle`
+- `tangled-spindle`
+- `plcbundle-plcbundle`
 - `hyperlink-academy-leaflet`
 - `atproto-atproto-api`
 
