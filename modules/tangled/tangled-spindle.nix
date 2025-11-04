@@ -1,18 +1,18 @@
 { config, lib, pkgs, ... }:
 
 let
-  cfg = config.services.tangled-dev.spindle;
+  cfg = config.services.tangled.spindle;
 in
 
 with lib;
 
 {
-  options.services.tangled-dev.spindle = {
+  options.services.tangled.spindle = {
     enable = mkEnableOption "Tangled Spindle - Event processor with ATProto integration";
 
     package = mkOption {
       type = types.package;
-      default = pkgs.tangled-dev-spindle or pkgs.spindle;
+      default = pkgs.tangled-spindle or pkgs.spindle;
       defaultText = literalExpression "pkgs.spindle";
       description = "Package to use for Tangled Spindle";
     };
@@ -194,11 +194,11 @@ with lib;
     assertions = [
       {
         assertion = cfg.server.hostname != "";
-        message = "services.tangled-dev.spindle.server.hostname must be set";
+        message = "services.tangled.spindle.server.hostname must be set";
       }
       {
         assertion = cfg.server.owner != "";
-        message = "services.tangled-dev.spindle.server.owner must be set";
+        message = "services.tangled.spindle.server.owner must be set";
       }
     ];
 
@@ -211,15 +211,39 @@ with lib;
 
     users.groups.${cfg.group} = {};
 
+    # Use tmpfiles.rules to create directories with proper permissions
     systemd.tmpfiles.rules = [
       "d '${cfg.dataDir}' 0750 ${cfg.user} ${cfg.group} - -"
       "d '${cfg.dataDir}/logs' 0750 ${cfg.user} ${cfg.group} - -"
     ];
 
+    # Setup service that runs before tangled-spindle
+    # This has no security restrictions and runs as root
+    systemd.services.tangled-spindle-setup = {
+      description = "Tangled Spindle setup service";
+      wantedBy = [ "multi-user.target" ];
+      before = [ "tangled-spindle.service" ];
+      
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+      };
+
+      script = ''
+        # Ensure directories exist with correct ownership
+        mkdir -p "${cfg.dataDir}"
+        mkdir -p "${cfg.dataDir}/logs"
+        
+        # Set ownership
+        chown -R ${cfg.user}:${cfg.group} "${cfg.dataDir}"
+      '';
+    };
+
     systemd.services.tangled-spindle = {
       description = "Tangled Spindle - Event processor with ATProto integration";
       wantedBy = [ "multi-user.target" ];
-      after = [ "network.target" ];
+      after = [ "network.target" "tangled-spindle-setup.service" ];
+      requires = [ "tangled-spindle-setup.service" ];
 
       serviceConfig = {
         Type = "exec";
@@ -252,7 +276,7 @@ with lib;
         ReadOnlyPaths = [ "/nix/store" ];
         
         # Environment file
-        EnvironmentFile = optional (cfg.environmentFile != null) cfg.environmentFile;
+        EnvironmentFile = mkIf (cfg.environmentFile != null) cfg.environmentFile;
       };
 
       environment = {
