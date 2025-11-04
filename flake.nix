@@ -176,40 +176,235 @@
       packages = forAllSystems (system: (preparePackages system).packages);
       legacyPackages = forAllSystems (system: (preparePackages system).legacyPackages);
 
+      overlays = {
+        default = final: prev: {
+          # Nested package sets
+          microcosm = {
+            who-am-i = self.packages.${final.system}.microcosm-who-am-i;
+            ufos = self.packages.${final.system}.microcosm-ufos;
+            ufos-fuzz = self.packages.${final.system}.microcosm-ufos-fuzz;
+            spacedust = self.packages.${final.system}.microcosm-spacedust;
+            slingshot = self.packages.${final.system}.microcosm-slingshot;
+            reflector = self.packages.${final.system}.microcosm-reflector;
+            quasar = self.packages.${final.system}.microcosm-quasar;
+            pocket = self.packages.${final.system}.microcosm-pocket;
+            links = self.packages.${final.system}.microcosm-links;
+            jetstream = self.packages.${final.system}.microcosm-jetstream;
+            constellation = self.packages.${final.system}.microcosm-constellation;
+            allegedly = self.packages.${final.system}.microcosm-allegedly;
+            default = self.packages.${final.system}.microcosm;
+          };
+          smokesignal-events = {
+            quickdid = self.packages.${final.system}.smokesignal-events-quickdid;
+            default = self.packages.${final.system}.smokesignal-events;
+          };
+          stream-place = {
+            streamplace = self.packages.${final.system}.stream-place-streamplace;
+            binary = self.packages.${final.system}.stream-place-binary;
+            default = self.packages.${final.system}.stream-place;
+          };
+          tangled = {
+            spindle = self.packages.${final.system}.tangled-spindle;
+            lexgen = self.packages.${final.system}.tangled-lexgen;
+            knot = self.packages.${final.system}.tangled-knot;
+            genjwks = self.packages.${final.system}.tangled-genjwks;
+            camo = self.packages.${final.system}.tangled-camo;
+            avatar = self.packages.${final.system}.tangled-avatar;
+            appview = self.packages.${final.system}.tangled-appview;
+            appview-static-files = self.packages.${final.system}.tangled-appview-static-files;
+            default = self.packages.${final.system}.tangled;
+          };
+          bluesky = {
+            indigo = self.packages.${final.system}.bluesky-indigo;
+            atproto-xrpc = self.packages.${final.system}.bluesky-atproto-xrpc;
+            atproto-syntax = self.packages.${final.system}.bluesky-atproto-syntax;
+            atproto-repo = self.packages.${final.system}.bluesky-atproto-repo;
+            atproto-lexicon = self.packages.${final.system}.bluesky-atproto-lexicon;
+            atproto-identity = self.packages.${final.system}.bluesky-atproto-identity;
+            atproto-did = self.packages.${final.system}.bluesky-atproto-did;
+            atproto-api = self.packages.${final.system}.bluesky-atproto-api;
+            default = self.packages.${final.system}.bluesky;
+          };
+          blacksky = {
+            rsky = self.packages.${final.system}.blacksky-rsky;
+            default = self.packages.${final.system}.blacksky;
+          };
+          grain-social = {
+            grain = self.packages.${final.system}.grain-social-grain;
+            darkroom = self.packages.${final.system}.grain-social-darkroom;
+            cli = self.packages.${final.system}.grain-social-cli;
+            default = self.packages.${final.system}.grain-social;
+          };
+          hyperlink-academy = {
+            leaflet = self.packages.${final.system}.hyperlink-academy-leaflet;
+            default = self.packages.${final.system}.hyperlink-academy;
+          };
+          likeandscribe = {
+            frontpage = self.packages.${final.system}.likeandscribe-frontpage;
+            default = self.packages.${final.system}.likeandscribe;
+          };
+          mackuba = {
+            lycan = self.packages.${final.system}.mackuba-lycan;
+            default = self.packages.${final.system}.mackuba;
+          };
+          parakeet-social = {
+            parakeet = self.packages.${final.system}.parakeet-social-parakeet;
+            default = self.packages.${final.system}.parakeet-social;
+          };
+          plcbundle = {
+            plcbundle = self.packages.${final.system}.plcbundle-plcbundle;
+            default = self.packages.${final.system}.plcbundle;
+          };
+          slices-network = {
+            packages = self.packages.${final.system}.slices-network-packages;
+            frontend = self.packages.${final.system}.slices-network-frontend;
+            api = self.packages.${final.system}.slices-network-api;
+            default = self.packages.${final.system}.slices-network;
+          };
+          teal-fm = {
+            teal = self.packages.${final.system}.teal-fm-teal;
+            default = self.packages.${final.system}.teal-fm;
+          };
+          whey-party = {
+            red-dwarf = self.packages.${final.system}.whey-party-red-dwarf;
+            default = self.packages.${final.system}.whey-party;
+          };
+          whyrusleeping = {
+            konbini = self.packages.${final.system}.whyrusleeping-konbini;
+            default = self.packages.${final.system}.whyrusleeping;
+          };
+          witchcraft-systems = {
+            pds-dash = self.packages.${final.system}.witchcraft-systems-pds-dash;
+            pds-dash-themed = self.packages.${final.system}.witchcraft-systems-pds-dash-themed;
+            default = self.packages.${final.system}.witchcraft-systems;
+          };
+          yoten-app = {
+            yoten = self.packages.${final.system}.yoten-app-yoten;
+            default = self.packages.${final.system}.yoten-app;
+          };
+          baileytownsend = {
+            pds-gatekeeper = self.packages.${final.system}.baileytownsend-pds-gatekeeper;
+            default = self.packages.${final.system}.baileytownsend;
+          };
+
+          # Flat names for backward compatibility
+          microcosm-who-am-i = self.packages.${final.system}.microcosm-who-am-i;
+          microcosm-ufos = self.packages.${final.system}.microcosm-ufos;
+          microcosm-ufos-fuzz = self.packages.${final.system}.microcosm-ufos-fuzz;
+          microcosm-spacedust = self.packages.${final.system}.microcosm-spacedust;
+          microcosm-slingshot = self.packages.${final.system}.microcosm-slingshot;
+          microcosm-reflector = self.packages.${final.system}.microcosm-reflector;
+          microcosm-quasar = self.packages.${final.system}.microcosm-quasar;
+          microcosm-pocket = self.packages.${final.system}.microcosm-pocket;
+          microcosm-links = self.packages.${final.system}.microcosm-links;
+          microcosm-jetstream = self.packages.${final.system}.microcosm-jetstream;
+          microcosm-constellation = self.packages.${final.system}.microcosm-constellation;
+          microcosm-allegedly = self.packages.${final.system}.microcosm-allegedly;
+
+          smokesignal-events-quickdid = self.packages.${final.system}.smokesignal-events-quickdid;
+
+          stream-place-streamplace = self.packages.${final.system}.stream-place-streamplace;
+          stream-place-binary = self.packages.${final.system}.stream-place-binary;
+
+          tangled-spindle = self.packages.${final.system}.tangled-spindle;
+          tangled-lexgen = self.packages.${final.system}.tangled-lexgen;
+          tangled-knot = self.packages.${final.system}.tangled-knot;
+          tangled-genjwks = self.packages.${final.system}.tangled-genjwks;
+          tangled-camo = self.packages.${final.system}.tangled-camo;
+          tangled-avatar = self.packages.${final.system}.tangled-avatar;
+          tangled-appview = self.packages.${final.system}.tangled-appview;
+          tangled-appview-static-files = self.packages.${final.system}.tangled-appview-static-files;
+
+          bluesky-indigo = self.packages.${final.system}.bluesky-indigo;
+          bluesky-atproto-xrpc = self.packages.${final.system}.bluesky-atproto-xrpc;
+          bluesky-atproto-syntax = self.packages.${final.system}.bluesky-atproto-syntax;
+          bluesky-atproto-repo = self.packages.${final.system}.bluesky-atproto-repo;
+          bluesky-atproto-lexicon = self.packages.${final.system}.bluesky-atproto-lexicon;
+          bluesky-atproto-identity = self.packages.${final.system}.bluesky-atproto-identity;
+          bluesky-atproto-did = self.packages.${final.system}.bluesky-atproto-did;
+          bluesky-atproto-api = self.packages.${final.system}.bluesky-atproto-api;
+
+          blacksky-rsky = self.packages.${final.system}.blacksky-rsky;
+
+          grain-social-grain = self.packages.${final.system}.grain-social-grain;
+          grain-social-darkroom = self.packages.${final.system}.grain-social-darkroom;
+          grain-social-cli = self.packages.${final.system}.grain-social-cli;
+
+          hyperlink-academy-leaflet = self.packages.${final.system}.hyperlink-academy-leaflet;
+
+          likeandscribe-frontpage = self.packages.${final.system}.likeandscribe-frontpage;
+
+          mackuba-lycan = self.packages.${final.system}.mackuba-lycan;
+
+          parakeet-social-parakeet = self.packages.${final.system}.parakeet-social-parakeet;
+
+          plcbundle-plcbundle = self.packages.${final.system}.plcbundle-plcbundle;
+
+          slices-network-packages = self.packages.${final.system}.slices-network-packages;
+          slices-network-frontend = self.packages.${final.system}.slices-network-frontend;
+          slices-network-api = self.packages.${final.system}.slices-network-api;
+
+          teal-fm-teal = self.packages.${final.system}.teal-fm-teal;
+
+          whey-party-red-dwarf = self.packages.${final.system}.whey-party-red-dwarf;
+
+          whyrusleeping-konbini = self.packages.${final.system}.whyrusleeping-konbini;
+
+          witchcraft-systems-pds-dash = self.packages.${final.system}.witchcraft-systems-pds-dash;
+          witchcraft-systems-pds-dash-themed = self.packages.${final.system}.witchcraft-systems-pds-dash-themed;
+
+          yoten-app-yoten = self.packages.${final.system}.yoten-app-yoten;
+
+          baileytownsend-pds-gatekeeper = self.packages.${final.system}.baileytownsend-pds-gatekeeper;
+
+          # Convenient short aliases for commonly used packages
+          quickdid = self.packages.${final.system}.smokesignal-events-quickdid;
+          spacedust = self.packages.${final.system}.microcosm-spacedust;
+          ufos = self.packages.${final.system}.microcosm-ufos;
+          slingshot = self.packages.${final.system}.microcosm-slingshot;
+          lycan = self.packages.${final.system}.mackuba-lycan;
+        };
+      };
+
+
       # Comprehensive NixOS Modules
       nixosModules = let
-        moduleList = [
-          "microcosm"
-          "blacksky"
-          "bluesky"
-          "hyperlink-academy"
-          "slices-network"
-          "teal-fm"
-          "parakeet-social"
-          "stream-place"
-          "yoten-app"
-          "red-dwarf-client"
-          "tangled"
-          "smokesignal-events"
-          "mackuba"
-          "whyrusleeping"
-          "witchcraft-systems"
-          "likeandscribe"
-          "grain-social"
-          "atbackup-pages-dev"
-          "whey-party"
-        ];
-        moduleImports =
+        # Dynamically discover modules in the ./modules directory
+        # This avoids needing to manually update a list when modules are added/removed
+        # Look for directories (not .nix files) since modules are organized as subdirectories
+        moduleEntries = builtins.readDir ./modules;
+        allModuleNames = builtins.filter
+          (name: moduleEntries.${name} == "directory")
+          (builtins.attrNames moduleEntries);
+
+        # Exclude modules with known issues (e.g., infinite recursion)
+        excludedModules = [ "slices-network" ];
+        moduleNames = builtins.filter
+          (name: !(builtins.elem name excludedModules))
+          allModuleNames;
+
+        # Export ALL modules individually (including excluded ones for manual import)
+        allModuleImports =
           builtins.listToAttrs
             (builtins.map
               (name: {
                 inherit name;
                 value = import (./modules + "/${name}");
               })
-              moduleList
+              allModuleNames
             );
-      in moduleImports // {
-        default = import ./modules;
+
+        # Only import non-excluded modules in default
+        safeModuleImports = builtins.filter
+          (mod: !(builtins.elem mod excludedModules))
+          (builtins.map (name: allModuleImports.${name}) moduleNames);
+
+      in allModuleImports // {
+        # Comprehensive default module: imports all safe modules + applies overlay
+        default = { pkgs, ... }: {
+          imports = safeModuleImports;
+          nixpkgs.overlays = [ self.overlays.default ];
+        };
       };
 
       # Development Shells
@@ -242,18 +437,6 @@
         }
       );
 
-      # Global Nix configuration
-      nixConfig = {
-        extra-substituters = [
-          "https://nix-community.cachix.org"
-          "https://crane.cachix.org"
-          "https://atproto-nix.cachix.org"
-        ];
-        extra-trusted-public-keys = [
-          "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
-          "crane.cachix.org-1:8Scfpmn9w+hGdXH/Q9tTLiYAE/2dnJYRJP7kl80GuRk="
-          "atproto-nix.cachix.org-1:YOUR_CACHIX_PUBLIC_KEY"
-        ];
-      };
+
     };
 }

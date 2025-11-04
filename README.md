@@ -208,7 +208,10 @@ ATProto tools and feed generators by @mackuba.eu:
 }
 ```
 
-Available module collections:
+**Recommended: Use the default module** (imports everything automatically):
+- `atproto-nur.nixosModules.default` - **All modules + package overlay** (easiest option)
+
+**Individual module collections** (for selective imports):
 - `atproto-nur.nixosModules.common` - **Common utilities** (static-site-deploy, nixos-integration)
 - `atproto-nur.nixosModules.microcosm` - Microcosm services (constellation, slingshot, etc.)
 - `atproto-nur.nixosModules.blacksky` - Blacksky/rsky services (PDS, relay, etc.)
@@ -217,7 +220,7 @@ Available module collections:
 - `atproto-nur.nixosModules.tangled` - Tangled infrastructure (appview, knot, spindle)
 - `atproto-nur.nixosModules.likeandscribe` - Frontpage and drainpipe services
 - `atproto-nur.nixosModules.hyperlink-academy` - Leaflet collaborative writing
-- `atproto-nur.nixosModules.slices-network` - Slices AppView
+- `atproto-nur.nixosModules.slices-network` - Slices AppView (⚠️  excluded from default due to recursion issue)
 - `atproto-nur.nixosModules.teal-fm` - Teal music platform
 - `atproto-nur.nixosModules.parakeet-social` - Parakeet AppView
 - `atproto-nur.nixosModules.yoten-app` - Yoten language learning
@@ -227,6 +230,20 @@ Available module collections:
 - `atproto-nur.nixosModules.smokesignal-events` - QuickDID service
 - `atproto-nur.nixosModules.individual` - PDS gatekeeper
 - `atproto-nur.nixosModules.mackuba` - Lycan feed generator
+
+**Package Access**: The default module provides packages in multiple naming conventions:
+```nix
+# All naming patterns work:
+pkgs.microcosm-spacedust       # Flat (full name)
+pkgs.microcosm.spacedust       # Nested namespace
+pkgs.spacedust                 # Convenient alias
+
+# Available short aliases:
+pkgs.quickdid    # → smokesignal-events-quickdid
+pkgs.spacedust   # → microcosm-spacedust
+pkgs.ufos        # → microcosm-ufos
+pkgs.slingshot   # → microcosm-slingshot
+```
 
 ### Common Utility Modules
 
