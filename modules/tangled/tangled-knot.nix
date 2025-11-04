@@ -169,15 +169,15 @@ with lib;
     assertions = [
       {
         assertion = cfg.server.hostname != "";
-        message = "services.tangled-dev.knot.server.hostname must be set";
+        message = "services.tangled.knot.server.hostname must be set";
       }
       {
         assertion = cfg.server.owner != "";
-        message = "services.tangled-dev.knot.server.owner must be set";
+        message = "services.tangled.knot.server.owner must be set";
       }
       {
         assertion = !(cfg.motd != null && cfg.motdFile != null);
-        message = "services.tangled-dev.knot.motd and motdFile cannot both be set";
+        message = "services.tangled.knot.motd and motdFile cannot both be set";
       }
     ];
 
@@ -235,12 +235,14 @@ with lib;
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" "sshd.service" ];
 
+      # preStart runs as root (before dropping privileges)
       preStart = let
         setMotd = ''
           ${optionalString (cfg.motdFile != null) "cat ${cfg.motdFile} > ${cfg.dataDir}/motd"}
           ${optionalString (cfg.motd != null) ''printf "${cfg.motd}" > ${cfg.dataDir}/motd''}
         '';
       in ''
+        # Ensure directories exist with correct ownership
         mkdir -p "${cfg.repoDir}"
         chown -R ${cfg.gitUser}:${cfg.gitUser} "${cfg.repoDir}"
 
