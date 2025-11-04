@@ -199,8 +199,12 @@ with lib;
     users.groups.${cfg.group} = {};
     users.groups.${cfg.gitUser} = {};
 
+    # Use tmpfiles.rules to create directories and set permissions
+    # This runs early in the boot process as root
     systemd.tmpfiles.rules = [
       "d '${cfg.dataDir}' 0750 ${cfg.user} ${cfg.group} - -"
+      "d '${cfg.dataDir}/.config' 0750 ${cfg.user} ${cfg.group} - -"
+      "d '${cfg.dataDir}/.config/git' 0750 ${cfg.user} ${cfg.group} - -"
       "d '${cfg.repoDir}' 0750 ${cfg.gitUser} ${cfg.gitUser} - -"
     ];
 
@@ -230,23 +234,29 @@ with lib;
       '';
     };
 
-    systemd.services.tangled-knot = {
-      description = "Tangled Knot - Git server with ATProto integration";
+    # Setup service that runs before tangled-knot
+    # This has no security restrictions and runs as root
+    systemd.services.tangled-knot-setup = {
+      description = "Tangled Knot setup service";
       wantedBy = [ "multi-user.target" ];
-      after = [ "network.target" "sshd.service" ];
+      before = [ "tangled-knot.service" ];
+      
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+      };
 
-      # preStart runs as root (before dropping privileges)
-      preStart = let
+      script = let
         setMotd = ''
           ${optionalString (cfg.motdFile != null) "cat ${cfg.motdFile} > ${cfg.dataDir}/motd"}
           ${optionalString (cfg.motd != null) ''printf "${cfg.motd}" > ${cfg.dataDir}/motd''}
         '';
       in ''
-        # Ensure directories exist with correct ownership
+        # Ensure directories exist
         mkdir -p "${cfg.repoDir}"
-        chown -R ${cfg.gitUser}:${cfg.gitUser} "${cfg.repoDir}"
-
         mkdir -p "${cfg.dataDir}/.config/git"
+        
+        # Create git config
         cat > "${cfg.dataDir}/.config/git/config" << EOF
         [user]
             name = Tangled Git User
@@ -254,9 +264,21 @@ with lib;
         [receive]
             advertisePushOptions = true
         EOF
+        
+        # Set MOTD if configured
         ${setMotd}
+        
+        # Set ownership
+        chown -R ${cfg.gitUser}:${cfg.gitUser} "${cfg.repoDir}"
         chown -R ${cfg.user}:${cfg.group} "${cfg.dataDir}"
       '';
+    };
+
+    systemd.services.tangled-knot = {
+      description = "Tangled Knot - Git server with ATProto integration";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "network.target" "sshd.service" "tangled-knot-setup.service" ];
+      requires = [ "tangled-knot-setup.service" ];
 
       serviceConfig = {
         Type = "exec";
