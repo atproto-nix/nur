@@ -1,19 +1,19 @@
 { config, lib, pkgs, ... }:
 
 let
-  cfg = config.services.tangled-knot;
+  cfg = config.services.tangled.knot;
 in
 
 with lib;
 
 {
-  options.services.tangled-dev.knot = {
+  options.services.tangled.knot = {
     enable = mkEnableOption "Tangled Knot - Git server with ATProto integration";
 
     package = mkOption {
       type = types.package;
-      default = pkgs.tangled-dev-knot or pkgs.knot;
-      defaultText = literalExpression "pkgs.knot";
+      default = pkgs.tangled-knot or pkgs.tangled.knot;
+      defaultText = literalExpression "pkgs.tangled.knot";
       description = "Package to use for Tangled Knot";
     };
 
