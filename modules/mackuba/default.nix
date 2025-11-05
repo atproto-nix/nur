@@ -6,6 +6,6 @@
 
 {
   imports = [
-    ./mackuba-lycan.nix
+    ./lycan.nix
   ];
 }

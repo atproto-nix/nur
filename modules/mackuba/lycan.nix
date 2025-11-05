@@ -1,340 +1,342 @@
-# NixOS service module for Lycan - Custom feed generator for AT Protocol
-# A Ruby/Sinatra application for creating custom feeds on Bluesky
-#
-# Configuration example:
-#
-# services.lycan = {
-#   enable = true;
-#   hostname = "feeds.example.com";
-#   port = 3000;
-#   database = {
-#     host = "localhost";
-#     name = "lycan";
-#     user = "lycan";
-#     passwordFile = "/run/secrets/lycan-db-password";
-#   };
-#   environment = {
-#     RELAY_HOST = "bsky.network";
-#     APPVIEW_HOST = "public.api.bsky.app";
-#   };
-# };
-
 { config, lib, pkgs, ... }:
 
 with lib;
 
 let
-  cfg = config.services.lycan;
-  lycanPkg = pkgs.mackuba-lycan or pkgs.callPackage ../../pkgs/mackuba { inherit lib; };
+  cfg = config.services.mackuba-lycan;
 in
 {
-  options.services.lycan = with types; {
-    enable = mkEnableOption "Lycan feed generator service for AT Protocol";
+  options.services.mackuba-lycan = {
+    enable = mkEnableOption "Lycan custom feed generator";
 
     package = mkOption {
-      type = package;
-      default = lycanPkg;
+      type = types.package;
+      default = pkgs.mackuba-lycan or pkgs.lycan;
       description = "The lycan package to use.";
     };
 
-    user = mkOption {
-      type = str;
-      default = "lycan";
-      description = "User account for lycan service.";
-    };
-
-    group = mkOption {
-      type = str;
-      default = "lycan";
-      description = "Group for lycan service.";
-    };
-
-    dataDir = mkOption {
-      type = path;
-      default = "/var/lib/lycan";
-      description = "Data directory for lycan service (logs, cache, etc).";
+    port = mkOption {
+      type = types.port;
+      default = 3000;
+      description = "Port for the Lycan service to listen on.";
     };
 
     hostname = mkOption {
-      type = str;
-      default = "localhost";
-      description = ''
-        Hostname for the Lycan feed generator server.
-        This is used to construct feed URIs and identify the server.
-      '';
+      type = types.str;
+      default = "lycan.feeds.blue";
+      description = "Hostname for the Lycan server.";
       example = "feeds.example.com";
     };
 
-    port = mkOption {
-      type = int;
-      default = 3000;
-      description = "Port to bind the Lycan web server to.";
-    };
-
-    bindAddress = mkOption {
-      type = str;
-      default = "127.0.0.1";
-      description = "Address to bind the Lycan web server to.";
+    allowedHosts = mkOption {
+      type = types.listOf types.str;
+      default = [];
+      description = "Allowed hosts for the Lycan server.";
+      example = "lycan.example.com";
     };
 
     database = {
-      host = mkOption {
-        type = str;
-        default = "localhost";
-        description = "PostgreSQL database host.";
-      };
-
-      port = mkOption {
-        type = int;
-        default = 5432;
-        description = "PostgreSQL database port.";
-      };
-
-      name = mkOption {
-        type = str;
-        default = "lycan";
-        description = "PostgreSQL database name.";
-      };
-
-      user = mkOption {
-        type = str;
-        default = "lycan";
-        description = "PostgreSQL database user.";
-      };
-
-      passwordFile = mkOption {
-        type = nullOr path;
+      url = mkOption {
+        type = types.nullOr types.str;
         default = null;
-        description = ''
-          Path to file containing PostgreSQL password.
-          If null, password authentication is disabled.
-        '';
+        description = "PostgreSQL database URL. Leave null when using createLocally.";
+        example = "postgresql://lycan:password@localhost/lycan";
       };
 
       createLocally = mkOption {
-        type = bool;
+        type = types.bool;
         default = true;
-        description = "Create PostgreSQL database and user locally.";
+        description = "Whether to create a local PostgreSQL database.";
+      };
+
+      name = mkOption {
+        type = types.str;
+        default = "lycan";
+        description = "Name of the PostgreSQL database.";
       };
     };
 
-    relayHost = mkOption {
-      type = str;
-      default = "bsky.network";
-      description = "ATProto relay host for firehose connections.";
+    relay = {
+      host = mkOption {
+        type = types.str;
+        default = "bsky.network";
+        description = "ATProto relay host.";
+      };
+
+      jetstreamHost = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "Jetstream host (alternative to relay).";
+        example = "jetstream2.us-east.bsky.network";
+      };
     };
 
-    appviewHost = mkOption {
-      type = str;
-      default = "public.api.bsky.app";
-      description = "AppView host for service discovery.";
+    appview = {
+      host = mkOption {
+        type = types.str;
+        default = "public.api.bsky.app";
+        description = "AppView host for ATProto queries.";
+      };
     };
 
-    logLevel = mkOption {
-      type = enum [ "debug" "info" "warn" "error" ];
-      default = "info";
-      description = "Logging level for the Lycan service.";
+    firehose = {
+      userAgent = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "User agent string for firehose connections.";
+        example = "Lycan (@my.handle)";
+      };
     };
 
-    environment = mkOption {
-      type = attrsOf str;
-      default = {};
+    environmentFile = mkOption {
+      type = types.nullOr types.path;
+      default = null;
       description = ''
-        Additional environment variables to pass to the Lycan service.
-        Useful for customizing behavior without rewriting configuration.
+        Path to environment file containing sensitive configuration.
+        Should contain DATABASE_URL if not using createLocally.
       '';
-      example = {
-        FIREHOSE_USER_AGENT = "MyFeedGenerator/1.0";
-        CUSTOM_LEXICON_URL = "https://example.com/lexicon.json";
-      };
+      example = "/run/secrets/lycan.env";
+    };
+
+    user = mkOption {
+      type = types.str;
+      default = "lycan";
+      description = "User account under which Lycan runs.";
+    };
+
+    group = mkOption {
+      type = types.str;
+      default = "lycan";
+      description = "Group under which Lycan runs.";
+    };
+
+    dataDir = mkOption {
+      type = types.path;
+      default = "/var/lib/lycan";
+      description = "Directory where Lycan stores its data.";
     };
 
     openFirewall = mkOption {
-      type = bool;
+      type = types.bool;
       default = false;
-      description = "Whether to open the firewall port for Lycan.";
-    };
-
-    workingDirectory = mkOption {
-      type = path;
-      default = "/var/lib/lycan";
-      description = "Working directory for Lycan process.";
+      description = "Whether to open the firewall for Lycan.";
     };
   };
 
-  config = mkIf cfg.enable (mkMerge [
-    # Configuration validation
-    {
-      assertions = [
-        {
-          assertion = cfg.package != null;
-          message = "services.lycan.package must be set to a valid package.";
-        }
-        {
-          assertion = cfg.hostname != "";
-          message = "services.lycan.hostname cannot be empty.";
-        }
-        {
-          assertion = cfg.port > 0 && cfg.port < 65536;
-          message = "services.lycan.port must be a valid port number (1-65535).";
-        }
-        {
-          assertion = cfg.database.name != "";
-          message = "services.lycan.database.name cannot be empty.";
-        }
-      ];
+  config = mkIf cfg.enable {
+    assertions = [
+      {
+        assertion = cfg.database.createLocally -> cfg.database.url == null;
+        message = "Cannot specify database.url when database.createLocally is true.";
+      }
+      {
+        assertion = !cfg.database.createLocally -> cfg.database.url != null;
+        message = "Must specify database.url when database.createLocally is false.";
+      }
+    ];
 
-      warnings = lib.optionals (cfg.logLevel == "debug") [
-        "Lycan debug logging enabled - performance may be impacted in production"
-      ];
-    }
+    services.postgresql = mkIf cfg.database.createLocally {
+      enable = true;
+      ensureDatabases = [ cfg.database.name ];
+      ensureUsers = [{
+        name = cfg.user;
+        ensureDBOwnership = true;
+      }];
+    };
 
-    # User and group management
-    {
-      users.users.${cfg.user} = {
-        isSystemUser = true;
-        group = cfg.group;
-        home = cfg.dataDir;
-        createHome = false;
-        description = "Lycan feed generator service user";
+    users.users.${cfg.user} = {
+      isSystemUser = true;
+      group = cfg.group;
+      home = cfg.dataDir;
+      createHome = true;
+    };
+
+    users.groups.${cfg.group} = { };
+
+    systemd.tmpfiles.rules = [
+      "d '${cfg.dataDir}' 0750 ${cfg.user} ${cfg.group} - -"
+      "d '${cfg.dataDir}/log' 0750 ${cfg.user} ${cfg.group} - -"
+      "d '${cfg.dataDir}/tmp' 0750 ${cfg.user} ${cfg.group} - -"
+    ];
+
+    systemd.services.lycan = {
+      description = "Lycan ATProto Feed Generator";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "network.target" ] ++ optional cfg.database.createLocally "postgresql.service";
+      wants = optional cfg.database.createLocally "postgresql.service";
+
+      preStart = ''
+        # Always sync application files from package to dataDir
+        echo "Syncing Lycan application files to ${cfg.dataDir}..."
+
+        # Preserve the log directory
+        if [ -d ${cfg.dataDir}/log ]; then
+          mv ${cfg.dataDir}/log ${cfg.dataDir}/log.tmp
+        fi
+
+        # Remove old application files (but preserve db directory if it exists)
+        find ${cfg.dataDir} -mindepth 1 -maxdepth 1 ! -name 'db' ! -name 'log.tmp' -exec rm -rf {} +
+
+        # Copy new application files
+        cp -r ${cfg.package}/share/lycan/* ${cfg.dataDir}/
+        chmod -R u+w ${cfg.dataDir}
+
+        # Restore log directory
+        if [ -d ${cfg.dataDir}/log.tmp ]; then
+          mv ${cfg.dataDir}/log.tmp ${cfg.dataDir}/log
+        else
+          mkdir -p ${cfg.dataDir}/log
+        fi
+
+        ${optionalString cfg.database.createLocally ''
+          # Run database migrations automatically
+          echo "Running database migrations..."
+          cd ${cfg.dataDir}
+          DATABASE_URL="postgresql:///${cfg.database.name}?host=/run/postgresql" \
+            ${cfg.package.bundlerEnv}/bin/rake db:migrate
+        ''}
+      '';
+
+      serviceConfig = {
+        Type = "simple";
+        User = cfg.user;
+        Group = cfg.group;
+        WorkingDirectory = cfg.dataDir;
+
+        ExecStart = "${cfg.package.bundlerEnv}/bin/rackup -p ${toString cfg.port}";
+
+        # Environment variables
+        Environment = [
+          "RACK_ENV=production"
+          "SERVER_HOSTNAME=${cfg.hostname}"
+          "RELAY_HOST=${cfg.relay.host}"
+          "APPVIEW_HOST=${cfg.appview.host}"
+          "PORT=${toString cfg.port}"
+        ] ++ optional (cfg.database.createLocally)
+          "DATABASE_URL=postgresql:///${cfg.database.name}?host=/run/postgresql"
+        ++ optional (cfg.relay.jetstreamHost != null)
+          "JETSTREAM_HOST=${cfg.relay.jetstreamHost}"
+        ++ optional (cfg.firehose.userAgent != null)
+          "FIREHOSE_USER_AGENT=${cfg.firehose.userAgent}"
+        ++ optional (cfg.allowedHosts != [])
+          "RACK_PROTECTION_ALLOWED_HOSTS=${concatStringsSep "," cfg.allowedHosts}";
+
+        EnvironmentFile = mkIf (cfg.environmentFile != null) cfg.environmentFile;
+
+        # Security hardening
+        NoNewPrivileges = true;
+        PrivateTmp = true;
+        ProtectSystem = "strict";
+        ProtectHome = true;
+        ReadWritePaths = [ cfg.dataDir ];
+        ProtectKernelTunables = true;
+        ProtectKernelModules = true;
+        ProtectControlGroups = true;
+        RestrictSUIDSGID = true;
+        RestrictRealtime = true;
+        RestrictNamespaces = true;
+        LockPersonality = true;
+
+        Restart = "on-failure";
+        RestartSec = "5s";
       };
+    };
 
-      users.groups.${cfg.group} = {};
-    }
+    # Worker service for processing import jobs
+    systemd.services.lycan-worker = mkIf cfg.enable {
+      description = "Lycan Worker - Import Job Processor";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "network.target" "lycan.service" ] ++ optional cfg.database.createLocally "postgresql.service";
+      wants = optional cfg.database.createLocally "postgresql.service";
 
-    # Directory and tmpfiles management
-    {
-      systemd.tmpfiles.rules = [
-        "d '${cfg.dataDir}' 0750 ${cfg.user} ${cfg.group} - -"
-        "d '${cfg.dataDir}/logs' 0750 ${cfg.user} ${cfg.group} - -"
-        "d '${cfg.dataDir}/cache' 0750 ${cfg.user} ${cfg.group} - -"
-      ];
-    }
+      serviceConfig = {
+        Type = "simple";
+        User = cfg.user;
+        Group = cfg.group;
+        WorkingDirectory = cfg.dataDir;
 
-    # PostgreSQL database setup (optional local database)
-    (mkIf cfg.database.createLocally {
-      services.postgresql = {
-        enable = true;
-        ensureUsers = [
-          {
-            name = cfg.database.user;
-            ensureDBOwnership = true;
-          }
-        ];
-        ensureDatabases = [ cfg.database.name ];
+        ExecStart = "${cfg.package.bundlerEnv.wrappedRuby}/bin/ruby ${cfg.dataDir}/bin/worker";
+
+        Environment = [
+          "RACK_ENV=production"
+          "RELAY_HOST=${cfg.relay.host}"
+          "APPVIEW_HOST=${cfg.appview.host}"
+          "BUNDLE_GEMFILE=${cfg.dataDir}/Gemfile"
+          "SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
+        ] ++ optional (cfg.database.createLocally)
+          "DATABASE_URL=postgresql:///${cfg.database.name}?host=/run/postgresql"
+        ++ optional (cfg.relay.jetstreamHost != null)
+          "JETSTREAM_HOST=${cfg.relay.jetstreamHost}";
+
+        EnvironmentFile = mkIf (cfg.environmentFile != null) cfg.environmentFile;
+
+        # Security hardening
+        NoNewPrivileges = true;
+        PrivateTmp = true;
+        ProtectSystem = "strict";
+        ProtectHome = true;
+        ReadWritePaths = [ cfg.dataDir ];
+        ProtectKernelTunables = true;
+        ProtectKernelModules = true;
+        ProtectControlGroups = true;
+        RestrictSUIDSGID = true;
+        RestrictRealtime = true;
+        RestrictNamespaces = true;
+        LockPersonality = true;
+
+        Restart = "on-failure";
+        RestartSec = "5s";
       };
-    })
+    };
 
-    # systemd service configuration
-    {
-      systemd.services.lycan = {
-        description = "Lycan - Custom feed generator for AT Protocol";
-        wantedBy = [ "multi-user.target" ];
-        after = [ "network.target" ] ++ (lib.optionals cfg.database.createLocally [ "postgresql.service" ]);
-        wants = [ "network-online.target" ];
+    # Firehose service for real-time event streaming
+    systemd.services.lycan-firehose = mkIf cfg.enable {
+      description = "Lycan Firehose - ATProto Event Stream";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "network.target" "lycan.service" ] ++ optional cfg.database.createLocally "postgresql.service";
+      wants = optional cfg.database.createLocally "postgresql.service";
 
-        path = with pkgs; [ ruby_3_3 ];
+      serviceConfig = {
+        Type = "simple";
+        User = cfg.user;
+        Group = cfg.group;
+        WorkingDirectory = cfg.dataDir;
 
-        environment = {
-          # Server configuration
-          SERVER_HOSTNAME = cfg.hostname;
-          BIND_ADDRESS = cfg.bindAddress;
-          PORT = toString cfg.port;
+        ExecStart = "${cfg.package.bundlerEnv.wrappedRuby}/bin/ruby ${cfg.dataDir}/bin/firehose";
 
-          # Database configuration
-          DATABASE_URL =
-            if cfg.database.passwordFile != null
-            then "postgresql://${cfg.database.user}:$(cat ${cfg.database.passwordFile})@${cfg.database.host}:${toString cfg.database.port}/${cfg.database.name}"
-            else "postgresql://${cfg.database.user}@${cfg.database.host}:${toString cfg.database.port}/${cfg.database.name}";
+        Environment = [
+          "RACK_ENV=production"
+          "RELAY_HOST=${cfg.relay.host}"
+          "BUNDLE_GEMFILE=${cfg.dataDir}/Gemfile"
+          "SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
+        ] ++ optional (cfg.database.createLocally)
+          "DATABASE_URL=postgresql:///${cfg.database.name}?host=/run/postgresql"
+        ++ optional (cfg.relay.jetstreamHost != null)
+          "JETSTREAM_HOST=${cfg.relay.jetstreamHost}"
+        ++ optional (cfg.firehose.userAgent != null)
+          "FIREHOSE_USER_AGENT=${cfg.firehose.userAgent}";
 
-          # ATProto configuration
-          RELAY_HOST = cfg.relayHost;
-          APPVIEW_HOST = cfg.appviewHost;
+        EnvironmentFile = mkIf (cfg.environmentFile != null) cfg.environmentFile;
 
-          # Logging
-          RACK_ENV = "production";
-          RAILS_ENV = "production";
-          LOG_LEVEL = lib.toUpper cfg.logLevel;
+        # Security hardening
+        NoNewPrivileges = true;
+        PrivateTmp = true;
+        ProtectSystem = "strict";
+        ProtectHome = true;
+        ReadWritePaths = [ cfg.dataDir ];
+        ProtectKernelTunables = true;
+        ProtectKernelModules = true;
+        ProtectControlGroups = true;
+        RestrictSUIDSGID = true;
+        RestrictRealtime = true;
+        RestrictNamespaces = true;
+        LockPersonality = true;
 
-          # Ruby/Sinatra specific
-          BUNDLE_GEMFILE = "${cfg.package}/Gemfile";
-          BUNDLE_APP_CONFIG = "${cfg.dataDir}/.bundle";
-        } // cfg.environment;
-
-        serviceConfig = {
-          Type = "simple";
-          User = cfg.user;
-          Group = cfg.group;
-          WorkingDirectory = cfg.workingDirectory;
-          StateDirectory = "lycan";
-          CacheDirectory = "lycan";
-          LogsDirectory = "lycan";
-
-          # Security hardening
-          NoNewPrivileges = true;
-          ProtectSystem = "strict";
-          ProtectHome = true;
-          PrivateTmp = true;
-          ProtectKernelTunables = true;
-          ProtectKernelModules = true;
-          ProtectKernelLogs = true;
-          ProtectControlGroups = true;
-          ProtectClock = true;
-          RestrictRealtime = true;
-          RestrictSUIDSGID = true;
-          RestrictNamespaces = true;
-          LockPersonality = true;
-          MemoryDenyWriteExecute = true;
-          RemoveIPC = true;
-          PrivateMounts = true;
-          PrivateDevices = true;
-          RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
-          SystemCallArchitectures = "native";
-          UMask = "0077";
-
-          # Restart policy
-          Restart = "on-failure";
-          RestartSec = "5s";
-          StartLimitBurst = 5;
-          StartLimitIntervalSec = "60s";
-
-          # File access
-          ReadWritePaths = [ cfg.dataDir ];
-          ReadOnlyPaths = [ "${cfg.package}" ];
-
-          # Execute start command
-          ExecStart = ''
-            ${pkgs.ruby_3_3}/bin/bundle exec \
-            ${cfg.package}/bin/lycan
-          '';
-
-          # Graceful shutdown
-          ExecStop = "${pkgs.coreutils}/bin/kill -TERM $MAINPID";
-          TimeoutStopSec = 30;
-        };
-
-        preStart = mkIf cfg.database.createLocally ''
-          # Run database migrations on startup
-          ${pkgs.ruby_3_3}/bin/bundle exec ${cfg.package}/bin/lycan-rake db:migrate || true
-        '';
+        Restart = "on-failure";
+        RestartSec = "5s";
       };
-    }
+    };
 
-    # Firewall configuration
-    (mkIf cfg.openFirewall {
-      networking.firewall = {
-        allowedTCPPorts = [ cfg.port ];
-      };
-    })
-
-    # Optional: Add nginx reverse proxy example
-    # services.nginx.virtualHosts.${cfg.hostname} = {
-    #   enableACME = true;
-    #   forceSSL = true;
-    #   locations."/" = {
-    #     proxyPass = "http://${cfg.bindAddress}:${toString cfg.port}";
-    #     proxyWebsockets = true;
-    #   };
-    # };
-  ]);
+    networking.firewall.allowedTCPPorts = mkIf cfg.openFirewall [ cfg.port ];
+  };
 }

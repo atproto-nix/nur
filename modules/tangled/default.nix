@@ -2,10 +2,10 @@
 
 {
   imports = [
-    ./tangled-appview.nix
-    ./tangled-knot.nix
-    ./tangled-spindle.nix
-    ./tangled-avatar.nix
-    ./tangled-camo.nix
+    ./appview.nix
+    ./knot.nix
+    ./spindle.nix
+    ./avatar.nix
+    ./camo.nix
   ];
 }

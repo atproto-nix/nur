@@ -1,13 +1,13 @@
 { config, lib, pkgs, ... }:
 
 let
-  cfg = config.services.tangled.spindle;
+  cfg = config.services.tangled-spindle;
 in
 
 with lib;
 
 {
-  options.services.tangled.spindle = {
+  options.services.tangled-spindle = {
     enable = mkEnableOption "Tangled Spindle - Event processor with ATProto integration";
 
     package = mkOption {
@@ -194,11 +194,11 @@ with lib;
     assertions = [
       {
         assertion = cfg.server.hostname != "";
-        message = "services.tangled.spindle.server.hostname must be set";
+        message = "services.tangled-spindle.server.hostname must be set";
       }
       {
         assertion = cfg.server.owner != "";
-        message = "services.tangled.spindle.server.owner must be set";
+        message = "services.tangled-spindle.server.owner must be set";
       }
     ];
 

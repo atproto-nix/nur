@@ -1,13 +1,13 @@
 { config, lib, pkgs, ... }:
 
 let
-  cfg = config.services.tangled.knot;
+  cfg = config.services.tangled-knot;
 in
 
 with lib;
 
 {
-  options.services.tangled.knot = {
+  options.services.tangled-knot = {
     enable = mkEnableOption "Tangled Knot - Git server with ATProto integration";
 
     package = mkOption {
@@ -169,15 +169,15 @@ with lib;
     assertions = [
       {
         assertion = cfg.server.hostname != "";
-        message = "services.tangled.knot.server.hostname must be set";
+        message = "services.tangled-knot.server.hostname must be set";
       }
       {
         assertion = cfg.server.owner != "";
-        message = "services.tangled.knot.server.owner must be set";
+        message = "services.tangled-knot.server.owner must be set";
       }
       {
         assertion = !(cfg.motd != null && cfg.motdFile != null);
-        message = "services.tangled.knot.motd and motdFile cannot both be set";
+        message = "services.tangled-knot.motd and motdFile cannot both be set";
       }
     ];
 

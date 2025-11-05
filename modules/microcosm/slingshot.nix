@@ -92,6 +92,9 @@ in
       description = "ATProto service component with TLS support";
       extraReadWritePaths = [ "${cfg.dataDir}/cache" "${cfg.dataDir}/certs" ];
       serviceConfig = {
+        # Slingshot uses Foyer storage which needs many open files
+        LimitNOFILE = 65536;
+
         ExecStart = ''
           ${cfg.package}/bin/slingshot \
             --jetstream ${escapeShellArg cfg.jetstream} \

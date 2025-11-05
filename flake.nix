@@ -362,7 +362,11 @@
           spacedust = self.packages.${final.system}.microcosm-spacedust;
           ufos = self.packages.${final.system}.microcosm-ufos;
           slingshot = self.packages.${final.system}.microcosm-slingshot;
+          constellation = self.packages.${final.system}.microcosm-constellation;
+          pocket = self.packages.${final.system}.microcosm-pocket;
           lycan = self.packages.${final.system}.mackuba-lycan;
+          knot = self.packages.${final.system}.tangled-knot;
+          spindle = self.packages.${final.system}.tangled-spindle;
         };
       };
 

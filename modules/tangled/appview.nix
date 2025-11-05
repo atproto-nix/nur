@@ -1,13 +1,13 @@
 { config, lib, pkgs, ... }:
 
 let
-  cfg = config.services.tangled-dev.appview;
+  cfg = config.services.tangled-appview;
 in
 
 with lib;
 
 {
-  options.services.tangled-dev.appview = {
+  options.services.tangled-appview = {
     enable = mkEnableOption "Tangled AppView - Web interface for ATProto git forge";
 
     package = mkOption {
