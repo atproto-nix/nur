@@ -1,4 +1,4 @@
-{ pkgs, lib, buildGoModule, fetchFromGitHub, ... }:
+{ pkgs, lib, buildGoModule, fetchFromGitHub, buildNpmPackage, ... }:
 
 # Indigo - Official Bluesky ATProto services
 # Complete collection of all production services from github.com/bluesky-social/indigo
@@ -13,8 +13,47 @@ let
 
   indigoVendorHash = "sha256-9hKOHJzG7YWW/ZN8xF8Z6JsR506fiNTzeeGqSy/oCGc=";
 
+  # Build the relay admin UI (TypeScript/React/Vite with yarn)
+  # Uses FOD (Fixed-Output Derivation) pattern to allow yarn to fetch dependencies
+  # SSL certificate handling enables builds on both macOS and Linux
+  relayAdminUi = pkgs.stdenv.mkDerivation {
+    pname = "indigo-relay-admin-ui";
+    version = "unstable";
+    src = "${indigoSrc}/cmd/relay/relay-admin-ui";
+
+    nativeBuildInputs = with pkgs; [ nodejs yarn python3 cacert ];
+
+    # FOD pattern: allows network access to fetch dependencies
+    # Calculates hash once, ensures reproducibility
+    outputHashMode = "recursive";
+    outputHashAlgo = "sha256";
+    outputHash = "sha256-I6E4W/sPp3twQUOmRzXbPSMY98olvZkjclK9iyWiAbY=";
+
+    buildPhase = ''
+      # Fix SSL certificate verification
+      export SSL_CERT_FILE="${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
+      export NODE_EXTRA_CA_CERTS="${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
+      export HOME=$TMPDIR
+
+      yarn install --frozen-lockfile
+      yarn build
+    '';
+
+    installPhase = ''
+      mkdir -p $out
+      cp -r dist/* $out/
+    '';
+
+    meta = with lib; {
+      description = "Admin UI for Indigo Relay";
+      homepage = "https://github.com/bluesky-social/indigo";
+      license = licenses.mit;
+      platforms = platforms.all;
+    };
+  };
+
   # Build individual service from indigo source
-  buildIndigoService = { subPackage, name, description }:
+  buildIndigoService = { subPackage, name, description, includeAdminUi ? true }:
     buildGoModule {
       pname = "indigo-${name}";
       version = "unstable";
@@ -24,6 +63,12 @@ let
 
       # Build the specific service
       subPackages = [ "cmd/${subPackage}" ];
+
+      # If this is the relay service, include the admin UI
+      preBuild = lib.optionalString includeAdminUi ''
+        mkdir -p cmd/relay/public
+        cp -r ${relayAdminUi}/* cmd/relay/public/
+      '';
 
       meta = with lib; {
         inherit description;
@@ -42,6 +87,7 @@ let
     subPackage = "relay";
     name = "relay";
     description = "Official Bluesky ATProto Relay (sync v1.1) - subscribes to PDS hosts and outputs combined firehose";
+    includeAdminUi = true;
   };
 
   bigsky = buildIndigoService {
