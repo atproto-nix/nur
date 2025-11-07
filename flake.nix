@@ -57,6 +57,12 @@
       url = "github:nekowinston/nix-deno";
       inputs.nixpkgs.follows = "nixpkgs";  # Pin to same nixpkgs version
     };
+
+    # Go module to Nix converter (used by tangled packages)
+    gomod2nix = {
+      url = "github:nix-community/gomod2nix";
+      inputs.nixpkgs.follows = "nixpkgs";  # Pin to same nixpkgs version
+    };
   };
 
   # ===========================================================================
@@ -89,7 +95,7 @@
   #
   # ===========================================================================
 
-  outputs = { self, nixpkgs, crane, rust-overlay, deno }:
+  outputs = { self, nixpkgs, crane, rust-overlay, deno, gomod2nix }:
     let
       # BEST PRACTICE: Define forAllSystems helper at top level
       # This makes it available to all subsequent let-bindings
@@ -140,9 +146,13 @@
           # BEST PRACTICE: Pass complete build context to package set
           # Prevents individual packages from reimporting/redefining these
           # Ensures all packages use the same versions
+          buildGoApplication =
+            (pkgs.callPackage "${gomod2nix}/builder" {
+              inherit gomod2nix;
+            }).buildGoApplication;
           selectedPackages =
             import ./pkgs/default.nix {
-              inherit pkgs craneLib;
+              inherit pkgs craneLib buildGoApplication;
               lib = pkgs.lib;                    # Standard library functions
               fetchgit = pkgs.fetchgit;          # Git source fetcher
               buildGoModule = pkgs.buildGoModule; # Go build helper

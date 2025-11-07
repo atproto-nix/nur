@@ -1,15 +1,12 @@
 { lib
-, buildGoModule
+, buildGoApplication
 , fetchFromTangled
 , pkg-config
 , sqlite
 , stdenv
 }:
 
-buildGoModule rec {
-  pname = "tangled-spindle";
-  version = "0.1.0";
-
+let
   src = fetchFromTangled {
     domain = "tangled.org";
     owner = "@tangled.org";
@@ -18,7 +15,17 @@ buildGoModule rec {
     hash = "sha256-qDVJ2sEQL0TJbWer6ByhhQrzHE1bZI3U1mmCk0sPZqo=";
   };
 
-  vendorHash = null;  # Tangled project manages its own vendor directory
+  # Read the gomod2nix.toml file from the source
+  modules = "${src}/nix/gomod2nix.toml";
+in
+
+buildGoApplication rec {
+  pname = "spindle";
+  version = "0.1.0";
+
+  inherit src modules;
+
+  subPackages = [ "cmd/spindle" ];
 
   nativeBuildInputs = [
     pkg-config
@@ -28,8 +35,9 @@ buildGoModule rec {
     sqlite
   ];
 
-  # Build only the spindle binary
-  subPackages = [ "cmd/spindle" ];
+  # CGO settings for sqlite
+  CGO_ENABLED = 1;
+  tags = [ "libsqlite3" ];
 
   # Build flags
   ldflags = [

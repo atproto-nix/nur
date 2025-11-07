@@ -1,15 +1,14 @@
 { lib
-, buildGoModule
+, buildGoApplication
 , fetchFromTangled
 , pkg-config
 , sqlite
 , stdenv
+, makeWrapper
+, git
 }:
 
-buildGoModule rec {
-  pname = "tangled-knot";
-  version = "0.1.0";
-
+let
   src = fetchFromTangled {
     domain = "tangled.org";
     owner = "@tangled.org";
@@ -18,18 +17,30 @@ buildGoModule rec {
     hash = "sha256-qDVJ2sEQL0TJbWer6ByhhQrzHE1bZI3U1mmCk0sPZqo=";
   };
 
-  vendorHash = null;  # Tangled project manages its own vendor directory
+  # Read the gomod2nix.toml file from the source
+  modules = "${src}/nix/gomod2nix.toml";
+in
+
+buildGoApplication rec {
+  pname = "knot";
+  version = "0.1.0";
+
+  inherit src modules;
+
+  subPackages = [ "cmd/knot" ];
 
   nativeBuildInputs = [
     pkg-config
+    makeWrapper
   ];
 
   buildInputs = [
     sqlite
   ];
 
-  # Build only the knot binary
-  subPackages = [ "cmd/knot" ];
+  # CGO settings for sqlite
+  CGO_ENABLED = 1;
+  tags = [ "libsqlite3" ];
 
   # Build flags
   ldflags = [
@@ -37,6 +48,12 @@ buildGoModule rec {
     "-w"
     "-X main.version=${version}"
   ];
+
+  # Wrap the binary to include git in PATH
+  postInstall = ''
+    wrapProgram $out/bin/knot \
+      --prefix PATH : ${git}/bin
+  '';
 
   # ATProto metadata
   passthru = {

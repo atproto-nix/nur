@@ -1,5 +1,5 @@
 { lib
-, buildGoModule
+, buildGoApplication
 , fetchFromTangled
 , pkg-config
 , sqlite
@@ -9,10 +9,6 @@
 
 let
   appview-static-files = callPackage ./appview-static-files.nix { };
-in
-buildGoModule rec {
-  pname = "tangled-appview";
-  version = "0.1.0";
 
   src = fetchFromTangled {
     domain = "tangled.org";
@@ -22,7 +18,17 @@ buildGoModule rec {
     hash = "sha256-qDVJ2sEQL0TJbWer6ByhhQrzHE1bZI3U1mmCk0sPZqo=";
   };
 
-  vendorHash = null;  # Tangled project manages its own vendor directory
+  # Read the gomod2nix.toml file from the source
+  modules = "${src}/nix/gomod2nix.toml";
+in
+
+buildGoApplication rec {
+  pname = "appview";
+  version = "0.1.0";
+
+  inherit src modules;
+
+  subPackages = [ "cmd/appview" ];
 
   nativeBuildInputs = [
     pkg-config
@@ -32,14 +38,15 @@ buildGoModule rec {
     sqlite
   ];
 
+  # CGO settings for sqlite
+  CGO_ENABLED = 1;
+  tags = [ "libsqlite3" ];
+
   # Copy static files before building (needed for Go embed)
   postUnpack = ''
-    mkdir -p $sourceRoot/appview/pages/static
-    cp -frv ${appview-static-files}/* $sourceRoot/appview/pages/static
+    mkdir -p source/appview/pages/static
+    cp -frv ${appview-static-files}/* source/appview/pages/static
   '';
-
-  # Build only the appview binary
-  subPackages = [ "cmd/appview" ];
 
   # Build flags
   ldflags = [
