@@ -35,13 +35,13 @@ All packages use the `tangled-*` prefix:
 
 ## NixOS Modules
 
-All services have corresponding modules under `services.tangled-dev.*`:
+All services have corresponding modules:
 
-- `services.tangled-dev.knot`
-- `services.tangled-dev.appview`
-- `services.tangled-dev.spindle`
-- `services.tangled-avatar`
-- `services.tangled-camo`
+- `services.tangled-knot` - Git server
+- `services.tangled-appview` - Web interface
+- `services.tangled-spindle` - Event processor
+- `services.tangled-avatar` - Avatar proxy
+- `services.tangled-camo` - Image proxy
 
 ## Quick Start - Minimal Configuration
 
@@ -50,7 +50,7 @@ All services have corresponding modules under `services.tangled-dev.*`:
   imports = [ atproto-nur.nixosModules.tangled ];
 
   # Knot Git Server
-  services.tangled-dev.knot = {
+  services.tangled-knot = {
     enable = true;
     server = {
       hostname = "git.example.com";
@@ -60,14 +60,14 @@ All services have corresponding modules under `services.tangled-dev.*`:
   };
 
   # AppView Web Interface
-  services.tangled-dev.appview = {
+  services.tangled-appview = {
     enable = true;
     port = 3000;
     cookieSecret = "your-secret-cookie-key-here";  # Change this!
   };
 
   # Optional: Spindle Event Processor
-  services.tangled-dev.spindle = {
+  services.tangled-spindle = {
     enable = true;
     server = {
       hostname = "spindle.example.com";
@@ -131,7 +131,7 @@ See [examples/tangled-stack.nix](./examples/tangled-stack.nix) for a complete ex
 ### Knot Configuration
 
 ```nix
-services.tangled-dev.knot = {
+services.tangled-knot = {
   enable = true;
 
   # Server configuration (REQUIRED)
@@ -179,7 +179,7 @@ services.tangled-dev.knot = {
 ### AppView Configuration
 
 ```nix
-services.tangled-dev.appview = {
+services.tangled-appview = {
   enable = true;
 
   port = 3000;
@@ -216,7 +216,7 @@ services.tangled-dev.appview = {
 ### Spindle Configuration
 
 ```nix
-services.tangled-dev.spindle = {
+services.tangled-spindle = {
   enable = true;
 
   # Server configuration (REQUIRED)
