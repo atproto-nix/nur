@@ -82,12 +82,6 @@ in
         # Root for static files
         root = "${backendCfg.package}/share/konbini/frontend";
 
-        # Security headers (defined at server level for inheritance)
-        add_header X-Frame-Options "SAMEORIGIN" always;
-        add_header X-Content-Type-Options "nosniff" always;
-        add_header X-XSS-Protection "1; mode=block" always;
-        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-
         # Redirect to index.html for React SPA routing
         locations."/" = {
           tryFiles = "$uri $uri/ /index.html";
@@ -138,6 +132,17 @@ in
             add_header Referrer-Policy "strict-origin-when-cross-origin" always;
           '';
         };
+
+        # Server-level security headers
+        extraConfig = ''
+          # Prevent framing
+          add_header X-Frame-Options "SAMEORIGIN" always;
+
+          # Content security policy
+          add_header X-Content-Type-Options "nosniff" always;
+          add_header X-XSS-Protection "1; mode=block" always;
+          add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+        '';
       };
     };
 
