@@ -76,8 +76,7 @@ in
           }
         ];
 
-        # Enable SSL if configured
-        enableSSL = cfg.enableSSL;
+        # Use ACME host if SSL is enabled
         useACMEHost = mkIf cfg.enableSSL cfg.domain;
 
         # Root for static files
