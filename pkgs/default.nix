@@ -31,7 +31,7 @@
 #
 # ==============================================================================
 
-{ pkgs, lib, craneLib, fetchgit, buildGoModule ? pkgs.buildGoModule, buildNpmPackage ? pkgs.buildNpmPackage, atprotoLib, ... }:
+{ pkgs, lib, craneLib, fetchgit, buildGoModule ? pkgs.buildGoModule, buildNpmPackage ? pkgs.buildNpmPackage, buildGoApplication ? null, atprotoLib, ... }:
 
 let
   # BEST PRACTICE: Organize packages by category and purpose
@@ -63,7 +63,7 @@ let
 
     # Development tools and infrastructure
     # Core infrastructure tools, build systems, and development utilities
-    tangled = pkgs.callPackage ./tangled { inherit lib buildGoModule; fetchFromTangled = pkgs.fetchFromTangled; };
+    tangled = pkgs.callPackage ./tangled { inherit lib buildGoModule buildGoApplication; fetchFromTangled = pkgs.fetchFromTangled; };
 
     # PLC Bundle - DID operation archiving and distribution (atscan.net)
     # Cryptographic archiving of AT Protocol DID operations
