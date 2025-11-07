@@ -11,7 +11,7 @@ let
 in
 {
   options.services.whyrusleeping.konbini = {
-    enable = mkEnableOption "Konbini - Friends of Friends Bluesky AppView";
+    enable = mkEnableOption "Konbini - Friends of Friends Bluesky AppView with multi-service support (API, XRPC, pprof)";
 
     package = mkOption {
       type = types.package;
@@ -38,10 +38,41 @@ in
       description = "Directory where Konbini stores its data.";
     };
 
-    port = mkOption {
+    apiPort = mkOption {
       type = types.port;
       default = 4444;
-      description = "Port for the Konbini API server.";
+      description = ''
+        Port for the Konbini API server (custom JSON API for frontend).
+        NOTE: This port is hardcoded in the konbini application.
+        This option controls firewall rules and reverse proxy configuration.
+      '';
+    };
+
+    xrpcPort = mkOption {
+      type = types.port;
+      default = 4446;
+      description = ''
+        Port for the XRPC server (ATProto/Bluesky AppView compatibility).
+        Allows the official Bluesky app to use Konbini as an AppView.
+        NOTE: This port is hardcoded in the konbini application.
+        This option controls firewall rules and reverse proxy configuration.
+      '';
+    };
+
+    pprofPort = mkOption {
+      type = types.port;
+      default = 4445;
+      description = ''
+        Port for the pprof debugging server (Go profiling endpoints).
+        NOTE: This port is hardcoded in the konbini application.
+        This option controls firewall rules and reverse proxy configuration.
+      '';
+    };
+
+    pprofEnable = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Enable the pprof debugging server. Disabled by default for security.";
     };
 
     hostname = mkOption {
@@ -113,6 +144,52 @@ in
       '';
     };
 
+    maxDatabaseConnections = mkOption {
+      type = types.int;
+      default = 0;
+      description = ''
+        Maximum number of database connections. Set to 0 for automatic (CPU count).
+        Passed to konbini via --max-db-connections flag.
+      '';
+    };
+
+    redis = {
+      enable = mkOption {
+        type = types.bool;
+        default = false;
+        description = ''
+          Enable Redis for identity caching, improving performance.
+        '';
+      };
+
+      url = mkOption {
+        type = types.str;
+        example = "redis://localhost:6379";
+        description = ''
+          Redis connection URL. Only used if redis.enable is true.
+        '';
+      };
+    };
+
+    observability = {
+      jaeger = mkOption {
+        type = types.bool;
+        default = false;
+        description = ''
+          Enable Jaeger tracing for observability and debugging.
+        '';
+      };
+
+      environment = mkOption {
+        type = types.str;
+        default = "production";
+        example = "development";
+        description = ''
+          Environment name for tracing. Set to "development" for development deployments.
+        '';
+      };
+    };
+
     environmentFile = mkOption {
       type = types.nullOr types.path;
       default = null;
@@ -138,7 +215,7 @@ in
     openFirewall = mkOption {
       type = types.bool;
       default = false;
-      description = "Open the firewall for the Konbini API port.";
+      description = "Open the firewall for Konbini service ports (API, XRPC, pprof).";
     };
   };
 
@@ -183,7 +260,7 @@ in
 
     # systemd service
     systemd.services.konbini = {
-      description = "Konbini - Friends of Friends Bluesky AppView";
+      description = "Konbini - Friends of Friends Bluesky AppView (multi-service: API, XRPC, pprof)";
       documentation = [ "https://github.com/whyrusleeping/konbini" ];
       after = [ "network.target" ] ++ optional cfg.database.createLocally "postgresql.service";
       requires = optional cfg.database.createLocally "postgresql.service";
@@ -195,19 +272,30 @@ in
           then "postgresql:///${cfg.user}?host=/run/postgresql"
           else cfg.database.url;
 
-        # Port and hostname
-        PORT = toString cfg.port;
+        # Hostname
         KONBINI_HOSTNAME = cfg.hostname;
 
-        # Sync configuration
-        SYNC_CONFIG = syncConfigFile;
-      } // cfg.extraEnv;
+        # Observability
+        ENV = cfg.observability.environment;
+      } // (optionalAttrs cfg.observability.jaeger {
+        OTEL_ENABLED = "true";
+      }) // cfg.extraEnv;
 
       serviceConfig = {
         Type = "simple";
         User = cfg.user;
         Group = cfg.group;
-        ExecStart = "${cfg.package}/bin/konbini";
+
+        # Build command line with all flags
+        ExecStart = let
+          baseCmd = "${cfg.package}/bin/konbini";
+          syncConfigFlag = "--sync-config ${syncConfigFile}";
+          maxDbConnFlag = optionalString (cfg.maxDatabaseConnections > 0)
+            "--max-db-connections ${toString cfg.maxDatabaseConnections}";
+          redisFlag = optionalString cfg.redis.enable "--redis-url ${cfg.redis.url}";
+          jaegerFlag = optionalString cfg.observability.jaeger "--jaeger";
+        in "${baseCmd} ${syncConfigFlag} ${maxDbConnFlag} ${redisFlag} ${jaegerFlag}";
+
         Restart = "on-failure";
         RestartSec = "10s";
 
@@ -255,11 +343,14 @@ in
         ${optionalString (cfg.bluesky.passwordFile != null) ''
           export BSKY_PASSWORD="$(cat $CREDENTIALS_DIRECTORY/bsky-password)"
         ''}
-        exec ${cfg.package}/bin/konbini
+        exec systemctl start konbini.service
       '';
     };
 
     # Firewall
-    networking.firewall.allowedTCPPorts = mkIf cfg.openFirewall [ cfg.port ];
+    networking.firewall.allowedTCPPorts = mkIf cfg.openFirewall (
+      [ cfg.apiPort cfg.xrpcPort ]
+      ++ optional cfg.pprofEnable cfg.pprofPort
+    );
   };
 }

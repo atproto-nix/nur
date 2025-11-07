@@ -3,5 +3,6 @@
 {
   imports = [
     ./konbini.nix
+    ./konbini-frontend.nix
   ];
 }

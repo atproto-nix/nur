@@ -3,7 +3,6 @@
 , fetchFromGitHub
 , buildNpmPackage
 , nodejs
-, makeWrapper
 }:
 
 let
@@ -54,8 +53,6 @@ buildGoModule {
 
   vendorHash = "sha256-sboHNGOy0P1w/LL5OwStrPP0f+kbYcent6FKXOCuX6Y=";
 
-  nativeBuildInputs = [ makeWrapper ];
-
   # Go build (backend only)
   buildPhase = ''
     runHook preBuild
@@ -73,12 +70,9 @@ buildGoModule {
     cp konbini $out/bin/
 
     # Install frontend static files
+    # Note: These are served by the konbini-frontend NixOS module via nginx
     mkdir -p $out/share/konbini/frontend
     cp -r ${frontend}/* $out/share/konbini/frontend/
-
-    # Wrap binary to set frontend path
-    wrapProgram $out/bin/konbini \
-      --set KONBINI_FRONTEND_PATH $out/share/konbini/frontend
 
     runHook postInstall
   '';
@@ -122,17 +116,29 @@ buildGoModule {
       indexed AppViews, Konbini selectively indexes content based on your
       social graph.
 
+      Multi-Service Architecture:
+      - API server (port 4444): Custom JSON API for the React frontend
+      - XRPC server (port 4446): ATProto/Bluesky AppView compatibility
+      - pprof server (port 4445): Go profiling and debugging
+
       Features:
       - Partial indexing based on social connections
       - Firehose and Jetstream support
       - Multiple upstream sync backends
       - PostgreSQL database backend
-      - React frontend
+      - React frontend (served by separate nginx service)
+      - XRPC-compatible endpoints for Bluesky app integration
       - API endpoints compatible with app.bsky.* spec
       - Selective repo backfill support
+      - Optional Redis caching for identity lookups
+      - Optional Jaeger tracing support
 
       Can be used as a custom AppView endpoint for the official Bluesky app
       by configuring a did:web service DID.
+
+      NixOS Usage:
+      Use services.whyrusleeping.konbini for the backend services and
+      services.whyrusleeping.konbini-frontend for the web UI.
 
       Built with:
       - Go backend (Echo framework)

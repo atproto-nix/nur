@@ -117,6 +117,7 @@ Community-maintained Rust implementations:
 - `smokesignal-events-quickdid` - Fast identity resolution service
 - `individual-pds-gatekeeper` - PDS security microservice
 - `microcosm-blue-allegedly` - PLC tools and services
+- `whyrusleeping-konbini` - Friends of Friends Bluesky AppView (Go backend + React frontend)
 
 **Desktop App** (package only, no module):
 - `atbackup-pages-dev-atbackup` - One-click Bluesky backups (Tauri desktop app)
@@ -241,6 +242,7 @@ ATProto tools and feed generators by @mackuba.eu:
 - `atproto-nur.nixosModules.witchcraft-systems` - PDS dashboard
 - `atproto-nur.nixosModules.smokesignal-events` - QuickDID service
 - `atproto-nur.nixosModules.individual` - PDS gatekeeper
+- `atproto-nur.nixosModules.whyrusleeping` - Konbini AppView (backend + frontend)
 - `atproto-nur.nixosModules.mackuba` - Lycan feed generator
 
 **Package Access**: The default module provides packages in multiple naming conventions:
