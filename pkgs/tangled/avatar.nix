@@ -14,8 +14,8 @@ buildNpmPackage rec {
     domain = "tangled.org";
     owner = "@tangled.org";
     repo = "core";
-    rev = "54a60448cf5c456650e9954ca9422276c5d73282";
-    hash = "sha256-OcTD732dTYT69smyDSI6oi0vXSwnpJfLGxq7MGNqOus=";
+    rev = "2e5a4cde904d86825cefe5971e68f1bdfb1dd36f";
+    hash = lib.fakeHash;  # Will be calculated on first build
   };
 
   sourceRoot = "${src.name}/avatar";
