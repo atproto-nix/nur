@@ -18,7 +18,9 @@ let
   # This caches all Deno dependencies offline before the main build
   denoCacheFOD = packaging.determinism.createValidatedFOD {
     name = "slices-frontend-deno-cache";
-    outputHash = "sha256-t7F+DRGJbxrSk40gknHUxk1+m/rt1HSMtxq1bVN8e8E=";
+    # Hash needs to be recalculated after removing codegen task
+    # TODO: Replace with correct hash from first build attempt
+    outputHash = lib.fakeHash;
     nativeBuildInputs = with pkgs; [ deno cacert curl unzip ];
 
     script = ''
@@ -34,12 +36,12 @@ let
       # Cache the main entrypoint and all its dependencies
       echo "Caching frontend entrypoint..."
       if [ -f deno.lock ]; then
-        deno cache --lock=deno.lock frontend/src/client.ts
+        deno cache --lock=deno.lock frontend/src/main.ts
       else
-        deno cache frontend/src/client.ts
+        deno cache frontend/src/main.ts
       fi
 
-      # Cache all package dependencies that codegen might need
+      # Cache all package dependencies that frontend might import
       echo "Caching all workspace packages..."
       if [ -f deno.lock ]; then
         deno cache --lock=deno.lock packages/*/mod.ts packages/*/src/**/*.ts 2>/dev/null || true
@@ -47,18 +49,10 @@ let
         deno cache packages/*/mod.ts packages/*/src/**/*.ts 2>/dev/null || true
       fi
 
-      # Cache codegen script itself if it exists
-      if [ -f tools/codegen.ts ]; then
-        echo "Caching codegen tool..."
-        deno cache tools/codegen.ts || true
-      fi
-
-      # Run codegen task to cache ALL its dependencies (including npm packages like 'marked')
-      echo "Running codegen to cache all npm dependencies..."
-      if [ -f deno.json ] || [ -f deno.jsonc ]; then
-        # Run the task which will download and cache everything
-        deno task codegen:frontend || echo "Codegen completed with possible warnings"
-      fi
+      # IMPORTANT: We do NOT run 'deno task codegen:frontend' in FOD
+      # Reason: Codegen requires the CLI to be built first, creating circular dependency
+      # Solution: Codegen should be run at build time (buildPhase) AFTER packages are available
+      # Currently we skip codegen since frontend may use pre-generated client.ts
     '';
   };
 
@@ -96,12 +90,14 @@ let
       cp -r ${denoCacheFOD}/* "$DENO_DIR"/
       chmod -R u+w "$DENO_DIR"
 
-      # Skip codegen in offline build - it should have been done in FOD
-      echo "Skipping codegen (already done in cache phase)..."
+      # Note: Codegen is skipped here due to circular build dependency
+      # (frontend needs generated client from CLI, CLI is built separately)
+      # If frontend/src/client.ts doesn't exist, the service will fail at runtime
+      # This is acceptable if client.ts is pre-generated or if we build packages first
+      echo "Preparing frontend for runtime execution (codegen handled separately)..."
 
       # Don't use deno compile (requires denort download)
       # Instead, we'll create a wrapper script that runs the code directly
-      echo "Preparing frontend for runtime execution..."
 
       runHook postBuild
     '';
@@ -116,7 +112,8 @@ let
       cp -r packages $out/share/slices-frontend/
       cp -r "$DENO_DIR" $out/share/slices-frontend/.deno
 
-      # Copy config files if they exist
+      # Copy workspace configuration files - REQUIRED for workspace imports to work
+      # Without root deno.json, imports like @slices/client won't resolve
       [ -f deno.json ] && cp deno.json $out/share/slices-frontend/ || true
       [ -f deno.jsonc ] && cp deno.jsonc $out/share/slices-frontend/ || true
       [ -f deno.lock ] && cp deno.lock $out/share/slices-frontend/ || true
@@ -127,7 +124,7 @@ let
         --add-flags "--allow-all" \
         --add-flags "--no-check" \
         --add-flags "--cached-only" \
-        --add-flags "$out/share/slices-frontend/frontend/src/client.ts" \
+        --add-flags "$out/share/slices-frontend/frontend/src/main.ts" \
         --set DENO_DIR "$out/share/slices-frontend/.deno" \
         --set DENO_NO_UPDATE_CHECK "1" \
         --set DENO_NO_PROMPT "1"

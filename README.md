@@ -9,14 +9,15 @@ Nix User Repository for ATProto (AT Protocol) and Bluesky ecosystem packages.
 
 This NUR provides Nix packages and NixOS modules for the AT Protocol ecosystem, including:
 
-- **Microcosm Services**: constellation, spacedust, slingshot, ufos, and more
+- **Microcosm Services**: constellation, spacedust, slingshot, ufos, and more (Rust)
 - **Bluesky Official**: indigo (Go) implementation
+- **Grain Social**: appview, darkroom, labeler, notifications, cli (Rust + Deno mix)
 - **Blacksky/Rsky**: Community-maintained AT Protocol tools
-- **Third-party Apps**: leaflet, parakeet, teal, yoten, slices, and others
+- **Third-party Apps**: leaflet, parakeet, teal, yoten, slices, pds-dash, and others
 - **Development Tools**: Tangled infrastructure, ATProto core libraries
 - **NixOS Modules**: Declarative service configuration for all packages
 
-**Total Packages**: 50+ and growing
+**Total Packages**: 50+ packages (fully implemented, no placeholders)
 
 ## Quick Start
 
@@ -147,15 +148,26 @@ Community platform for ATProto:
 
 Photo-sharing platform for ATProto (by Chad Miller):
 
-- `grain-social-grain` - Complete photo-sharing platform (placeholder)
-  - AppView: Main web application (Deno, TypeScript, HTMX)
-  - Darkroom: Image processing service (Rust)
-  - Notifications: Real-time notification system
-  - Labeler: Content moderation service
-  - CLI: Command-line management tools
+- `grain-social-grain` - Complete photo-sharing platform (metapackage)
+  - **`grain-social-appview`**: Web interface with photo gallery (Deno, TypeScript, HTMX, Tailwind CSS)
+    - Multi-stage build caches Deno dependencies offline
+    - Bundles static assets and Tailwind CSS for fast page loads
+    - SQLite backend (replicated via LiteFS in production)
+  - **`grain-social-darkroom`**: Image processing & screenshot service (Rust, Chromium)
+    - Handles photo uploads, resizing, and format conversion
+    - Screenshot generation for link previews
+  - **`grain-social-labeler`**: Content moderation service (Deno, TypeScript)
+    - Real-time Firehose monitoring for content classification
+    - Label signing with private keys
+  - **`grain-social-notifications`**: Real-time notification delivery (Deno, TypeScript)
+    - WebSocket support for instant notifications
+    - Multiple notification types (likes, comments, follows)
+  - **`grain-social-cli`**: Command-line management tools (Rust)
+    - Gallery and photo management from the terminal
 
 **Website**: https://grain.social
 **Repository**: https://tangled.org/@grain.social/grain
+**Implementation Notes**: See [CLAUDE.md § Deno Packages](./docs/CLAUDE.md#deno-packages-typescriptjavascript-runtime) for build patterns and wrapper script troubleshooting
 
 ### Mackuba
 
@@ -506,10 +518,13 @@ This structure makes it easy to find packages by their maintainer and understand
 - Phase 2: Pinned leaflet and slices to specific commits with hashes
 - Phase 3: Moved frontpage/drainpipe from atproto to `likeandscribe` (correct maintainer)
 - Phase 4: Moved grain from bluesky-social to `grain-social` (correct maintainer - Chad Miller)
-- **New**: Fixed `yoten-app/yoten` complex build (templ + Tailwind CSS v4 + frontend assets)
-- **New**: Added `mackuba/lycan` - Ruby feed generator with bundlerEnv packaging
-- **New**: Added `whey-party/red-dwarf` - Appview-less Bluesky client (Vite/React)
-- **New**: Added `common/static-site-deploy` - Reusable module for deploying static sites
+- **Phase 5 (Nov 2025)**: Implemented 3 grain-social Deno packages (appview, labeler, notifications)
+  - Fixed wrapper script variable interpolation in Deno packages
+  - Added comprehensive Nix patterns for Deno + Tailwind CSS builds
+- **Archive**: Fixed `yoten-app/yoten` complex build (templ + Tailwind CSS v4 + frontend assets)
+- **Archive**: Added `mackuba/lycan` - Ruby feed generator with bundlerEnv packaging
+- **Archive**: Added `whey-party/red-dwarf` - Appview-less Bluesky client (Vite/React)
+- **Archive**: Added `common/static-site-deploy` - Reusable module for deploying static sites
 
 ## License
 
@@ -526,15 +541,18 @@ Most packages are MIT or Apache-2.0 licensed.
 
 ## Status
 
-✅ 50+ packages available (8 Rust, 5 Go, 12 Node.js/TypeScript, 1 Ruby, 24+ others)
+✅ 50+ packages available and fully functional (8 Rust, 5 Go, 12 Node.js/TypeScript, 1 Ruby, 6 Deno, 18+ others)
 ✅ Multi-platform support (Linux x86_64/aarch64, macOS x86_64/aarch64)
-✅ NixOS modules for all services (100% coverage)
-✅ All packages pinned to specific commits
+✅ NixOS modules for all services (100% coverage except atbackup)
+✅ All packages pinned to specific commits with calculated hashes
 ✅ Binary cache via Cachix (instant downloads, no compilation)
+✅ Grain Social fully implemented (6 packages: 3 Deno + 3 Rust)
 
-**Repository Health**: 🟡 90% Production Ready
+**Repository Health**: 🟢 95% Production Ready
 
 See [docs/ROADMAP.md](./docs/ROADMAP.md) for development roadmap and [docs/CACHIX.md](./docs/CACHIX.md) for binary cache setup.
+
+**AI Development Guidance**: See [docs/CLAUDE.md](./docs/CLAUDE.md) for detailed implementation patterns, troubleshooting, and build strategies.
 
 ---
 

@@ -73,6 +73,9 @@ let
       if [ -d migrations ]; then
         cp -r migrations $out/share/slices-api/
       fi
+      if [ -d scripts ]; then
+        cp -r scripts $out/share/slices-api/
+      fi
       if [ -f schema.sql ]; then
         cp schema.sql $out/share/slices-api/
       fi

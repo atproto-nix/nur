@@ -17,6 +17,7 @@ let
   # Fixed-output derivation for packages cache
   packagesCacheFOD = packaging.determinism.createValidatedFOD {
     name = "slices-packages-deno-cache";
+    # Hash is stable since packages don't run codegen
     outputHash = "sha256-U0dhXo7O7OX1FCxa5HFGVIZCXPfDrMK+cT1R1veDvpw=";
     nativeBuildInputs = with pkgs; [ deno cacert curl unzip ];
 
@@ -80,7 +81,8 @@ let
       cp -r packages $out/share/slices-packages/
       cp -r "$DENO_DIR" $out/share/slices-packages/.deno
 
-      # Copy config files if they exist
+      # Copy workspace configuration files - REQUIRED for workspace imports to work
+      # Without root deno.json, imports like @slices/client won't resolve
       [ -f deno.json ] && cp deno.json $out/share/slices-packages/ || true
       [ -f deno.jsonc ] && cp deno.jsonc $out/share/slices-packages/ || true
       [ -f deno.lock ] && cp deno.lock $out/share/slices-packages/ || true

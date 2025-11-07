@@ -54,22 +54,22 @@ let
     fi
 
     # Create orchestrator script
-    cat > $out/bin/slices-orchestrator <<'EOF'
+    cat > $out/bin/slices-orchestrator <<EOF
 #!/bin/sh
 # Slices multi-component orchestrator
 
 set -e
 
 # Default configuration
-API_PORT="''${API_PORT:-3000}"
-FRONTEND_PORT="''${FRONTEND_PORT:-8080}"
-DATABASE_URL="''${DATABASE_URL:-postgresql://slices:slices@localhost:5432/slices}"
-REDIS_URL="''${REDIS_URL:-redis://localhost:6379}"
+API_PORT="\''${API_PORT:-3000}"
+FRONTEND_PORT="\''${FRONTEND_PORT:-8080}"
+DATABASE_URL="\''${DATABASE_URL:-postgresql://slices:slices@localhost:5432/slices}"
+REDIS_URL="\''${REDIS_URL:-redis://localhost:6379}"
 
 echo "Starting Slices platform..."
-echo "API Port: ''$API_PORT"
-echo "Frontend Port: ''$FRONTEND_PORT"
-echo "Database: ''$DATABASE_URL"
+echo "API Port: \$API_PORT"
+echo "Frontend Port: \$FRONTEND_PORT"
+echo "Database: \$DATABASE_URL"
 
 # Function to cleanup background processes
 cleanup() {
@@ -82,18 +82,18 @@ trap cleanup INT TERM
 
 # Start API backend
 echo "Starting Slices API backend..."
-PORT="''$API_PORT" DATABASE_URL="''$DATABASE_URL" REDIS_URL="''$REDIS_URL" $out/bin/slices &
+PORT="\$API_PORT" DATABASE_URL="\$DATABASE_URL" REDIS_URL="\$REDIS_URL" $out/bin/slices &
 
 # Wait a moment for API to start
 sleep 2
 
 # Start frontend
 echo "Starting Slices frontend..."
-PORT="''$FRONTEND_PORT" API_URL="http://localhost:''$API_PORT" DATABASE_URL="sqlite:slices-frontend.db" $out/bin/slices-frontend &
+PORT="\$FRONTEND_PORT" API_URL="http://localhost:\$API_PORT" DATABASE_URL="sqlite:slices-frontend.db" $out/bin/slices-frontend &
 
 echo "Slices platform started successfully!"
-echo "API: http://localhost:''$API_PORT"
-echo "Frontend: http://localhost:''$FRONTEND_PORT"
+echo "API: http://localhost:\$API_PORT"
+echo "Frontend: http://localhost:\$FRONTEND_PORT"
 echo "Press Ctrl+C to stop all services"
 
 # Wait for all background processes

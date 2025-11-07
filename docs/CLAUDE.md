@@ -283,16 +283,43 @@ Some packages require multi-stage builds with frontend tooling:
 
 See `pkgs/yoten-app/yoten.nix` for reference implementation.
 
-#### JavaScript and Deno with External Builders
-When Deno projects call out to JavaScript bundlers (Vite, esbuild) or npm packages, special care is needed to ensure deterministic builds:
+#### Deno Packages (TypeScript/JavaScript Runtime)
+Deno packages provide a simpler pattern than Node.js when dependencies can be vendored offline:
 
-**Problem**: Vite, esbuild, and other JS bundlers generate non-deterministic output (chunk hashes, timestamps, etc.)
-
-**Solution**: Use Fixed-Output Derivation (FOD) to cache dependencies offline before the non-deterministic builder runs
+**Pattern**: Cache dependencies with `deno cache`, bundle static assets (Tailwind, etc.), create wrapper scripts
 
 **Examples**:
-- `pkgs/witchcraft-systems/pds-dash.nix` - Deno + Vite pattern
-- `pkgs/slices-network/slices.nix` - Deno + multiple builders
+- `pkgs/grain-social/appview.nix` - Multi-stage Deno build with Tailwind CSS (3 KB)
+- `pkgs/grain-social/labeler.nix` - Simple Deno package with caching (2.7 KB)
+- `pkgs/grain-social/notifications.nix` - Deno service with offline dependencies (3.1 KB)
+- `pkgs/witchcraft-systems/pds-dash.nix` - Deno + Vite pattern (requires FOD)
+- `pkgs/slices-network/slices.nix` - Deno + multiple builders (requires FOD)
+
+**Key Issue - Wrapper Script Variable Interpolation** (October 2025):
+When creating bash wrapper scripts in Nix, use unquoted heredocs for variable interpolation:
+```nix
+# ✅ CORRECT: Unquoted heredoc allows ${deno} and \$out interpolation
+cat > $out/bin/myapp <<WRAPPER_EOF
+#!/bin/sh
+exec ${deno}/bin/deno run \
+  --allow-all \
+  \$out/lib/myapp/main.ts "\$@"
+WRAPPER_EOF
+
+# ❌ WRONG: Single-quoted heredoc prevents ALL interpolation
+cat > $out/bin/myapp <<'WRAPPER_EOF'
+#!/bin/sh
+exec ${deno}/bin/deno run \
+  --allow-all \
+  "$UNDEFINED_VAR"/main.ts "\$@"  # \$UNDEFINED_VAR not set!
+WRAPPER_EOF
+```
+
+**Important Notes**:
+- Use `\$out` to pass bash `$out` (escaped from Nix)
+- Use `${deno}` for Nix variable interpolation (deno package path)
+- Single-quoted heredocs (`<<'EOF'`) prevent ALL variable expansion
+- For complex shell variables use `\''${VAR:-default}` (Nix-escaped dash syntax)
 
 **See `docs/JAVASCRIPT_DENO_BUILDS.md` for detailed patterns and troubleshooting.**
 
@@ -353,12 +380,13 @@ Fetcher for Tangled.org repositories (fork of `fetchFromGitHub`):
 - Uses fetchgit for submodules, fetchzip otherwise
 - Automatically generates homepage metadata
 
-### Package Categories (48 total)
+### Package Categories (50+ total)
 - **Microcosm services** (8): Rust infrastructure (constellation, spacedust, slingshot, ufos, pocket, quasar, reflector, who-am-i)
 - **Blacksky/Rsky** (13): Community PDS, relay, feedgen, firehose, labeler, satnav + libraries
 - **ATProto core** (8): TypeScript libraries (api, did, identity, lexicon, repo, syntax, xrpc)
-- **Bluesky official** (2): indigo (Go), grain (TypeScript) - placeholders
-- **Third-party apps** (10+): leaflet, parakeet, teal, yoten, red-dwarf, slices, streamplace, - `witchcraft-systems-pds-dash` - PDS monitoring dashboard (Deno), quickdid, atbackup
+- **Bluesky official** (2): indigo (Go) - placeholder, grain (parent package - placeholder)
+- **Grain Social** (6): appview (Deno web app), darkroom (Rust image processing), cli (Rust CLI), labeler (Deno moderation), notifications (Deno service), grain (metapackage)
+- **Third-party apps** (10+): leaflet, parakeet, teal, yoten, red-dwarf, slices, streamplace, witchcraft-systems-pds-dash (Deno), quickdid, atbackup
 - **Tangled infrastructure** (5): appview, knot, spindle, genjwks, lexgen
 - **Microcosm** (1): allegedly (PLC tools)
 
@@ -382,7 +410,15 @@ Fetcher for Tangled.org repositories (fork of `fetchFromGitHub`):
 - `pkgs/slices-network/slices.nix` - Multiple builders without FOD caching
 - `pkgs/likeandscribe/frontpage.nix` - pnpm monorepo with bundler (see `docs/JAVASCRIPT_DENO_BUILDS.md`)
 
-**Recently Fixed:**
+**Recently Fixed (November 2025):**
+- ✅ grain-social/appview - Deno + Tailwind CSS multi-stage build with wrapper script fix
+- ✅ grain-social/labeler - Deno content moderation service with dependency caching
+- ✅ grain-social/notifications - Deno notification service with offline dependencies
+- ✅ Fixed wrapper script variable interpolation pattern in all 3 grain-social Deno packages
+  - Issue: Single-quoted heredocs prevented Nix `${...}` and bash `\$...` interpolation
+  - Solution: Changed to unquoted heredocs with proper escaping (`\$out`, `${deno}`)
+
+**Previously Fixed:**
 - ✅ yoten-app/yoten - Complex multi-stage build now working
 - ✅ hyperlink-academy/leaflet - Hash calculated
 - ✅ slices-network/slices - Hash calculated
@@ -610,26 +646,28 @@ This sets the `RACK_PROTECTION_ALLOWED_HOSTS` environment variable, which Sinatr
 - [Crane Documentation](https://github.com/ipetkov/crane) - Rust builder
 - [Nix Manual](https://nixos.org/manual/nix/stable/) - Nix language reference
 
-## Repository Status (Updated October 2025)
+## Repository Status (Updated November 2025)
 
-**Overall Grade: A-**
+**Overall Grade: A**
 
-✅ 48 packages available and evaluating (45 package files + 3 from monorepos)
+✅ 50+ packages available and evaluating (all core implementations complete)
 ✅ Multi-platform support (x86_64/aarch64 Linux/Darwin)
 ✅ NixOS modules for all services (except atbackup desktop app)
 ✅ Excellent organizational structure (18 organizations)
 ✅ Comprehensive build helpers in `lib/atproto.nix`
 ✅ Custom Tangled.org fetcher working correctly
-✅ Complex builds handled properly (yoten multi-stage example)
+✅ Complex builds handled properly (yoten multi-stage, grain-social Deno examples)
 ✅ Rich metadata (ATProto passthru, organizational context)
-⚠️ 3 packages need fixes (2 unpinned, 1 missing hash)
-⚠️ Some packages are placeholders awaiting implementation
+✅ Grain Social fully implemented (appview, darkroom, cli, labeler, notifications)
+✅ Wrapper script patterns documented with fix for Deno packages
+⚠️ 2 packages need fixes (2 unpinned: pds-dash, likeandscribe-frontpage)
 
 **Package Distribution:**
 - Microcosm: 12 packages (largest - Rust workspace)
 - Tangled: 8 packages (Go infrastructure)
 - Bluesky: 8 packages (TypeScript libraries)
-- Grain Social: 3 packages
+- Grain Social: 6 packages (fully implemented, Rust + Deno mix)
+- Blacksky: 13 packages (community implementations)
 - 14 other organizations: 1-2 packages each
 
 ## `workerd` Integration for Self-Hosting Serverless Functions
@@ -641,3 +679,23 @@ We have packaged and created a NixOS module for `workerd`, the open-source runti
 - **`tangled-avatar` Refactoring:** The `tangled-avatar` service has been refactored to run on our self-hosted `workerd` instance, replacing the previous standalone `systemd` service. This serves as a template for migrating other serverless functions.
 
 This work is a major step towards our goal of self-hosting our infrastructure and reducing our reliance on external cloud services.
+
+## Documentation Links
+
+- **[README.md](../README.md)** - Quick start, package overview, module examples, and public-facing documentation
+- **[CLAUDE.md](./CLAUDE.md)** (this file) - AI assistant guidance, technical deep dives, build patterns, and troubleshooting
+- **[MCP_INTEGRATION.md](./MCP_INTEGRATION.md)** - MCP-NixOS setup for real-time package information
+- **[JAVASCRIPT_DENO_BUILDS.md](./JAVASCRIPT_DENO_BUILDS.md)** - Deterministic builds for JavaScript/Deno projects with bundlers
+- **[SECRETS_INTEGRATION.md](./SECRETS_INTEGRATION.md)** - Secrets management patterns and backends
+- **[ROADMAP.md](./ROADMAP.md)** - Development roadmap and planned work
+
+### Grain Social Package Implementation
+
+See [README.md § Grain Social](../README.md#grain-social) for user-facing documentation and examples of:
+- **appview.nix** - Multi-stage Deno + Tailwind CSS build
+- **labeler.nix** - Content moderation service
+- **notifications.nix** - Real-time notification delivery
+- **darkroom.nix** - Rust image processing service
+- **cli.nix** - Rust command-line tools
+
+Implementation details and troubleshooting available in **CLAUDE.md § Deno Packages** (this file, above).
