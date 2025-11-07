@@ -162,16 +162,11 @@
         in {
           # BEST PRACTICE: Include default package
           # Allows 'nix build' to work without specifying package name
+          # Note: We don't combine all packages into a single derivation because
+          # some packages are platform-specific (e.g., streamplace-binary is x86_64-linux only)
+          # and trying to combine them would fail on other platforms.
           packages = selectedPackages // {
-            default = pkgs.symlinkJoin {
-              name = "atproto-nur-all";
-              # Combine all packages into single derivation for easy testing
-              paths = builtins.attrValues selectedPackages;
-              meta = {
-                description = "All ATProto NUR packages";
-                homepage = "https://github.com/atproto/nur";
-              };
-            };
+            default = selectedPackages.microcosm-constellation;
 
             # Short aliases for Indigo services (for convenience)
             # Allows: nix build .#indigo-relay instead of .#bluesky-indigo-relay

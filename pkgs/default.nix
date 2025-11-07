@@ -64,6 +64,9 @@ let
     # Development tools and infrastructure
     # Core infrastructure tools, build systems, and development utilities
     tangled = pkgs.callPackage ./tangled { inherit lib buildGoModule buildGoApplication; fetchFromTangled = pkgs.fetchFromTangled; };
+
+    # JavaScript/Wasm runtime for Cloudflare Workers self-hosting
+    # Cloudflare's open-source workerd runtime for self-hosting Worker-based services
     workerd = pkgs.callPackage ./workerd { inherit lib; };
 
     # PLC Bundle - DID operation archiving and distribution (atscan.net)

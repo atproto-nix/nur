@@ -1,7 +1,6 @@
 { lib
 , stdenv
 , fetchurl
-, unzip
 , autoPatchelfHook
 , glibc
 , zlib
@@ -25,7 +24,9 @@ let
 
   # Hashes for workerd binaries on different platforms
   # Obtained via: nix-prefetch-url "https://registry.npmjs.org/@cloudflare/workerd-PLATFORM/-/workerd-PLATFORM-VERSION.tgz"
-  # Format: base32 SRI hash (see https://nixos.org/manual/nix/stable/protocols/nix-archive.html)
+  # Format: base32 (directly from nix-prefetch-url output)
+  # Note: fetchurl requires hash argument in format: "sha256-base64" or "base32-hash"
+  # Since nix-prefetch-url outputs base32, we use it directly
   hashes = {
     x86_64-linux = "00gg0axvl8whqvbl3iqa8yr3spjfny44v0mcl6hcmsm5x78rfsx0";
     aarch64-linux = "0xpcl52h5wfs4ld7fb6q2y9ab6g9dqm9lcpgwvp5cr188zni1pyc";
@@ -36,7 +37,9 @@ let
   # Fetch the workerd binary for the target platform from npm
   workerdBinary = fetchurl {
     url = "https://registry.npmjs.org/@cloudflare/workerd-${npmPlatform}/-/workerd-${npmPlatform}-${version}.tgz";
-    hash = hashes.${stdenv.hostPlatform.system} or (throw "no hash for ${stdenv.hostPlatform.system}");
+    # Use hash attribute with base32 format from nix-prefetch-url
+    # Format: "sha256:base32hash" (Nix will convert to SRI internally)
+    hash = "sha256:" + (hashes.${stdenv.hostPlatform.system} or (throw "no hash for ${stdenv.hostPlatform.system}"));
   };
 in
 stdenv.mkDerivation rec {
@@ -45,9 +48,7 @@ stdenv.mkDerivation rec {
 
   src = workerdBinary;
 
-  nativeBuildInputs = [
-    unzip
-  ] ++ lib.optionals stdenv.isLinux [
+  nativeBuildInputs = lib.optionals stdenv.isLinux [
     autoPatchelfHook
   ];
 
@@ -60,7 +61,10 @@ stdenv.mkDerivation rec {
   sourceRoot = ".";
 
   unpackPhase = ''
-    ${unzip}/bin/unzip -q $src
+    mkdir -p workerd-extract
+    cd workerd-extract
+    tar -xzf $src
+    cd ..
   '';
 
   buildPhase = ''
@@ -73,12 +77,18 @@ stdenv.mkDerivation rec {
 
     mkdir -p $out/bin
 
-    # Extract the workerd binary from the npm package
-    find . -name "workerd" -type f -executable | while read binary; do
+    # The npm package unpacks to package/ directory, with binary in bin/
+    find workerd-extract -name "workerd" -type f | while read binary; do
       cp "$binary" $out/bin/workerd
       chmod +x $out/bin/workerd
       break
     done
+
+    # If not found, search more broadly
+    if [ ! -f $out/bin/workerd ]; then
+      find workerd-extract -type f -executable -name "workerd*" | head -1 | xargs -I {} cp {} $out/bin/workerd
+      chmod +x $out/bin/workerd
+    fi
 
     runHook postInstall
   '';

@@ -63,6 +63,8 @@ in
       isSystemUser = true;
       group = cfg.group;
       description = "Tangled Avatar service user";
+      home = "/var/lib/tangled-avatar";
+      createHome = true;
     };
 
     users.groups.${cfg.group} = {};
@@ -77,27 +79,78 @@ in
         Type = "simple";
         User = cfg.user;
         Group = cfg.group;
+
+        # Setup environment before starting: generate env file with secret
+        ExecStartPre = "${pkgs.bash}/bin/bash -c ''
+          mkdir -p /var/lib/tangled-avatar /var/cache/tangled-avatar
+          # Generate environment file with the shared secret
+          cat > /var/lib/tangled-avatar/.avatar.env <<'EOF'
+          AVATAR_SHARED_SECRET="$(cat ${cfg.sharedSecretFile})"
+          EOF
+          chmod 0600 /var/lib/tangled-avatar/.avatar.env
+        ''";
+
         ExecStart = "${cfg.package}/bin/avatar";
+
         Restart = "on-failure";
         RestartSec = "5s";
 
-        # Security hardening
+        # Security hardening (balanced for writable state directory)
         NoNewPrivileges = true;
         PrivateTmp = true;
         ProtectSystem = "strict";
         ProtectHome = true;
+        ProtectKernelTunables = true;
+        ProtectKernelModules = true;
+        ProtectControlGroups = true;
+        RestrictRealtime = true;
+        RestrictNamespaces = true;
+        LockPersonality = true;
+        MemoryDenyWriteExecute = true;
+        RestrictAddressFamilies = [ "AF_UNIX" "AF_INET" "AF_INET6" ];
 
-        # Runtime directory
+        # Runtime directory for wrangler cache
         RuntimeDirectory = "tangled-avatar";
+        RuntimeDirectoryMode = "0700";
         StateDirectory = "tangled-avatar";
+        StateDirectoryMode = "0700";
+        CacheDirectory = "tangled-avatar";
+        CacheDirectoryMode = "0700";
+
+        # Working directory
         WorkingDirectory = "/var/lib/tangled-avatar";
 
-        # Environment
+        # Read-write paths for state and cache
+        ReadWritePaths = [
+          "/var/lib/tangled-avatar"
+          "/var/cache/tangled-avatar"
+          "/var/run/tangled-avatar"
+        ];
+
+        # Load environment file with shared secret
+        EnvironmentFiles = [ "/var/lib/tangled-avatar/.avatar.env" ];
+
+        # Default environment
         Environment = [
           "HOME=/var/lib/tangled-avatar"
+          "NODE_ENV=production"
+          "RUNTIME_DIRECTORY=/var/lib/tangled-avatar"
         ];
       };
     };
+
+    # Ensure proper permissions and ownership of shared secret file at runtime
+    system.activationScripts.tangled-avatar-secrets = ''
+      if [ -f "${cfg.sharedSecretFile}" ]; then
+        chmod 0600 "${cfg.sharedSecretFile}"
+        chown ${cfg.user}:${cfg.group} "${cfg.sharedSecretFile}" 2>/dev/null || true
+      fi
+
+      # Create and set permissions on state directory
+      mkdir -p /var/lib/tangled-avatar /var/cache/tangled-avatar
+      chown ${cfg.user}:${cfg.group} /var/lib/tangled-avatar /var/cache/tangled-avatar
+      chmod 0700 /var/lib/tangled-avatar /var/cache/tangled-avatar
+    '';
 
     networking.firewall.allowedTCPPorts = mkIf cfg.openFirewall [ cfg.port ];
   };
