@@ -24,12 +24,13 @@ let
   npmPlatform = systemMap.${stdenv.hostPlatform.system} or (throw "unsupported system: ${stdenv.hostPlatform.system}");
 
   # Hashes for workerd binaries on different platforms
-  # To update: nix-prefetch-url "https://registry.npmjs.org/@cloudflare/workerd-PLATFORM/-/workerd-PLATFORM-VERSION.tgz"
+  # Obtained via: nix-prefetch-url "https://registry.npmjs.org/@cloudflare/workerd-PLATFORM/-/workerd-PLATFORM-VERSION.tgz"
+  # Format: base32 SRI hash (see https://nixos.org/manual/nix/stable/protocols/nix-archive.html)
   hashes = {
-    x86_64-linux = "sha256-uxyz+oWHRsyuMlSWQ2jLkNt5qQczLcKPj5dxmXv6Wpo=";      # TODO: Calculate
-    aarch64-linux = "sha256-1234567890abcdef1234567890abcdef1234567890=";   # TODO: Calculate
-    x86_64-darwin = "sha256-1234567890abcdef1234567890abcdef1234567890=";   # TODO: Calculate
-    aarch64-darwin = "sha256-1234567890abcdef1234567890abcdef1234567890=";  # TODO: Calculate (darwin-arm64)
+    x86_64-linux = "00gg0axvl8whqvbl3iqa8yr3spjfny44v0mcl6hcmsm5x78rfsx0";
+    aarch64-linux = "0xpcl52h5wfs4ld7fb6q2y9ab6g9dqm9lcpgwvp5cr188zni1pyc";
+    x86_64-darwin = "0nmk1v7icgjffv1nwbh6v3n82msdwa6lrnl3h5w25w7m3ah2m0sn";
+    aarch64-darwin = "10d1afpgcq7f31aqvmf2mld0chqsjxq3pvrij9z3aqmdwixwypd1";
   };
 
   # Fetch the workerd binary for the target platform from npm
