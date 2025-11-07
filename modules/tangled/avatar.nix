@@ -84,7 +84,7 @@ in
         ExecStartPre = "${pkgs.bash}/bin/bash -c ''
           mkdir -p /var/lib/tangled-avatar /var/cache/tangled-avatar
           # Generate environment file with the shared secret
-          cat > /var/lib/tangled-avatar/.avatar.env <<'EOF'
+          cat > /var/lib/tangled-avatar/.avatar.env <<EOF
           AVATAR_SHARED_SECRET="$(cat ${cfg.sharedSecretFile})"
           EOF
           chmod 0600 /var/lib/tangled-avatar/.avatar.env
