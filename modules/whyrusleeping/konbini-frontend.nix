@@ -82,12 +82,23 @@ in
         # Root for static files
         root = "${backendCfg.package}/share/konbini/frontend";
 
+        # Security headers (defined at server level for inheritance)
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-XSS-Protection "1; mode=block" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
         # Redirect to index.html for React SPA routing
         locations."/" = {
           tryFiles = "$uri $uri/ /index.html";
           extraConfig = ''
             # Cache busting for HTML
             add_header Cache-Control "public, max-age=0, must-revalidate" always;
+            # Security headers (repeated in location block to prevent inheritance loss)
+            add_header X-Frame-Options "SAMEORIGIN" always;
+            add_header X-Content-Type-Options "nosniff" always;
+            add_header X-XSS-Protection "1; mode=block" always;
+            add_header Referrer-Policy "strict-origin-when-cross-origin" always;
           '';
         };
 
@@ -96,6 +107,11 @@ in
           extraConfig = ''
             expires 1y;
             add_header Cache-Control "public, immutable" always;
+            # Security headers (repeated in location block to prevent inheritance loss)
+            add_header X-Frame-Options "SAMEORIGIN" always;
+            add_header X-Content-Type-Options "nosniff" always;
+            add_header X-XSS-Protection "1; mode=block" always;
+            add_header Referrer-Policy "strict-origin-when-cross-origin" always;
           '';
         };
 
@@ -114,19 +130,14 @@ in
             # Timeouts for long-lived connections
             proxy_read_timeout 86400s;
             proxy_send_timeout 86400s;
+
+            # Security headers (repeated in location block to prevent inheritance loss)
+            add_header X-Frame-Options "SAMEORIGIN" always;
+            add_header X-Content-Type-Options "nosniff" always;
+            add_header X-XSS-Protection "1; mode=block" always;
+            add_header Referrer-Policy "strict-origin-when-cross-origin" always;
           '';
         };
-
-        # Security headers
-        extraConfig = ''
-          # Prevent framing
-          add_header X-Frame-Options "SAMEORIGIN" always;
-
-          # Content security policy (adjust as needed)
-          add_header X-Content-Type-Options "nosniff" always;
-          add_header X-XSS-Protection "1; mode=block" always;
-          add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-        '';
       };
     };
 
