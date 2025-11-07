@@ -22,7 +22,7 @@ buildGoModule rec {
     hash = "sha256-qDVJ2sEQL0TJbWer6ByhhQrzHE1bZI3U1mmCk0sPZqo=";
   };
 
-  vendorHash = "sha256-ppAAcayRboFCX1rB6FCYEqJi8crlCHBRuvUoZfmiuYY=";
+  vendorHash = null;  # Tangled project manages its own vendor directory
 
   nativeBuildInputs = [
     pkg-config
