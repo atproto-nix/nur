@@ -58,40 +58,44 @@ in
       }
     ];
 
+    # Create user and group for the service
     users.users.${cfg.user} = {
       isSystemUser = true;
       group = cfg.group;
       description = "Tangled Avatar service user";
     };
 
-    users.groups.${cfg.group} = { };
+    users.groups.${cfg.group} = {};
 
+    # Create systemd service for avatar (runs via wrangler dev)
     systemd.services.tangled-avatar = {
-      description = "Tangled Avatar Service - Bluesky avatar proxy";
-      wantedBy = [ "multi-user.target" ];
+      description = "Tangled Avatar Service";
       after = [ "network.target" ];
+      wantedBy = [ "multi-user.target" ];
 
       serviceConfig = {
         Type = "simple";
         User = cfg.user;
         Group = cfg.group;
-
-        ExecStart = ''
-          ${cfg.package}/bin/avatar --port ${toString cfg.port}
-        '';
-
-        # Load shared secret from file
-        EnvironmentFile = cfg.sharedSecretFile;
+        ExecStart = "${cfg.package}/bin/avatar";
+        Restart = "on-failure";
+        RestartSec = "5s";
 
         # Security hardening
         NoNewPrivileges = true;
         PrivateTmp = true;
         ProtectSystem = "strict";
         ProtectHome = true;
-        ReadWritePaths = [];
 
-        Restart = "on-failure";
-        RestartSec = "5s";
+        # Runtime directory
+        RuntimeDirectory = "tangled-avatar";
+        StateDirectory = "tangled-avatar";
+        WorkingDirectory = "/var/lib/tangled-avatar";
+
+        # Environment
+        Environment = [
+          "HOME=/var/lib/tangled-avatar"
+        ];
       };
     };
 

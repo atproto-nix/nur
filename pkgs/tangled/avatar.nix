@@ -33,6 +33,57 @@ buildNpmPackage rec {
     # Replace esbuild binary with one from nixpkgs
     mkdir -p node_modules/.bin
     ln -sf ${esbuild}/bin/esbuild node_modules/.bin/esbuild
+
+    # Patch avatar code to work in local dev mode (remove Cloudflare cf.image API)
+    # The cf.image parameter only works on Cloudflare Workers, not in wrangler dev
+    substituteInPlace src/index.js \
+      --replace-fail \
+'      // Resize if requested
+      let avatarResponse;
+      if (resizeToTiny) {
+        avatarResponse = await fetch(avatarUrl, {
+          cf: {
+            image: {
+              width: 32,
+              height: 32,
+              fit: "cover",
+              format: "webp",
+            },
+          },
+        });
+      } else {
+        avatarResponse = await fetch(avatarUrl);
+      }' \
+'      // Resize if requested (disabled for local wrangler dev)
+      let avatarResponse = await fetch(avatarUrl);'
+
+    # Wrap API fetch in try-catch to handle TLS errors in local dev
+    substituteInPlace src/index.js \
+      --replace-fail \
+'    try {
+      const profileResponse = await fetch(
+        `https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile?actor=''${actor}`,
+      );
+      const profile = await profileResponse.json();
+      const avatar = profile.avatar;
+
+      let avatarUrl = profile.avatar;
+
+      if (!avatarUrl) {' \
+'    try {
+      let profileResponse, profile, avatarUrl;
+      try {
+        profileResponse = await fetch(
+          `https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile?actor=''${actor}`,
+        );
+        profile = await profileResponse.json();
+        avatarUrl = profile.avatar;
+      } catch (fetchError) {
+        // Handle TLS/fetch errors in local dev (workerd TLS issues)
+        avatarUrl = null;
+      }
+
+      if (!avatarUrl) {'
   '';
   
   dontNpmBuild = true;
@@ -48,14 +99,45 @@ buildNpmPackage rec {
     cp package.json $out/lib/avatar/
     cp -r node_modules $out/lib/avatar/
 
-    # Create wrapper script for running the worker
-    makeWrapper ${nodejs}/bin/node $out/bin/avatar \
-      --add-flags "$out/lib/avatar/node_modules/wrangler/bin/wrangler.js" \
-      --add-flags "dev" \
-      --add-flags "--port 8787" \
-      --add-flags "--local-protocol http" \
-      --set-default AVATAR_SHARED_SECRET "" \
-      --chdir "$out/lib/avatar"
+    # Create wrapper script that sets up writable directory and injects env vars
+    cat > $out/bin/avatar <<'WRAPPER_EOF'
+#!/bin/sh
+# Wrangler needs a writable directory for runtime data
+RUNTIME_DIR="''${RUNTIME_DIRECTORY:-$HOME/.cache/tangled-avatar}"
+mkdir -p "$RUNTIME_DIR"
+
+# Copy source files to writable directory if not already there
+if [ ! -f "$RUNTIME_DIR/package.json" ]; then
+  cp -r ${placeholder "out"}/lib/avatar/* "$RUNTIME_DIR/"
+  chmod -R u+w "$RUNTIME_DIR/node_modules"
+  chmod u+w "$RUNTIME_DIR/wrangler.jsonc"
+fi
+
+cd "$RUNTIME_DIR"
+
+# Always regenerate wrangler config with environment variables bound
+# This is needed because wrangler dev doesn't automatically expose process.env to the Worker's env object
+chmod u+w wrangler.jsonc 2>/dev/null || true
+cat > wrangler.jsonc <<WRANGLER_EOF
+{
+	"\$schema": "node_modules/wrangler/config-schema.json",
+	"name": "avatar",
+	"main": "src/index.js",
+	"compatibility_date": "2025-05-03",
+	"observability": {
+		"enabled": true
+	},
+	"vars": {
+		"AVATAR_SHARED_SECRET": "''${AVATAR_SHARED_SECRET:-}"
+	}
+}
+WRANGLER_EOF
+
+exec ${nodejs}/bin/node node_modules/wrangler/bin/wrangler.js dev \
+  --port 8787 \
+  --local-protocol http
+WRAPPER_EOF
+    chmod +x $out/bin/avatar
 
     runHook postInstall
   '';

@@ -269,6 +269,115 @@ services.static-site-deploy.sites.red-dwarf = {
 };
 ```
 
+## Secrets Management
+
+The NUR provides a pluggable secrets management abstraction that allows you to use any secrets backend (sops-nix, agenix, Vault, custom) with a consistent API.
+
+### Quick Start with sops-nix
+
+```nix
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    atproto-nur.url = "github:atproto-nix/nur";
+    sops-nix.url = "github:Mic92/sops-nix";
+  };
+
+  outputs = { nixpkgs, atproto-nur, sops-nix, ... }: {
+    nixosConfigurations.myhost = nixpkgs.lib.nixosSystem {
+      modules = [
+        sops-nix.nixosModules.sops
+        atproto-nur.nixosModules.default
+        {
+          # Configure sops-nix
+          sops.defaultSopsFile = ./secrets.yaml;
+          sops.age.keyFile = "/etc/secrets/age-key.txt";
+
+          # Secrets are automatically managed
+          services.microcosm-constellation = {
+            enable = true;
+            # Module handles secrets configuration
+          };
+
+          # Or configure manually
+          sops.secrets."constellation-secret" = {
+            owner = "constellation";
+            sopsFile = ./secrets.yaml;
+          };
+        }
+      ];
+    };
+  };
+}
+```
+
+### Available Backends
+
+- **sops-nix** (recommended) - Age/PGP encrypted secrets in repository
+- **agenix** - Age-only encrypted secrets
+- **HashiCorp Vault** - Enterprise secrets management with dynamic secrets
+- **file-based** - Simple files for development (no encryption)
+- **custom** - Implement your own backend
+
+### Backend-Agnostic Modules
+
+Services work with any secrets backend:
+
+```nix
+# Works with sops-nix, agenix, Vault, or custom backend
+services.myapp = {
+  enable = true;
+  secrets.database = "/run/secrets/myapp-db-password";
+};
+
+# Backend determines where secret comes from:
+# - sops-nix: decrypts from secrets.yaml
+# - agenix: decrypts from .age file
+# - Vault: fetches from Vault server
+# - file: reads from plain file
+```
+
+### Creating Custom Backends
+
+Implement the simple backend interface:
+
+```nix
+# custom-backend.nix
+{ lib, config }:
+
+{
+  mkSecret = args: { inherit (args) name; /* ... */ };
+  getSecretPath = secret: "/custom/path/${secret.name}";
+  getSecretOptions = secret: { /* NixOS config */ };
+  mkSecretEnvVar = varName: secret: ''export ${varName}=$(cat ...)'';
+}
+```
+
+Then use it:
+
+```nix
+let
+  secretsLib = import "${inputs.atproto-nur}/lib/secrets.nix" { inherit lib; };
+  mySecrets = secretsLib.withBackend (import ./custom-backend.nix { inherit lib config; });
+in
+{
+  services.myapp.secretsBackend = mySecrets;
+}
+```
+
+### Documentation
+
+- **[Secrets Integration Guide](./docs/SECRETS_INTEGRATION.md)** - Complete architecture and patterns
+- **[Secrets API Reference](./lib/secrets/README.md)** - API documentation and troubleshooting
+- **[Example Module](./examples/secrets-integration-example.nix)** - Working example implementation
+
+**Key Features:**
+- 🔌 **Pluggable**: Switch backends without changing module code
+- 🔒 **Secure**: Secrets loaded at runtime, never in Nix store
+- 🎯 **Type-safe**: Compile-time validation
+- 📦 **Zero lock-in**: Use any secrets manager
+- 🚀 **Auto-detect**: Automatically uses available backend
+
 ## AI-Assisted Development
 
 This repository uses [MCP-NixOS](https://mcp-nixos.io/) for AI-assisted development with Claude Code and other MCP-compatible assistants.

@@ -25,6 +25,7 @@ let
     infrastructure = [
       "tangled"
       "stream-place"
+      "supabase"
     ];
 
     applications = [

@@ -134,15 +134,17 @@ in
       serviceConfig = {
         ExecStart = concatStringsSep " " [
           "${cfg.package}/bin/plcbundle"
-          "--plc-directory=${cfg.plcDirectoryUrl}"
-          "--bundle-dir=${cfg.bundleDir}"
-          "--bind=${cfg.bindAddress}"
-          "--max-bundle-size=${toString cfg.maxBundleSize}"
-          "--compression-level=${toString cfg.compressionLevel}"
-          (optionalString cfg.enableWebSocket "--enable-websocket")
-          (optionalString cfg.enableSpamDetection "--enable-spam-detection")
-          (optionalString cfg.enableDidIndexing "--enable-did-indexing")
+          "serve"
+          "-host ${elemAt (splitString ":" cfg.bindAddress) 0}"
+          "-port ${elemAt (splitString ":" cfg.bindAddress) 1}"
+          "-plc ${cfg.plcDirectoryUrl}"
+          "-sync"
+          (optionalString cfg.enableWebSocket "-websocket")
+          (optionalString cfg.enableDidIndexing "-resolver")
         ];
+
+        # Set working directory to bundle directory
+        WorkingDirectory = cfg.bundleDir;
 
         # Allow reading from network and the data directory
         extraReadWritePaths = [ cfg.bundleDir ];

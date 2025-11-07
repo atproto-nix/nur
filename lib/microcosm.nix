@@ -43,8 +43,8 @@ rec {
   standardRestartConfig = {
     Restart = "on-failure";
     RestartSec = "5s";
-    StartLimitBurst = 3;
-    StartLimitIntervalSec = "60s";
+    # Note: StartLimitBurst and StartLimitIntervalSec belong in systemd service's
+    # unit section, not serviceConfig. They should be set directly on the service.
   };
 
   # Helper function to create standard Microcosm service options

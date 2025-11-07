@@ -227,6 +227,11 @@
           };
           blacksky = {
             rsky = self.packages.${final.system}.blacksky-rsky;
+            relay = self.packages.${final.system}.blacksky-relay;
+            pds = self.packages.${final.system}.blacksky-pds;
+            feedgen = self.packages.${final.system}.blacksky-feedgen;
+            firehose = self.packages.${final.system}.blacksky-firehose;
+            labeler = self.packages.${final.system}.blacksky-labeler;
             default = self.packages.${final.system}.blacksky;
           };
           grain-social = {
@@ -253,7 +258,7 @@
           };
           plcbundle = {
             plcbundle = self.packages.${final.system}.plcbundle-plcbundle;
-            default = self.packages.${final.system}.plcbundle;
+            default = self.packages.${final.system}.plcbundle-all;
           };
           slices-network = {
             packages = self.packages.${final.system}.slices-network-packages;
@@ -381,8 +386,8 @@
           (name: moduleEntries.${name} == "directory")
           (builtins.attrNames moduleEntries);
 
-        # Exclude modules with known issues (e.g., infinite recursion)
-        excludedModules = [ "slices-network" ];
+        # Exclude modules with known issues (e.g., infinite recursion, incomplete packages)
+        excludedModules = [ "slices-network" "workerd" ];
         moduleNames = builtins.filter
           (name: !(builtins.elem name excludedModules))
           allModuleNames;

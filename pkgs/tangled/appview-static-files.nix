@@ -32,7 +32,7 @@ let
 
   ibm-plex-mono = fetchzip {
     url = "https://github.com/IBM/plex/releases/download/@ibm%2Fplex-mono@1.1.0/ibm-plex-mono.zip";
-    hash = "sha256-5vdKKvHAeZi6igrfpbOdhZlDX2/5+UvzlnCQV6DdqoQ=";
+    hash = "sha256-OwUmrPfEehLDz0fl2ChYLK8FQM2p0G1+EMrGsYEq+6g=";
     stripRoot = false;
   };
 

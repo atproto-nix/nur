@@ -7,8 +7,8 @@ with lib;
     enable = mkEnableOption "Blacksky Relay service";
     port = mkOption {
       type = types.port;
-      default = 8000;
-      description = "Port for the Blacksky Relay service.";
+      default = 9000;
+      description = "Port for the Blacksky Relay service (hard-coded in binary, option exists for documentation).";
     };
     dataDir = mkOption {
       type = types.str;
@@ -33,8 +33,6 @@ with lib;
     ];
     
     systemd.services.blacksky-relay = {
-      description = "Blacksky Relay service";
-      after = [ "network.target" ];
       wantedBy = [ "multi-user.target" ];
       
       serviceConfig = {
@@ -42,11 +40,11 @@ with lib;
         User = "blacksky-relay";
         Group = "blacksky-relay";
         WorkingDirectory = config.blacksky.relay.dataDir;
-        ExecStart = "${pkgs.blacksky-relay}/bin/rsky-relay --port ${toString config.blacksky.relay.port}";
+        ExecStart = "${pkgs.blacksky.relay}/bin/rsky-relay --no-plc-export";
         Restart = "on-failure";
         RestartSec = "5s";
         
-        # Security hardening
+        # Security hardening (relaxed for SQLite and Rust compatibility)
         NoNewPrivileges = true;
         ProtectSystem = "strict";
         ProtectHome = true;
@@ -56,13 +54,11 @@ with lib;
         ProtectControlGroups = true;
         RestrictSUIDSGID = true;
         RestrictRealtime = true;
-        RestrictNamespaces = true;
         LockPersonality = true;
-        MemoryDenyWriteExecute = true;
-        
+        # MemoryDenyWriteExecute and RestrictNamespaces disabled for SQLite/Rust compatibility
+
         # File system access
         ReadWritePaths = [ config.blacksky.relay.dataDir ];
-        ReadOnlyPaths = [ "/nix/store" ];
       };
     };
   };

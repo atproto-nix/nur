@@ -109,7 +109,7 @@ nixos-rebuild test --flake .#test-config
 # Update all flake inputs (nixpkgs, crane, rust-overlay)
 nix flake update
 
-# Update specific input
+# Or update specific input
 nix flake lock --update-input nixpkgs
 ```
 
@@ -131,27 +131,27 @@ nix build .#tangled-dev-spindle 2>&1 | grep "got:"
 
 #### Issues Fixed
 
-1. **Module System Architecture Problems**
-   - **Problem**: `modules/default.nix` used `pkgs` parameter causing infinite recursion
-   - **Root Cause**: NixOS modules shouldn't require `pkgs` at import-time in the aggregator
-   - **Fix**: Changed to use `lib` only, simplified to return module paths instead of evaluating them
-   - **Impact**: Eliminated infinite recursion errors during `nixos-rebuild`
+1.  **Module System Architecture Problems**
+    - **Problem**: `modules/default.nix` used `pkgs` parameter causing infinite recursion
+    - **Root Cause**: NixOS modules shouldn't require `pkgs` at import-time in the aggregator
+    - **Fix**: Changed to use `lib` only, simplified to return module paths instead of evaluating them
+    - **Impact**: Eliminated infinite recursion errors during `nixos-rebuild`
 
-2. **Missing Module Files**
-   - **Problem**: `red-dwarf-client/default.nix` imported non-existent `red-dwarf.nix`
-   - **Fix**: Created complete NixOS module for Red Dwarf (Bluesky web client with nginx integration)
-   - **Features**: SSL support, proper caching headers, static site serving
+2.  **Missing Module Files**
+    - **Problem**: `red-dwarf-client/default.nix` imported non-existent `red-dwarf.nix`
+    - **Fix**: Created complete NixOS module for Red Dwarf (Bluesky web client with nginx integration)
+    - **Features**: SSL support, proper caching headers, static site serving
 
-3. **Module List Mismatch**
-   - **Problem**: `modules/default.nix` listed `atbackup-pages-dev` which doesn't exist, missing `atproto`
-   - **Fix**: Updated module list to match actual directory structure
-   - **Modules removed**: `atbackup-pages-dev`
-   - **Modules added**: `atproto`
+3.  **Module List Mismatch**
+    - **Problem**: `modules/default.nix` listed `atbackup-pages-dev` which doesn't exist, missing `atproto`
+    - **Fix**: Updated module list to match actual directory structure
+    - **Modules removed**: `atbackup-pages-dev`
+    - **Modules added**: `atproto`
 
-4. **Module Export Structure**
-   - **Problem**: Modules were being imported as functions instead of paths
-   - **Fix**: `importModule` function now returns paths for NixOS to import, not evaluated modules
-   - **Result**: Proper lazy evaluation, no premature function calls
+4.  **Module Export Structure**
+    - **Problem**: Modules were being imported as functions instead of paths
+    - **Fix**: `importModule` function now returns paths for NixOS to import, not evaluated modules
+    - **Result**: Proper lazy evaluation, no premature function calls
 
 #### Usage in NixOS Configurations
 
@@ -196,10 +196,10 @@ Examples:
 - `atproto-atproto-api`
 
 ### Package Organization Flow
-1. **Organization directories** (`pkgs/ORGANIZATION/`) contain individual `.nix` files
-2. **Organization default.nix** (`pkgs/ORGANIZATION/default.nix`) exports packages as attrset
-3. **Global pkgs/default.nix** imports all organizations and flattens with prefixes
-4. **Flake** filters derivations and exposes as `packages.SYSTEM.PACKAGE-NAME`
+1.  **Organization directories** (`pkgs/ORGANIZATION/`) contain individual `.nix` files
+2.  **Organization default.nix** (`pkgs/ORGANIZATION/default.nix`) exports packages as attrset
+3.  **Global pkgs/default.nix** imports all organizations and flattens with prefixes
+4.  **Flake** filters derivations and exposes as `packages.SYSTEM.PACKAGE-NAME`
 
 ### NixOS Module Architecture
 - Each service package has a corresponding module in `modules/ORGANIZATION/`
@@ -232,10 +232,10 @@ services.static-site-deploy.sites.my-app = {
 ```
 
 This creates a systemd service `deploy-my-app.service` that:
-1. Syncs files from Nix store to web root using rsync
-2. Sets correct ownership and permissions
-3. Runs before specified services (e.g., web server)
-4. Reloads/restarts services after deployment
+1.  Syncs files from Nix store to web root using rsync
+2.  Sets correct ownership and permissions
+3.  Runs before specified services (e.g., web server)
+4.  Reloads/restarts services after deployment
 
 Real-world example: `whey-party-red-dwarf` deployment
 ```nix
@@ -260,11 +260,6 @@ See `modules/common/README.md` for full documentation.
 - Shared dependency caching via `buildDepsOnly` for workspace packages
 - Common environment in `lib/atproto.nix:defaultRustEnv`
 - Helper function: `mkRustAtprotoService` handles standard setup
-
-Example workflow (microcosm):
-1. Build shared `cargoArtifacts` once for entire workspace
-2. Build individual packages with `cargoExtraArgs = "--package NAME"`
-3. Reuses artifacts, speeds up multi-package builds
 
 #### Node.js/TypeScript Packages
 - Use `buildNpmPackage`
@@ -316,12 +311,12 @@ Primary development is on Tangled; GitHub is a mirror.
 
 ## Adding New Packages
 
-1. **Create package file**: `pkgs/ORGANIZATION/package-name.nix`
-2. **Add to organization**: Update `pkgs/ORGANIZATION/default.nix`
-3. **Pin versions**: NO `rev = "main"` or `lib.fakeHash` (see PINNING_NEEDED.md)
-4. **Create NixOS module** (if service): `modules/ORGANIZATION/package-name.nix`
-5. **Test build**: `nix build .#ORGANIZATION-package-name`
-6. **Update README.md**: Add to appropriate category
+1.  **Create package file**: `pkgs/ORGANIZATION/package-name.nix`
+2.  **Add to organization**: Update `pkgs/ORGANIZATION/default.nix`
+3.  **Pin versions**: NO `rev = "main"` or `lib.fakeHash` (see PINNING_NEEDED.md)
+4.  **Create NixOS module** (if service): `modules/ORGANIZATION/package-name.nix`
+5.  **Test build**: `nix build .#ORGANIZATION-package-name`
+6.  **Update README.md**: Add to appropriate category
 
 ### Critical Requirements
 - ✅ Pin all versions with specific commit hashes
@@ -408,12 +403,12 @@ Fetcher for Tangled.org repositories (fork of `fetchFromGitHub`):
 
 ## Development Workflow
 
-1. Make changes to package or module files
-2. Test locally: `nix build .#PACKAGE-NAME`
-3. Run flake check: `nix flake check` (evaluates all packages)
-4. Format: `nixpkgs-fmt file.nix`
-5. Update README.md if adding/removing packages
-6. Commit with clear message
+1.  Make changes to package or module files
+2.  Test locally: `nix build .#PACKAGE-NAME`
+3.  Run flake check: `nix flake check` (evaluates all packages)
+4.  Format: `nixpkgs-fmt *.nix`
+5.  Update README.md if adding/removing packages
+6.  Commit with clear message
 
 ## Module Development Pattern
 
@@ -512,30 +507,30 @@ modules = [
 **Error**: `error: infinite recursion encountered`
 
 **Common Causes**:
-1. Module `default.nix` files using `pkgs` parameter incorrectly
-2. Circular dependencies in module imports
-3. Config referenced in imports list
+1.  Module `default.nix` files using `pkgs` parameter incorrectly
+2.  Circular dependencies in module imports
+3.  Config referenced in imports list
 
 **Solution**: Check that module aggregators (`modules/default.nix`, `modules/ORGANIZATION/default.nix`) only use `lib` parameter and return paths, not evaluated modules.
 
 ### Module File Not Found
 
-**Error**: `error: path '/nix/store/.../modules/ORGANIZATION/service.nix' does not exist`
+**Error**: `error: path '/nix/store/.../PATH/service.nix' does not exist`
 
 **Solution**:
-1. Verify file exists in `modules/ORGANIZATION/service.nix`
-2. Check imports in `modules/ORGANIZATION/default.nix`
-3. Update `modules/default.nix` module list if directory was added/removed
-4. Run `nix flake lock --update-input nur` to refresh
+1.  Verify file exists in `modules/ORGANIZATION/service.nix`
+2.  Check imports in `modules/ORGANIZATION/default.nix`
+3.  Update `modules/default.nix` module list if directory was added/removed
+4.  Run `nix flake lock --update-input nur` to refresh
 
 ### Hash Mismatch Errors
 
 **Error**: `hash mismatch in fixed-output derivation`
 
 **Solution**:
-1. Build the package and note the "got:" hash from error
-2. Update the hash in the package `.nix` file
-3. Rebuild to verify
+1.  Build the package and note the "got:" hash from error
+2.  Update the hash in the package `.nix` file
+3.  Rebuild to verify
 
 ### Build Failures - File Permission Issues
 
@@ -636,3 +631,13 @@ This sets the `RACK_PROTECTION_ALLOWED_HOSTS` environment variable, which Sinatr
 - Bluesky: 8 packages (TypeScript libraries)
 - Grain Social: 3 packages
 - 14 other organizations: 1-2 packages each
+
+## `workerd` Integration for Self-Hosting Serverless Functions
+
+We have packaged and created a NixOS module for `workerd`, the open-source runtime for Cloudflare Workers. This allows us to self-host services that were originally designed as serverless functions.
+
+- **`workerd` Package:** A Nix package for `workerd` has been added to the `nur` repository.
+- **`workerd` Module:** A NixOS module for `workerd` has been created. It allows for the declarative configuration of workers, sockets, and bindings.
+- **`tangled-avatar` Refactoring:** The `tangled-avatar` service has been refactored to run on our self-hosted `workerd` instance, replacing the previous standalone `systemd` service. This serves as a template for migrating other serverless functions.
+
+This work is a major step towards our goal of self-hosting our infrastructure and reducing our reliance on external cloud services.

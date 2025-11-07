@@ -95,6 +95,9 @@ let
     # New organizational framework packages
     likeandscribe = pkgs.callPackage ./likeandscribe { inherit lib craneLib buildNpmPackage; };
 
+    # Backend-as-a-service platforms
+    supabase = pkgs.callPackage ./supabase { inherit lib buildNpmPackage; };
+
     # Legacy package collections (for backward compatibility)
     microcosm = pkgs.callPackage ./microcosm { inherit craneLib; };
     blacksky = pkgs.callPackage ./blacksky { inherit lib craneLib; };

@@ -83,6 +83,12 @@ in
       type = types.submodule {
         options = {
           enable = mkEnableOption "Prometheus metrics endpoint";
+
+          port = mkOption {
+            type = types.port;
+            default = 8760;
+            description = "Port for Prometheus metrics endpoint";
+          };
         };
       };
       default = {};
@@ -324,9 +330,11 @@ in
         # Restart policy for better reliability
         Restart = "on-failure";
         RestartSec = "5s";
-        StartLimitBurst = 3;
-        StartLimitIntervalSec = "60s";
       };
+
+      # Rate limiting for service restarts (goes in [Unit] section)
+      startLimitIntervalSec = 60;
+      startLimitBurst = 3;
     })
 
     # Enable global integration features based on service configuration
