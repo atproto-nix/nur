@@ -81,15 +81,16 @@ in
         Group = cfg.group;
 
         # Setup environment before starting: generate env file with secret
-        ExecStartPre = "${pkgs.bash}/bin/bash -c ''
+      ExecStartPre = let
+        script = pkgs.writeShellScript "avatar-init" ''
           mkdir -p /var/lib/tangled-avatar /var/cache/tangled-avatar
           # Generate environment file with the shared secret
-          AVATAR_SECRET_FILE="${cfg.sharedSecretFile}"
-          cat > /var/lib/tangled-avatar/.avatar.env <<'EOF'
-          AVATAR_SHARED_SECRET="$(cat $AVATAR_SECRET_FILE)"
-          EOF
+          cat > /var/lib/tangled-avatar/.avatar.env <<'ENVEOF'
+          AVATAR_SHARED_SECRET="$(cat ${cfg.sharedSecretFile})"
+          ENVEOF
           chmod 0600 /var/lib/tangled-avatar/.avatar.env
-        ''";
+        '';
+      in "${script}";
 
         ExecStart = "${cfg.package}/bin/avatar";
 
