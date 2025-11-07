@@ -25,11 +25,13 @@ let
     infrastructure = [
       "tangled"
       "stream-place"
-      "supabase"
+      # DISABLED: Supabase code is incomplete
+      # "supabase"
     ];
 
     applications = [
-      "hyperlink-academy"
+      # DISABLED: Depends on incomplete Supabase code
+      # "hyperlink-academy"
       # "slices-network"  # TODO: Has infinite recursion issue with nested submodules
       "teal-fm"
       "parakeet-social"

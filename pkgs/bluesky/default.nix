@@ -14,23 +14,47 @@ let
     maintainer = "Bluesky Social";
     description = "Official Bluesky ATProto implementations and tools";
     atprotoFocus = [ "infrastructure" "servers" "libraries" ];
-    packageCount = 8;
+    packageCount = 18;
   };
 
   # Package naming pattern: use simple names within organization
-  packages = {
-    # Go implementation (Indigo)
-    indigo = pkgs.callPackage ./indigo.nix { };
+  packages =
+    let
+      # Load all Indigo services once
+      indigo = pkgs.callPackage ./indigo.nix { inherit (pkgs) buildGoModule fetchFromGitHub; };
+    in
+    {
+      # Go implementation (Indigo) - all services
+      indigo = indigo;
 
-    # TypeScript libraries from @atproto/* packages
-    atproto-api = pkgs.callPackage ./atproto-api.nix { };
-    atproto-lexicon = pkgs.callPackage ./atproto-lexicon.nix { };
-    atproto-xrpc = pkgs.callPackage ./atproto-xrpc.nix { };
-    atproto-did = pkgs.callPackage ./atproto-did.nix { };
-    atproto-identity = pkgs.callPackage ./atproto-identity.nix { };
-    atproto-repo = pkgs.callPackage ./atproto-repo.nix { };
-    atproto-syntax = pkgs.callPackage ./atproto-syntax.nix { };
-  };
+      # Core relay services
+      indigo-relay = indigo.relay;
+      indigo-bigsky = indigo.bigsky;
+      indigo-rainbow = indigo.rainbow;
+
+      # Search & discovery services
+      indigo-palomar = indigo.palomar;
+      indigo-bluepages = indigo.bluepages;
+      indigo-collectiondir = indigo.collectiondir;
+
+      # Moderation & monitoring services
+      indigo-hepa = indigo.hepa;
+      indigo-beemo = indigo.beemo;
+      indigo-sonar = indigo.sonar;
+
+      # Operational tools
+      indigo-netsync = indigo.netsync;
+      indigo-gosky = indigo.gosky;
+
+      # TypeScript libraries from @atproto/* packages
+      atproto-api = pkgs.callPackage ./atproto-api.nix { };
+      atproto-lexicon = pkgs.callPackage ./atproto-lexicon.nix { };
+      atproto-xrpc = pkgs.callPackage ./atproto-xrpc.nix { };
+      atproto-did = pkgs.callPackage ./atproto-did.nix { };
+      atproto-identity = pkgs.callPackage ./atproto-identity.nix { };
+      atproto-repo = pkgs.callPackage ./atproto-repo.nix { };
+      atproto-syntax = pkgs.callPackage ./atproto-syntax.nix { };
+    };
 
   # Enhanced packages with organizational metadata
   enhancedPackages = lib.mapAttrs (name: pkg:

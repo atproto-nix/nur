@@ -1,7 +1,6 @@
 {
-  # Legacy Bluesky modules - most have been moved to organizational directories
-  # This directory is kept for backward compatibility
+  # Bluesky modules - official Bluesky implementations
   imports = [
-    # All modules have been moved to their respective organizational directories
+    ./bluesky-social/default.nix
   ];
 }

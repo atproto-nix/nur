@@ -41,7 +41,8 @@ let
   organizationalPackages = {
     # Educational and collaborative platforms
     # Packages for learning, collaboration, and knowledge sharing
-    hyperlink-academy = pkgs.callPackage ./hyperlink-academy { inherit lib; };
+    # DISABLED: Depends on incomplete Supabase code
+    # hyperlink-academy = pkgs.callPackage ./hyperlink-academy { inherit lib; };
 
     # Custom AppView and social platforms
     # Alternative social media frontends and social experiences
@@ -96,7 +97,8 @@ let
     likeandscribe = pkgs.callPackage ./likeandscribe { inherit lib craneLib buildNpmPackage; };
 
     # Backend-as-a-service platforms
-    supabase = pkgs.callPackage ./supabase { inherit lib buildNpmPackage; };
+    # DISABLED: Supabase code is incomplete
+    # supabase = pkgs.callPackage ./supabase { inherit lib buildNpmPackage; };
 
     # Legacy package collections (for backward compatibility)
     microcosm = pkgs.callPackage ./microcosm { inherit craneLib; };
@@ -149,20 +151,7 @@ let
 
 in
 
-# BEST PRACTICE: Export both flat packages and organizational collections
-# Flat packages go to flake outputs
-# Organizational structure and metadata available for tooling
-flattenedPackages // {
-  # Export organizational collections for direct access
-  # Useful for accessing packages by organization
-  # Not included in flake packages output, only in legacyPackages
-  organizations = organizationalPackages;
-
-  # Export organizational metadata for tooling and CI
-  # Metadata can be accessed without evaluating all packages
-  # Useful for: package discovery, documentation generation, CI organization
-  # Filters out legacy collections to avoid duplication
-  _organizationalMetadata = lib.mapAttrs (orgName: packages:
-    packages._organizationMeta or null
-  ) (lib.filterAttrs (n: v: n != "microcosm" && n != "blacksky" && n != "bluesky") organizationalPackages);
-}
+# BEST PRACTICE: Export only flattened packages to flake
+# Metadata and organizational structure available separately (legacyPackages)
+# This ensures only derivations are exported to packages.SYSTEM
+flattenedPackages

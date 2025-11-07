@@ -1,52 +1,58 @@
-# Defines the NixOS module for the Indigo Rainbow (firehose fanout/splitter) service
+# Defines the NixOS module for the Indigo NetSync (repo cloning/archival tool) service
 { config, lib, pkgs, ... }:
 
 with lib;
 
 let
-  cfg = config.services.indigo-rainbow;
+  cfg = config.services.indigo-netsync;
 in
 {
-  options.services.indigo-rainbow = {
-    enable = mkEnableOption "Indigo Rainbow firehose fanout service";
+  options.services.indigo-netsync = {
+    enable = mkEnableOption "Indigo NetSync repository cloning tool";
 
     package = mkOption {
       type = types.package;
-      default = pkgs.bluesky-indigo-rainbow;
-      description = "The Indigo Rainbow package to use.";
+      default = pkgs.bluesky-indigo-netsync;
+      description = "The Indigo NetSync package to use.";
     };
 
     dataDir = mkOption {
       type = types.str;
-      default = "/var/lib/indigo-rainbow";
-      description = "The absolute path to the directory to store Pebble KV data in.";
+      default = "/var/lib/indigo-netsync";
+      description = "The absolute path to the directory to store cloned repositories.";
     };
 
     user = mkOption {
       type = types.str;
-      default = "indigo-rainbow";
-      description = "User account for Indigo Rainbow service.";
+      default = "indigo-netsync";
+      description = "User account for Indigo NetSync service.";
     };
 
     group = mkOption {
       type = types.str;
-      default = "indigo-rainbow";
-      description = "Group for Indigo Rainbow service.";
+      default = "indigo-netsync";
+      description = "Group for Indigo NetSync service.";
     };
 
     settings = mkOption {
       type = types.submodule {
         options = {
-          port = mkOption {
-            type = types.port;
-            default = 2473;
-            description = "Port for the Rainbow WebSocket subscriptions to listen on.";
+          checkoutEndpoint = mkOption {
+            type = types.str;
+            description = "Endpoint for fetching repositories (PDS or relay).";
+            example = "https://bsky.social";
           };
 
-          upstreamHost = mkOption {
-            type = types.str;
-            description = "Upstream relay or PDS host to subscribe to for firehose events.";
-            example = "https://relay.bsky.social";
+          workers = mkOption {
+            type = types.int;
+            default = 10;
+            description = "Number of parallel worker threads for cloning.";
+          };
+
+          metricsPort = mkOption {
+            type = types.port;
+            default = 2471;
+            description = "Port for Prometheus metrics endpoint.";
           };
 
           logLevel = mkOption {
@@ -54,28 +60,18 @@ in
             default = "info";
             description = "Logging level.";
           };
-
-          metrics = {
-            enable = mkEnableOption "Prometheus metrics endpoint";
-
-            port = mkOption {
-              type = types.port;
-              default = 2471;
-              description = "Port for metrics endpoint.";
-            };
-          };
         };
       };
       default = {};
-      description = "Indigo Rainbow service configuration.";
+      description = "Indigo NetSync service configuration.";
     };
   };
 
   config = mkIf cfg.enable {
     assertions = [
       {
-        assertion = cfg.settings.upstreamHost != "";
-        message = "services.indigo-rainbow: upstreamHost must be specified";
+        assertion = cfg.settings.checkoutEndpoint != "";
+        message = "services.indigo-netsync: checkoutEndpoint must be specified";
       }
     ];
 
@@ -94,8 +90,8 @@ in
     ];
 
     # systemd service
-    systemd.services.indigo-rainbow = {
-      description = "Indigo Rainbow firehose fanout service";
+    systemd.services.indigo-netsync = {
+      description = "Indigo NetSync repository cloning and archival tool";
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" ];
       wants = [ "network.target" ];
@@ -129,19 +125,17 @@ in
 
       environment = {
         GOLOG_LOG_LEVEL = cfg.settings.logLevel;
-        RAINBOW_UPSTREAM_HOST = cfg.settings.upstreamHost;
-        RAINBOW_PORT = toString cfg.settings.port;
-      } // lib.optionalAttrs (cfg.settings.metrics.enable) {
-        RAINBOW_METRICS_PORT = toString cfg.settings.metrics.port;
+        NETSYNC_CHECKOUT_ENDPOINT = cfg.settings.checkoutEndpoint;
+        NETSYNC_WORKERS = toString cfg.settings.workers;
+        NETSYNC_METRICS_PORT = toString cfg.settings.metricsPort;
       };
 
       script = ''
-        exec ${cfg.package}/bin/rainbow
+        exec ${cfg.package}/bin/netsync
       '';
     };
 
     # Open firewall ports
-    networking.firewall.allowedTCPPorts = [ cfg.settings.port ]
-      ++ lib.optional cfg.settings.metrics.enable cfg.settings.metrics.port;
+    networking.firewall.allowedTCPPorts = [ cfg.settings.metricsPort ];
   };
 }

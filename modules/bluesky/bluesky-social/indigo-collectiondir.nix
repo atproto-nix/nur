@@ -1,37 +1,37 @@
-# Defines the NixOS module for the Indigo Rainbow (firehose fanout/splitter) service
+# Defines the NixOS module for the Indigo CollectionDir (collection discovery) service
 { config, lib, pkgs, ... }:
 
 with lib;
 
 let
-  cfg = config.services.indigo-rainbow;
+  cfg = config.services.indigo-collectiondir;
 in
 {
-  options.services.indigo-rainbow = {
-    enable = mkEnableOption "Indigo Rainbow firehose fanout service";
+  options.services.indigo-collectiondir = {
+    enable = mkEnableOption "Indigo CollectionDir collection discovery service";
 
     package = mkOption {
       type = types.package;
-      default = pkgs.bluesky-indigo-rainbow;
-      description = "The Indigo Rainbow package to use.";
+      default = pkgs.bluesky-indigo-collectiondir;
+      description = "The Indigo CollectionDir package to use.";
     };
 
     dataDir = mkOption {
       type = types.str;
-      default = "/var/lib/indigo-rainbow";
+      default = "/var/lib/indigo-collectiondir";
       description = "The absolute path to the directory to store Pebble KV data in.";
     };
 
     user = mkOption {
       type = types.str;
-      default = "indigo-rainbow";
-      description = "User account for Indigo Rainbow service.";
+      default = "indigo-collectiondir";
+      description = "User account for Indigo CollectionDir service.";
     };
 
     group = mkOption {
       type = types.str;
-      default = "indigo-rainbow";
-      description = "Group for Indigo Rainbow service.";
+      default = "indigo-collectiondir";
+      description = "Group for Indigo CollectionDir service.";
     };
 
     settings = mkOption {
@@ -39,14 +39,14 @@ in
         options = {
           port = mkOption {
             type = types.port;
-            default = 2473;
-            description = "Port for the Rainbow WebSocket subscriptions to listen on.";
+            default = 2584;
+            description = "Port for the CollectionDir service to listen on.";
           };
 
-          upstreamHost = mkOption {
+          firehoseUrl = mkOption {
             type = types.str;
-            description = "Upstream relay or PDS host to subscribe to for firehose events.";
-            example = "https://relay.bsky.social";
+            description = "URL to relay or PDS firehose for event subscription.";
+            example = "wss://relay.bsky.social/xrpc/com.atproto.sync.subscribeRepos";
           };
 
           logLevel = mkOption {
@@ -67,15 +67,15 @@ in
         };
       };
       default = {};
-      description = "Indigo Rainbow service configuration.";
+      description = "Indigo CollectionDir service configuration.";
     };
   };
 
   config = mkIf cfg.enable {
     assertions = [
       {
-        assertion = cfg.settings.upstreamHost != "";
-        message = "services.indigo-rainbow: upstreamHost must be specified";
+        assertion = cfg.settings.firehoseUrl != "";
+        message = "services.indigo-collectiondir: firehoseUrl must be specified";
       }
     ];
 
@@ -94,8 +94,8 @@ in
     ];
 
     # systemd service
-    systemd.services.indigo-rainbow = {
-      description = "Indigo Rainbow firehose fanout service";
+    systemd.services.indigo-collectiondir = {
+      description = "Indigo CollectionDir collection discovery service";
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" ];
       wants = [ "network.target" ];
@@ -129,14 +129,14 @@ in
 
       environment = {
         GOLOG_LOG_LEVEL = cfg.settings.logLevel;
-        RAINBOW_UPSTREAM_HOST = cfg.settings.upstreamHost;
-        RAINBOW_PORT = toString cfg.settings.port;
+        COLLECTIONDIR_PORT = toString cfg.settings.port;
+        COLLECTIONDIR_FIREHOSE_URL = cfg.settings.firehoseUrl;
       } // lib.optionalAttrs (cfg.settings.metrics.enable) {
-        RAINBOW_METRICS_PORT = toString cfg.settings.metrics.port;
+        COLLECTIONDIR_METRICS_PORT = toString cfg.settings.metrics.port;
       };
 
       script = ''
-        exec ${cfg.package}/bin/rainbow
+        exec ${cfg.package}/bin/collectiondir
       '';
     };
 

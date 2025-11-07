@@ -12,7 +12,7 @@ in
 
     package = mkOption {
       type = types.package;
-      default = pkgs.bluesky-social-indigo-hepa;
+      default = pkgs.bluesky-indigo-hepa;
       description = "The Indigo Hepa package to use.";
     };
 

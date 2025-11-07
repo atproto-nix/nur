@@ -1,37 +1,37 @@
-# Defines the NixOS module for the Indigo Relay service
+# Defines the NixOS module for the Indigo BigSky (original relay with full mirroring) service
 { config, lib, pkgs, ... }:
 
 with lib;
 
 let
-  cfg = config.services.indigo-relay;
+  cfg = config.services.indigo-bigsky;
 in
 {
-  options.services.indigo-relay = {
-    enable = mkEnableOption "Indigo ATProto Relay service";
+  options.services.indigo-bigsky = {
+    enable = mkEnableOption "Indigo BigSky relay with full repo mirroring";
 
     package = mkOption {
       type = types.package;
-      default = pkgs.bluesky-indigo-relay;
-      description = "The Indigo Relay package to use.";
+      default = pkgs.bluesky-indigo-bigsky;
+      description = "The Indigo BigSky package to use.";
     };
 
     dataDir = mkOption {
       type = types.str;
-      default = "/var/lib/indigo-relay";
+      default = "/var/lib/indigo-bigsky";
       description = "The absolute path to the directory to store data in.";
     };
 
     user = mkOption {
       type = types.str;
-      default = "indigo-relay";
-      description = "User account for Indigo Relay service.";
+      default = "indigo-bigsky";
+      description = "User account for Indigo BigSky service.";
     };
 
     group = mkOption {
       type = types.str;
-      default = "indigo-relay";
-      description = "Group for Indigo Relay service.";
+      default = "indigo-bigsky";
+      description = "Group for Indigo BigSky service.";
     };
 
     settings = mkOption {
@@ -39,21 +39,27 @@ in
         options = {
           port = mkOption {
             type = types.port;
-            default = 2470;
-            description = "Port for the relay service to listen on.";
+            default = 2472;
+            description = "Port for the bigsky service to listen on.";
           };
 
           hostname = mkOption {
             type = types.str;
-            description = "Hostname for the relay service.";
-            example = "relay.example.com";
+            description = "Hostname for the bigsky service.";
+            example = "bigsky.example.com";
+          };
+
+          upstreamHost = mkOption {
+            type = types.str;
+            description = "Upstream firehose host to connect to.";
+            example = "bsky.network";
           };
 
           database = {
             url = mkOption {
               type = types.str;
               description = "Database connection URL.";
-              example = "postgres://user:pass@localhost/relay";
+              example = "postgres://user:pass@localhost/bigsky";
             };
 
             passwordFile = mkOption {
@@ -69,22 +75,16 @@ in
             description = "PLC directory host URL.";
           };
 
-          bgsHost = mkOption {
-            type = types.nullOr types.str;
-            default = null;
-            description = "BGS (Big Graph Service) host URL.";
+          maxConnections = mkOption {
+            type = types.int;
+            default = 1000;
+            description = "Maximum number of concurrent connections.";
           };
 
-          adminPassword = mkOption {
-            type = types.nullOr types.str;
-            default = null;
-            description = "Admin password for relay management.";
-          };
-
-          adminPasswordFile = mkOption {
-            type = types.nullOr types.path;
-            default = null;
-            description = "File containing admin password.";
+          bufferSize = mkOption {
+            type = types.int;
+            default = 1000;
+            description = "Buffer size for event processing.";
           };
 
           logLevel = mkOption {
@@ -98,24 +98,18 @@ in
             
             port = mkOption {
               type = types.port;
-              default = 2471;
+              default = 2473;
               description = "Port for metrics endpoint.";
             };
           };
 
-          rateLimit = {
-            enable = mkEnableOption "rate limiting";
-
-            requestsPerMinute = mkOption {
-              type = types.int;
-              default = 100;
-              description = "Maximum requests per minute per IP.";
-            };
+          compression = {
+            enable = mkEnableOption "gzip compression for responses";
           };
         };
       };
       default = {};
-      description = "Indigo Relay service configuration.";
+      description = "Indigo Rainbow service configuration.";
     };
   };
 
@@ -123,20 +117,16 @@ in
     assertions = [
       {
         assertion = cfg.settings.hostname != "";
-        message = "services.indigo-relay: hostname must be specified";
+        message = "services.indigo-bigsky: hostname must be specified";
+      }
+      {
+        assertion = cfg.settings.upstreamHost != "";
+        message = "services.indigo-bigsky: upstreamHost must be specified";
       }
       {
         assertion = cfg.settings.database.url != "";
-        message = "services.indigo-relay: database URL must be specified";
+        message = "services.indigo-bigsky: database URL must be specified";
       }
-      {
-        assertion = (cfg.settings.adminPassword != null) != (cfg.settings.adminPasswordFile != null);
-        message = "services.indigo-relay: exactly one of adminPassword or adminPasswordFile must be specified";
-      }
-    ];
-
-    warnings = lib.optionals (cfg.settings.adminPassword != null) [
-      "Indigo Relay admin password is specified in plain text - consider using adminPasswordFile instead"
     ];
 
     # Create user and group
@@ -154,8 +144,8 @@ in
     ];
 
     # systemd service
-    systemd.services.indigo-relay = {
-      description = "Indigo ATProto Relay service";
+    systemd.services.indigo-bigsky = {
+      description = "Indigo Rainbow firehose splitter service";
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" "postgresql.service" ];
       wants = [ "network.target" ];
@@ -189,36 +179,30 @@ in
 
       environment = {
         GOLOG_LOG_LEVEL = cfg.settings.logLevel;
-        RELAY_HOSTNAME = cfg.settings.hostname;
-        RELAY_PORT = toString cfg.settings.port;
-        RELAY_PLC_HOST = cfg.settings.plcHost;
-        RELAY_DATABASE_URL = cfg.settings.database.url;
-      } // lib.optionalAttrs (cfg.settings.bgsHost != null) {
-        RELAY_BGS_HOST = cfg.settings.bgsHost;
+        RAINBOW_HOSTNAME = cfg.settings.hostname;
+        RAINBOW_PORT = toString cfg.settings.port;
+        RAINBOW_UPSTREAM_HOST = cfg.settings.upstreamHost;
+        RAINBOW_PLC_HOST = cfg.settings.plcHost;
+        RAINBOW_DATABASE_URL = cfg.settings.database.url;
+        RAINBOW_MAX_CONNECTIONS = toString cfg.settings.maxConnections;
+        RAINBOW_BUFFER_SIZE = toString cfg.settings.bufferSize;
       } // lib.optionalAttrs (cfg.settings.metrics.enable) {
-        RELAY_METRICS_PORT = toString cfg.settings.metrics.port;
-      } // lib.optionalAttrs (cfg.settings.rateLimit.enable) {
-        RELAY_RATE_LIMIT_ENABLED = "true";
-        RELAY_RATE_LIMIT_RPM = toString cfg.settings.rateLimit.requestsPerMinute;
+        RAINBOW_METRICS_PORT = toString cfg.settings.metrics.port;
+      } // lib.optionalAttrs (cfg.settings.compression.enable) {
+        RAINBOW_COMPRESSION_ENABLED = "true";
       };
 
       script = 
         let
-          passwordEnv = if cfg.settings.adminPasswordFile != null 
-            then "RELAY_ADMIN_PASSWORD=$(cat ${cfg.settings.adminPasswordFile})"
-            else "RELAY_ADMIN_PASSWORD=${cfg.settings.adminPassword}";
-          
           dbPasswordEnv = if cfg.settings.database.passwordFile != null
-            then "RELAY_DATABASE_URL=$(sed \"s/:pass@/:$(cat ${cfg.settings.database.passwordFile})@/\" <<< \"${cfg.settings.database.url}\")"
+            then "RAINBOW_DATABASE_URL=$(sed \"s/:pass@/:$(cat ${cfg.settings.database.passwordFile})@/\" <<< \"${cfg.settings.database.url}\")"
             else "";
         in
         ''
           ${lib.optionalString (cfg.settings.database.passwordFile != null) dbPasswordEnv}
-          ${passwordEnv}
-          export RELAY_ADMIN_PASSWORD
-          ${lib.optionalString (cfg.settings.database.passwordFile != null) "export RELAY_DATABASE_URL"}
+          ${lib.optionalString (cfg.settings.database.passwordFile != null) "export RAINBOW_DATABASE_URL"}
           
-          exec ${cfg.package}/bin/relay
+          exec ${cfg.package}/bin/bigsky
         '';
     };
 

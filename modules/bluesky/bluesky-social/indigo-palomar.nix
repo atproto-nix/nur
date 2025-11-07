@@ -12,7 +12,7 @@ in
 
     package = mkOption {
       type = types.package;
-      default = pkgs.bluesky-social-indigo-palomar;
+      default = pkgs.bluesky-indigo-palomar;
       description = "The Indigo Palomar package to use.";
     };
 

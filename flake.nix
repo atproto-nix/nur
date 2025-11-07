@@ -162,6 +162,21 @@
                 homepage = "https://github.com/atproto/nur";
               };
             };
+
+            # Short aliases for Indigo services (for convenience)
+            # Allows: nix build .#indigo-relay instead of .#bluesky-indigo-relay
+            indigo = selectedPackages.bluesky-indigo;
+            indigo-relay = selectedPackages.bluesky-indigo-relay;
+            indigo-bigsky = selectedPackages.bluesky-indigo-bigsky;
+            indigo-rainbow = selectedPackages.bluesky-indigo-rainbow;
+            indigo-palomar = selectedPackages.bluesky-indigo-palomar;
+            indigo-bluepages = selectedPackages.bluesky-indigo-bluepages;
+            indigo-collectiondir = selectedPackages.bluesky-indigo-collectiondir;
+            indigo-hepa = selectedPackages.bluesky-indigo-hepa;
+            indigo-beemo = selectedPackages.bluesky-indigo-beemo;
+            indigo-sonar = selectedPackages.bluesky-indigo-sonar;
+            indigo-netsync = selectedPackages.bluesky-indigo-netsync;
+            indigo-gosky = selectedPackages.bluesky-indigo-gosky;
           };
 
           # BEST PRACTICE: Maintain legacyPackages
@@ -216,6 +231,17 @@
           };
           bluesky = {
             indigo = self.packages.${final.system}.bluesky-indigo;
+            indigo-relay = self.packages.${final.system}.bluesky-indigo-relay;
+            indigo-bigsky = self.packages.${final.system}.bluesky-indigo-bigsky;
+            indigo-rainbow = self.packages.${final.system}.bluesky-indigo-rainbow;
+            indigo-palomar = self.packages.${final.system}.bluesky-indigo-palomar;
+            indigo-bluepages = self.packages.${final.system}.bluesky-indigo-bluepages;
+            indigo-collectiondir = self.packages.${final.system}.bluesky-indigo-collectiondir;
+            indigo-hepa = self.packages.${final.system}.bluesky-indigo-hepa;
+            indigo-beemo = self.packages.${final.system}.bluesky-indigo-beemo;
+            indigo-sonar = self.packages.${final.system}.bluesky-indigo-sonar;
+            indigo-netsync = self.packages.${final.system}.bluesky-indigo-netsync;
+            indigo-gosky = self.packages.${final.system}.bluesky-indigo-gosky;
             atproto-xrpc = self.packages.${final.system}.bluesky-atproto-xrpc;
             atproto-syntax = self.packages.${final.system}.bluesky-atproto-syntax;
             atproto-repo = self.packages.${final.system}.bluesky-atproto-repo;
@@ -321,6 +347,18 @@
           tangled-appview-static-files = self.packages.${final.system}.tangled-appview-static-files;
 
           bluesky-indigo = self.packages.${final.system}.bluesky-indigo;
+          indigo = self.packages.${final.system}.bluesky-indigo;
+          indigo-relay = self.packages.${final.system}.bluesky-indigo-relay;
+          indigo-bigsky = self.packages.${final.system}.bluesky-indigo-bigsky;
+          indigo-rainbow = self.packages.${final.system}.bluesky-indigo-rainbow;
+          indigo-palomar = self.packages.${final.system}.bluesky-indigo-palomar;
+          indigo-bluepages = self.packages.${final.system}.bluesky-indigo-bluepages;
+          indigo-collectiondir = self.packages.${final.system}.bluesky-indigo-collectiondir;
+          indigo-hepa = self.packages.${final.system}.bluesky-indigo-hepa;
+          indigo-beemo = self.packages.${final.system}.bluesky-indigo-beemo;
+          indigo-sonar = self.packages.${final.system}.bluesky-indigo-sonar;
+          indigo-netsync = self.packages.${final.system}.bluesky-indigo-netsync;
+          indigo-gosky = self.packages.${final.system}.bluesky-indigo-gosky;
           bluesky-atproto-xrpc = self.packages.${final.system}.bluesky-atproto-xrpc;
           bluesky-atproto-syntax = self.packages.${final.system}.bluesky-atproto-syntax;
           bluesky-atproto-repo = self.packages.${final.system}.bluesky-atproto-repo;
