@@ -1,4 +1,35 @@
-# Defines the NixOS module for the Grain Labeler service
+# Grain Labeler Service Module
+#
+# STATUS: Experimental - Awaiting package implementation
+#
+# This module defines configuration for the Grain Labeler service (content moderation),
+# but the actual package is not yet implemented.
+#
+# TO IMPLEMENT:
+# - Create /Users/jack/Software/nur-vps/pkgs/grain-social/labeler.nix
+# - Build with Rust (craneLib, similar to darkroom.nix)
+# - Source: @grain.social/grain monorepo from Tangled.org
+# - Requires: Cryptographic libs for key operations, PostgreSQL client
+#
+# FEATURES (configured but not yet functional):
+# - Flexible content labeling rules with JSON configuration
+# - Private key signing for label authentication
+# - Prometheus metrics endpoint
+# - API rate limiting and CORS support
+# - Batch processing configuration
+#
+# CONFIGURATION:
+# services.grain-labeler = {
+#   enable = true;  # Will fail until package is implemented
+#   settings = {
+#     hostname = "labeler.grain.example.com";
+#     firehoseHost = "bsky.network";
+#     database.url = "postgres://...";
+#     auth.did = "did:plc:labeler123";
+#     auth.privateKeyFile = "/run/secrets/labeler-key";
+#   };
+# };
+#
 { config, lib, pkgs, ... }:
 
 with lib;
@@ -12,7 +43,7 @@ in
 
     package = mkOption {
       type = types.package;
-      default = pkgs.bluesky-social-grain-labeler;
+      default = pkgs.grain-social-labeler or (throw "grain-social-labeler package not found in pkgs");
       description = "The Grain Labeler package to use.";
     };
 

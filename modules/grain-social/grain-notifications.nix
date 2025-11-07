@@ -1,4 +1,38 @@
-# Defines the NixOS module for the Grain Notifications service
+# Grain Notifications Service Module
+#
+# STATUS: Experimental - Awaiting package implementation
+#
+# This module defines configuration for the Grain Notifications service (real-time events),
+# but the actual package is not yet implemented.
+#
+# TO IMPLEMENT:
+# - Create /Users/jack/Software/nur-vps/pkgs/grain-social/notifications.nix
+# - Build with Deno/TypeScript or Rust (language TBD)
+# - Source: @grain.social/grain monorepo from Tangled.org
+# - Requires: PostgreSQL client, Redis client (optional), SMTP client
+#
+# FEATURES (configured but not yet functional):
+# - Real-time WebSocket support for live notifications
+# - Multiple notification types (likes, follows, mentions, replies, gallery events)
+# - Email delivery via SMTP
+# - Redis caching for performance (optional)
+# - Database persistence with configurable retention
+# - Prometheus metrics endpoint
+#
+# CONFIGURATION:
+# services.grain-notifications = {
+#   enable = true;  # Will fail until package is implemented
+#   settings = {
+#     hostname = "localhost";
+#     firehoseHost = "bsky.network";
+#     database.url = "postgres://...";
+#     redis.url = "redis://localhost:6379";  # Optional
+#     websocket.enable = true;
+#     email.enable = true;
+#     email.smtp.host = "smtp.example.com";
+#   };
+# };
+#
 { config, lib, pkgs, ... }:
 
 with lib;
@@ -12,7 +46,7 @@ in
 
     package = mkOption {
       type = types.package;
-      default = pkgs.bluesky-social-grain-notifications;
+      default = pkgs.grain-social-notifications or (throw "grain-social-notifications package not found in pkgs");
       description = "The Grain Notifications package to use.";
     };
 

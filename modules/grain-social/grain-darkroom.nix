@@ -1,3 +1,29 @@
+# Grain Darkroom Image Processing Service Module
+#
+# STATUS: ✅ Implemented and secure
+#
+# This module manages the Grain Darkroom service - an image processing and
+# screenshot service for the Grain Social photo-sharing platform.
+#
+# FEATURES:
+# - Image composition from HTML templates
+# - Gallery preview screenshot capture
+# - Headless Chromium rendering with WebDriver
+# - Security hardening via systemd sandbox (replaces --no-sandbox)
+# - Font support via Nix packages
+#
+# REQUIRES:
+# - chromium and chromedriver packages
+# - PostgreSQL for Grain AppView
+# - Grain AppView service (grain-appview)
+#
+# CONFIGURATION:
+# services.grain-social-darkroom = {
+#   enable = true;
+#   grainBaseUrl = "https://grain.example.com";
+#   openFirewall = false;  # Only local access from appview
+# };
+#
 { config, lib, pkgs, ... }:
 
 with lib;
@@ -80,6 +106,18 @@ in
       type = types.bool;
       default = false;
       description = "Open the firewall for the Darkroom port.";
+    };
+
+    chromeSecurityOptions = mkOption {
+      type = types.listOf types.str;
+      default = [];
+      description = "Additional Chromium security/compatibility flags.";
+      example = literalExpression ''
+        [
+          "--use-mock-cert-verifier"
+          "--ignore-certificate-errors"
+        ]
+      '';
     };
 
     settings = mkOption {
@@ -173,14 +211,17 @@ in
         GRAIN_BASE_URL = cfg.grainBaseUrl;
         PORT = toString cfg.port;
 
-        # Font configuration for Chromium rendering
-        FONTCONFIG_FILE = cfg.package.makeFontConfig;
-
         # Chromium profile directory
         CHROME_PROFILE_DIR = cfg.chromeProfileDir;
 
         # Chromium flags for headless operation
-        CHROME_FLAGS = "--headless --disable-gpu --no-sandbox --disable-dev-shm-usage";
+        # Base flags: headless mode, GPU disabled, /dev/shm disabled, single process
+        # Note: --no-sandbox is removed for security (uses systemd sandboxing instead).
+        # Additional flags can be configured via chromeSecurityOptions if needed.
+        CHROME_FLAGS = lib.concatStringsSep " " (
+          [ "--headless" "--disable-gpu" "--disable-dev-shm-usage" "--single-process" ]
+          ++ cfg.chromeSecurityOptions
+        );
       } // cfg.settings;
     };
 

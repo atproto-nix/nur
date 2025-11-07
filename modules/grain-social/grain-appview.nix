@@ -1,4 +1,27 @@
-# Defines the NixOS module for the Grain AppView service
+# Grain AppView Service Module
+#
+# STATUS: Experimental - Awaiting package implementation
+#
+# This module defines comprehensive configuration options for the Grain AppView service
+# (photo-sharing web application), but the actual package is not yet implemented.
+#
+# TO IMPLEMENT:
+# - Create /Users/jack/Software/nur-vps/pkgs/grain-social/appview.nix
+# - Build with Deno runtime (buildDeno or buildNpmPackage)
+# - Source: @grain.social/grain monorepo from Tangled.org
+# - Requires: PostgreSQL client libs, image processing deps
+#
+# CONFIGURATION:
+# services.grain-appview = {
+#   enable = true;  # Will fail until package is implemented
+#   settings = {
+#     hostname = "grain.example.com";
+#     firehoseHost = "bsky.network";
+#     database.url = "postgres://...";
+#     storage.type = "local";
+#   };
+# };
+#
 { config, lib, pkgs, ... }:
 
 with lib;
@@ -12,7 +35,7 @@ in
 
     package = mkOption {
       type = types.package;
-      default = pkgs.bluesky-social-grain-appview;
+      default = pkgs.grain-social-appview or (throw "grain-social-appview package not found in pkgs");
       description = "The Grain AppView package to use.";
     };
 
