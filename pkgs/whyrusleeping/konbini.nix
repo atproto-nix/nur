@@ -29,6 +29,12 @@ let
     buildPhase = ''
       runHook preBuild
 
+      # Configure frontend to use relative API URLs instead of hardcoded localhost:4444
+      # This allows the frontend to work correctly behind reverse proxies
+      export REACT_APP_API_URL=""
+      export VITE_API_URL=""
+      export PUBLIC_URL=""
+
       # Build React app with react-scripts
       npm run build
 

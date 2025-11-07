@@ -31,8 +31,23 @@ in
       type = types.str;
       default = "http://localhost:${toString backendCfg.apiPort}";
       description = ''
-        Backend API URL for the frontend to proxy requests to.
-        Default points to the local konbini backend API server.
+        Backend API URL for the nginx reverse proxy to forward requests to.
+
+        This configures nginx's server-side proxy behavior only (the locations."/api"
+        proxyPass directive). The client-side JavaScript API URL is determined at
+        package build time by environment variables (REACT_APP_API_URL, etc.), not
+        by this option.
+
+        For the frontend to work correctly:
+        1. The package must be built with relative API URL config (empty string)
+        2. The browser makes requests to /api (relative URL)
+        3. nginx proxies /api requests to this backendUrl
+
+        Default points to the local konbini backend API server (port 4444).
+
+        Examples:
+        - "http://localhost:4444" - Local backend (default)
+        - "http://remote-host:4444" - Remote backend via Tailscale/etc
       '';
     };
 
