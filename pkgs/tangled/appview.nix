@@ -19,7 +19,7 @@ buildGoModule rec {
     owner = "@tangled.org";
     repo = "core";
     rev = "2e5a4cde904d86825cefe5971e68f1bdfb1dd36f";
-    hash = lib.fakeHash;  # Will be calculated on first build
+    hash = "sha256-qDVJ2sEQL0TJbWer6ByhhQrzHE1bZI3U1mmCk0sPZqo=";
   };
 
   vendorHash = "sha256-ppAAcayRboFCX1rB6FCYEqJi8crlCHBRuvUoZfmiuYY=";
