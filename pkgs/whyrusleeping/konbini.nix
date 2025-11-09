@@ -26,14 +26,21 @@ let
 
     nativeBuildInputs = [ nodejs ];
 
+    # Patch the hardcoded API URL in the source code
+    postPatch = ''
+      echo "Patching frontend API URL to use relative paths..."
+
+      # Replace hardcoded localhost URL with relative URL in api.ts
+      substituteInPlace src/api.ts \
+        --replace-fail "const API_BASE_URL = 'http://localhost:4444/api';" \
+                       "const API_BASE_URL = '/api';"
+
+      echo "Frontend API URL patched successfully"
+      grep "API_BASE_URL" src/api.ts
+    '';
+
     buildPhase = ''
       runHook preBuild
-
-      # Configure frontend to use relative API URLs instead of hardcoded localhost:4444
-      # This allows the frontend to work correctly behind reverse proxies
-      export REACT_APP_API_URL=""
-      export VITE_API_URL=""
-      export PUBLIC_URL=""
 
       # Build React app with react-scripts
       npm run build
