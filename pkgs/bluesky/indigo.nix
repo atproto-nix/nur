@@ -21,7 +21,7 @@ let
     version = "unstable";
     src = "${indigoSrc}/cmd/relay/relay-admin-ui";
 
-    nativeBuildInputs = with pkgs; [ nodejs yarn python3 cacert ];
+    nativeBuildInputs = with pkgs; [ nodejs yarn python3 cacert nodePackages.typescript ];
 
     # FOD pattern: allows network access to fetch dependencies
     # Calculates hash once, ensures reproducibility
@@ -36,7 +36,12 @@ let
       export HOME=$TMPDIR
 
       yarn install --frozen-lockfile
-      yarn build
+
+      # Patch shebangs in node_modules to use Nix paths
+      patchShebangs node_modules
+
+      # Use npx to run build tools (automatically finds them in node_modules/.bin)
+      npx tsc && npx vite build
     '';
 
     installPhase = ''
@@ -53,7 +58,7 @@ let
   };
 
   # Build individual service from indigo source
-  buildIndigoService = { subPackage, name, description, includeAdminUi ? true }:
+  buildIndigoService = { subPackage, name, description, includeAdminUi ? false }:
     buildGoModule {
       pname = "indigo-${name}";
       version = "unstable";
@@ -64,11 +69,10 @@ let
       # Build the specific service
       subPackages = [ "cmd/${subPackage}" ];
 
-      # If this is the relay service, include the admin UI
-      preBuild = lib.optionalString includeAdminUi ''
-        mkdir -p cmd/relay/public
-        cp -r ${relayAdminUi}/* cmd/relay/public/
-      '';
+      # Expose admin UI as passthru for relay service
+      passthru = lib.optionalAttrs includeAdminUi {
+        adminUi = relayAdminUi;
+      };
 
       meta = with lib; {
         inherit description;

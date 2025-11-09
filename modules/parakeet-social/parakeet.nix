@@ -293,9 +293,9 @@ in
       "d '${cfg.dataDir}' 0750 ${cfg.user} ${cfg.group} - -"
       "d '${cfg.dataDir}/logs' 0750 ${cfg.user} ${cfg.group} - -"
       "d '${toString cfg.settings.consumer.resumePath}' 0750 ${cfg.user} ${cfg.group} - -"
-    ] ++ optional cfg.settings.index.enable [
+    ] ++ optionals cfg.settings.index.enable [
       "d '${toString cfg.settings.index.dbPath}' 0750 ${cfg.user} ${cfg.group} - -"
-    ] ++ optional (cfg.settings.consumer.backfill.downloadTmpDir != null) [
+    ] ++ optionals (cfg.settings.consumer.backfill.downloadTmpDir != null) [
       "d '${toString cfg.settings.consumer.backfill.downloadTmpDir}' 0750 ${cfg.user} ${cfg.group} - -"
     ];
 
@@ -303,8 +303,8 @@ in
     systemd.services.parakeet-social-parakeet = {
       description = "Parakeet ATProto AppView";
       wantedBy = [ "multi-user.target" ];
-      after = [ "network.target" "postgresql.service" "redis.service" ] 
-        ++ optional cfg.settings.index.enable [ "atproto-parakeet-index.service" ];
+      after = [ "network.target" "postgresql.service" "redis.service" ]
+        ++ optionals cfg.settings.index.enable [ "atproto-parakeet-index.service" ];
       wants = [ "network.target" ];
 
       serviceConfig = {
@@ -337,7 +337,7 @@ in
       environment = {
         PK_DATABASE_URL = cfg.settings.database.url;
         PK_REDIS_URI = cfg.settings.redis.url;
-        PK_INDEX_URI = "localhost:${toString cfg.settings.index.port}";
+        PK_INDEX_URI = "http://localhost:${toString cfg.settings.index.port}";
         PK_PLC_DIRECTORY = cfg.settings.plcDirectory;
         PK_SERVER__BIND_ADDRESS = cfg.settings.appview.bindAddress;
         PK_SERVER__PORT = toString cfg.settings.appview.port;
@@ -369,7 +369,7 @@ in
       description = "Parakeet consumer service";
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" "postgresql.service" "redis.service" ]
-        ++ optional cfg.settings.index.enable [ "atproto-parakeet-index.service" ];
+        ++ optionals cfg.settings.index.enable [ "atproto-parakeet-index.service" ];
       wants = [ "network.target" ];
 
       serviceConfig = {
@@ -404,7 +404,7 @@ in
       environment = {
         PKC_DATABASE__URL = cfg.settings.database.url;
         PKC_REDIS_URI = cfg.settings.redis.url;
-        PKC_INDEX_URI = "localhost:${toString cfg.settings.index.port}";
+        PKC_INDEX_URI = "http://localhost:${toString cfg.settings.index.port}";
         PKC_PLC_DIRECTORY = cfg.settings.plcDirectory;
         PKC_RESUME_PATH = toString cfg.settings.consumer.resumePath;
         PKC_INDEXER__INDEXER_WORKERS = toString cfg.settings.consumer.indexer.workers;

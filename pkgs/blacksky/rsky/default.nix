@@ -104,13 +104,154 @@ in
     services = [ "feedgen" ];
   };
 
-  satnav = mkRskyService {
-    pname = "rsky-satnav";
-    version = "0.1.0";
-    package = "rsky-satnav";
-    description = "AT Protocol Satnav - Structured Archive Traversal, Navigation & Verification";
-    services = [ "satnav" ];
-  };
+  # Satnav is a Dioxus web app that must be compiled to WASM, not a native binary
+  satnav =
+    let
+      # Custom crane lib with WASM target
+      wasmCraneLib = (craneLib.overrideToolchain (pkgs.rust-bin.stable.latest.default.override {
+        targets = [ "wasm32-unknown-unknown" ];
+      }));
+
+      # Build dependencies for WASM target
+      wasmCargoArtifacts = wasmCraneLib.buildDepsOnly {
+        src = rskySrc;
+        pname = "rsky-satnav-deps";
+        version = "0.1.0";
+
+        # Build for WASM target
+        cargoExtraArgs = "--target wasm32-unknown-unknown --package rsky-satnav";
+
+        env = atprotoLib.defaultRustEnv // {
+          CARGO_BUILD_TARGET = "wasm32-unknown-unknown";
+        };
+
+        nativeBuildInputs = atprotoLib.defaultRustNativeInputs;
+        buildInputs = atprotoLib.defaultRustBuildInputs;
+        tarFlags = "--no-same-owner";
+      };
+
+      # Build WASM binary using crane's cargoBuild
+      wasmBuild = wasmCraneLib.cargoBuild {
+        cargoArtifacts = wasmCargoArtifacts;  # crane expects this exact parameter name
+        src = rskySrc;
+        pname = "rsky-satnav-wasm";
+        version = "0.1.0";
+
+        cargoExtraArgs = "--target wasm32-unknown-unknown --package rsky-satnav";
+
+        env = atprotoLib.defaultRustEnv // {
+          CARGO_BUILD_TARGET = "wasm32-unknown-unknown";
+        };
+
+        nativeBuildInputs = atprotoLib.defaultRustNativeInputs;
+        buildInputs = atprotoLib.defaultRustBuildInputs;
+        tarFlags = "--no-same-owner";
+
+        # Don't run tests for WASM
+        doCheck = false;
+
+        # Install the WASM file
+        installPhaseCommand = ''
+          mkdir -p $out
+          cp target/wasm32-unknown-unknown/release/rsky-satnav.wasm $out/
+        '';
+      };
+    in
+    pkgs.stdenv.mkDerivation {
+      pname = "rsky-satnav";
+      version = "0.1.0";
+      src = rskySrc;
+
+      nativeBuildInputs = with pkgs; [
+        # Rust toolchain with WASM target (needed by dx bundle)
+        (rust-bin.stable.latest.default.override {
+          targets = [ "wasm32-unknown-unknown" ];
+        })
+        # WASM bindgen CLI - must match project's version (0.2.100)
+        wasm-bindgen-cli_0_2_100
+        # WASM optimizer
+        binaryen
+        # Tailwind CSS v4 for styling
+        tailwindcss_4
+        # Dioxus CLI for bundling
+        dioxus-cli
+      ];
+
+      buildPhase = ''
+        # Navigate to satnav directory
+        cd rsky-satnav
+
+        # Compile Tailwind CSS first
+        echo "Compiling Tailwind CSS..."
+        ${pkgs.tailwindcss_4}/bin/tailwindcss -i input.css -o assets/tailwind.css
+
+        # Run wasm-bindgen on the pre-built WASM binary
+        echo "Running wasm-bindgen..."
+        mkdir -p dist
+        ${pkgs.wasm-bindgen-cli_0_2_100}/bin/wasm-bindgen \
+          --target web \
+          --out-dir dist \
+          --out-name rsky-satnav \
+          ${wasmBuild}/rsky-satnav.wasm
+
+        # Optimize WASM with wasm-opt
+        echo "Optimizing WASM..."
+        ${pkgs.binaryen}/bin/wasm-opt -Oz dist/rsky-satnav_bg.wasm -o dist/rsky-satnav_bg.wasm
+
+        # Copy all assets to dist
+        echo "Copying assets..."
+        cp -r assets dist/
+
+        # Create a simple index.html that loads the WASM app
+        cat > dist/index.html << 'EOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>rsky-satnav</title>
+    <link rel="stylesheet" href="assets/tailwind.css">
+    <link rel="stylesheet" href="assets/main.css">
+    <link rel="icon" href="assets/favicon.ico">
+</head>
+<body>
+    <div id="main"></div>
+    <script type="module">
+        import init from './rsky-satnav.js';
+        await init();
+    </script>
+</body>
+</html>
+EOF
+      '';
+
+      installPhase = ''
+        # We're already in rsky-satnav directory from buildPhase
+        # dx bundle creates output in dist/ directory
+        # Install static files to $out/share/rsky-satnav/
+        mkdir -p $out/share/rsky-satnav
+
+        # Check if dist directory exists and has content
+        if [ -d "dist" ] && [ "$(ls -A dist)" ]; then
+          echo "Installing Dioxus bundle output..."
+          cp -r dist/* $out/share/rsky-satnav/
+        else
+          echo "Error: dist directory is missing or empty after dx bundle!"
+          echo "Current directory: $(pwd)"
+          echo "Contents:"
+          ls -laR || true
+          exit 1
+        fi
+      '';
+
+      meta = with pkgs.lib; {
+        description = "AT Protocol Satnav - Browser-based CAR file explorer (WASM)";
+        homepage = "https://github.com/blacksky-algorithms/rsky";
+        license = licenses.asl20;
+        platforms = platforms.all;  # Static files work on any platform
+        maintainers = [ ];
+      };
+    };
 
   firehose = mkRskyService {
     pname = "rsky-firehose";

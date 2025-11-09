@@ -263,6 +263,7 @@
             feedgen = self.packages.${final.system}.blacksky-feedgen;
             firehose = self.packages.${final.system}.blacksky-firehose;
             labeler = self.packages.${final.system}.blacksky-labeler;
+            satnav = self.packages.${final.system}.blacksky-satnav;
             default = self.packages.${final.system}.blacksky;
           };
           grain-social = {
@@ -373,6 +374,12 @@
           bluesky-atproto-api = self.packages.${final.system}.bluesky-atproto-api;
 
           blacksky-rsky = self.packages.${final.system}.blacksky-rsky;
+          blacksky-relay = self.packages.${final.system}.blacksky-relay;
+          blacksky-pds = self.packages.${final.system}.blacksky-pds;
+          blacksky-feedgen = self.packages.${final.system}.blacksky-feedgen;
+          blacksky-firehose = self.packages.${final.system}.blacksky-firehose;
+          blacksky-labeler = self.packages.${final.system}.blacksky-labeler;
+          blacksky-satnav = self.packages.${final.system}.blacksky-satnav;
 
           grain-social-grain = self.packages.${final.system}.grain-social-grain;
           grain-social-darkroom = self.packages.${final.system}.grain-social-darkroom;

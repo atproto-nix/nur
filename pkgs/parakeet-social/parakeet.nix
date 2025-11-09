@@ -10,25 +10,30 @@ craneLib.buildPackage rec {
     hash = "sha256-Cv8xHa8psCNBXy5DpQSQw2yJ3Ogae/9d7sj999iDgxU="; # The hash obtained from get_nix_hash.sh
   };
 
-  # Standard Rust environment for ATProto services (assuming it's a Rust project based on search results)
+  # Standard Rust environment for ATProto services
   env = {
     OPENSSL_NO_VENDOR = "1";
-    # Add other necessary environment variables if known
+    # Required for rocksdb bindgen
+    LIBCLANG_PATH = "${pkgs.libclang.lib}/lib";
   };
 
   nativeBuildInputs = with pkgs; [
     pkg-config
     protobuf
+    # Required for rocksdb (used by parakeet-index)
+    clang
   ];
 
   buildInputs = with pkgs; [
     openssl
-    sqlite # Assuming sqlite based on other ATProto services
-    # Add other build inputs if known
+    sqlite
+    # Required for rocksdb bindgen
+    libclang.lib
   ];
 
-  # Assuming the main binary is named 'parakeet'
-  cargoExtraArgs = "--bin parakeet";
+  # Build all workspace binaries
+  # parakeet-index requires the "server" feature to build its binary
+  cargoExtraArgs = "--workspace --features parakeet-index/server";
 
   # Add any postInstall steps if necessary, e.g., copying assets
 

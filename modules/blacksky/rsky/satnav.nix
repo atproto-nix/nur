@@ -33,19 +33,20 @@ with lib;
     ];
     
     systemd.services.blacksky-satnav = {
-      description = "Blacksky Satnav service";
+      description = "Blacksky Satnav service - WASM web app server";
       after = [ "network.target" ];
       wantedBy = [ "multi-user.target" ];
-      
+
       serviceConfig = {
         Type = "exec";
         User = "blacksky-satnav";
         Group = "blacksky-satnav";
         WorkingDirectory = config.blacksky.satnav.dataDir;
-        ExecStart = "${pkgs.blacksky-satnav}/bin/rsky-satnav --port ${toString config.blacksky.satnav.port}";
+        # Serve static WASM files with simple-http-server
+        ExecStart = "${pkgs.simple-http-server}/bin/simple-http-server -i -p ${toString config.blacksky.satnav.port} ${pkgs.blacksky.satnav}/share/rsky-satnav";
         Restart = "on-failure";
         RestartSec = "5s";
-        
+
         # Security hardening
         NoNewPrivileges = true;
         ProtectSystem = "strict";
@@ -58,8 +59,8 @@ with lib;
         RestrictRealtime = true;
         RestrictNamespaces = true;
         LockPersonality = true;
-        MemoryDenyWriteExecute = true;
-        
+        # Note: MemoryDenyWriteExecute removed - simple-http-server needs exec permissions
+
         # File system access
         ReadWritePaths = [ config.blacksky.satnav.dataDir ];
         ReadOnlyPaths = [ "/nix/store" ];

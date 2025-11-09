@@ -160,6 +160,13 @@ in
       after = [ "network.target" "postgresql.service" ];
       wants = [ "network.target" ];
 
+      preStart = lib.optionalString (cfg.package ? adminUi) ''
+        # Copy admin UI to data directory
+        mkdir -p ${cfg.dataDir}/public
+        cp -rf ${cfg.package.adminUi}/* ${cfg.dataDir}/public/
+        chmod -R u+w ${cfg.dataDir}/public
+      '';
+
       serviceConfig = {
         Type = "exec";
         User = cfg.user;
@@ -217,8 +224,8 @@ in
           ${passwordEnv}
           export RELAY_ADMIN_PASSWORD
           ${lib.optionalString (cfg.settings.database.passwordFile != null) "export RELAY_DATABASE_URL"}
-          
-          exec ${cfg.package}/bin/relay
+
+          exec ${cfg.package}/bin/relay serve
         '';
     };
 

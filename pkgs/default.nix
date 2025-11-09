@@ -96,6 +96,7 @@ let
     baileytownsend = pkgs.callPackage ./baileytownsend { inherit lib craneLib; };
     mackuba = pkgs.callPackage ./mackuba { inherit lib; fetchFromTangled = pkgs.fetchFromTangled; };
     whyrusleeping = pkgs.callPackage ./whyrusleeping { inherit lib; };
+    "hailey.at" = pkgs.callPackage ./hailey.at { inherit lib buildGoModule; fetchFromTangled = pkgs.fetchFromTangled; };
 
     # New organizational framework packages
     likeandscribe = pkgs.callPackage ./likeandscribe { inherit lib craneLib buildNpmPackage; };
