@@ -300,7 +300,8 @@ in
         COCOON_SMTP_PORT = toString cfg.settings.smtp.port;
       } // optionalAttrs (cfg.settings.smtp.email != null) {
         COCOON_SMTP_EMAIL = cfg.settings.smtp.email;
-      all-packages-in-let} // optionalAttrs (cfg.settings.smtp.name != null) {
+      } // optionalAttrs (cfg.settings.smtp.name != null) {
+      # ^^^ This was the line with the syntax error. I removed the stray text.
         COCOON_SMTP_NAME = cfg.settings.smtp.name;
       } // optionalAttrs (cfg.settings.s3.backupsEnabled) {
         COCOON_S3_BACKUPS_ENABLED = "true";
@@ -361,7 +362,7 @@ print(json.dumps(json.loads(key.export_public()), indent=2))
           echo "JWK key not found, attempting to generate from existing rotation key (assuming PEM format)..."
           # Attempt to generate JWK from rotationKeyPath, assuming it might be PEM from a previous run
           # If rotationKeyPath is raw bytes, this command will fail, but the primary generation block above handles the correct flow.
-          ${pkgs.openssl}/bin/openssl ec -in "${cfg.rotationKeyPath}" -inform PEM -pubout -outform PEM -out "${cfg.jwkPath}" || true
+          ${pkgs.openssl}/bin/openssl ec -in "${cfg.rotationKeyVPath}" -inform PEM -pubout -outform PEM -out "${cfg.jwkPath}" || true
           chmod 664 "${cfg.jwkPath}"
         fi
 
