@@ -244,7 +244,6 @@ in
       User = "cocoon";
       Group = "cocoon";
       WorkingDirectory = "/var/lib/cocoon";
-      Path = lib.makeBinPath [ pkgs.python313Packages.python ];
         Restart = "on-failure";
         RestartSec = "10s";
 
@@ -330,7 +329,7 @@ in
           # Generate JWK key from the temporary PEM private key
           echo "Generating JWK key at ${cfg.jwkPath} from temporary PEM private key..."
           # Use python and pyjwkest to convert PEM to JWK
-          ${pkgs.python313Packages.python}/bin/python -c '
+          PYTHONPATH=${pkgs.python312Packages.pyjwkest}/${pkgs.python312.sitePackages} ${pkgs.python312Packages.python}/bin/python -c '
 import sys
 from jwcrypto import jwk
 import json
