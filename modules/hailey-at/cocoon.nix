@@ -5,19 +5,6 @@ with lib;
 
 let
   cfg = config.services.hailey-at-cocoon;
-
-  # Create a Python env just for the keygen script
-  # We are explicitly adding EVERY dependency from the original PYTHONPATH
-  # to be certain nothing is missed.
-  keygenPython = pkgs.python312Packages.python.withPackages (ps: [
-    ps.pyjwkest
-    ps.six
-    ps.pycryptodomex
-    ps.requests
-    ps.urllib3
-    ps.future
-    ps.idna
-  ]);
 in
 {
   options.services.hailey-at-cocoon = {
@@ -45,6 +32,20 @@ in
       type = types.str;
       default = "cocoon";
       description = "Group for Cocoon service.";
+    };
+
+    environmentFile = mkOption {
+      type = types.nullOr types.path;
+      default = null;
+      description = ''
+        File to load environment variables from.
+
+        Use it to set values of `COCOON_ADMIN_PASSWORD` and `COCOON_SESSION_SECRET`.
+        These can be generated with:
+        ```
+        openssl rand -hex 16
+        ```
+      '';
     };
 
     settings = mkOption {
@@ -202,13 +203,13 @@ in
     rotationKeyPath = mkOption {
       type = types.str;
       default = "${cfg.keysDir}/rotation.key";
-      description = "Path to the rotation key file.";
+      description = "Path to the rotation key file (DER-encoded secp256k1 private key).";
     };
 
     jwkPath = mkOption {
       type = types.str;
       default = "${cfg.keysDir}/jwk.key";
-      description = "Path to the JWK key file.";
+      description = "Path to the JWK key file (public key).";
     };
   };
 
@@ -226,10 +227,8 @@ in
         assertion = cfg.settings.contactEmail != "";
         message = "services.hailey-at-cocoon: Contact email must be specified";
       }
-
     ];
 
-    # Create user and group
     users.users.${cfg.user} = {
       isSystemUser = true;
       group = cfg.group;
@@ -238,28 +237,75 @@ in
 
     users.groups.${cfg.group} = {};
 
-    # Directory management
     systemd.tmpfiles.rules = [
       "d '${cfg.dataDir}' 0750 ${cfg.user} ${cfg.group} - -"
       "d '${cfg.keysDir}' 0750 ${cfg.user} ${cfg.group} - -"
       "d '${cfg.dataDir}/db' 0750 ${cfg.user} ${cfg.group} - -"
     ];
 
-    # Cocoon PDS service
     systemd.services.hailey-at-cocoon = {
       description = "Cocoon Personal Data Server (PDS)";
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" ];
       wants = [ "network.target" ];
 
-    serviceConfig = {
-      Type = "exec";
-      User = "cocoon";
-      Group = "cocoon";
-      WorkingDirectory = "/var/lib/cocoon";
+      preStart = ''
+        set -euo pipefail
+        # Ensure the keys directory exists
+        ${pkgs.coreutils}/bin/mkdir -p "${cfg.keysDir}"
+        ${pkgs.coreutils}/bin/chown "${cfg.user}:${cfg.group}" "${cfg.keysDir}"
+
+        # Generate rotation key if it doesn't exist
+        if [ ! -f "${cfg.rotationKeyPath}" ]; then
+          ${pkgs.coreutils}/bin/echo "Generating rotation key at ${cfg.rotationKeyPath}..."
+          ${pkgs.openssl}/bin/openssl ecparam -name secp256k1 -genkey -noout -outform DER -out "${cfg.rotationKeyPath}"
+          ${pkgs.coreutils}/bin/chown "${cfg.user}:${cfg.group}" "${cfg.rotationKeyPath}"
+          ${pkgs.coreutils}/bin/chmod 600 "${cfg.rotationKeyPath}"
+        fi
+
+        # Generate JWK if it doesn't exist
+        if [ ! -f "${cfg.jwkPath}" ]; then
+          ${pkgs.coreutils}/bin/echo "Generating JWK at ${cfg.jwkPath}..."
+
+          PUB_KEY_TEXT=$(${pkgs.openssl}/bin/openssl ec -in "${cfg.rotationKeyPath}" -inform DER -pubout | ${pkgs.openssl}/bin/openssl ec -pubin -text -noout 2>/dev/null)
+
+          # The awk script extracts the hex key from the multiline 'pub:' section of the openssl output
+          HEX_PUBKEY=$(echo "$PUB_KEY_TEXT" | ${pkgs.gawk}/bin/awk '/pub:/{flag=1; next} /ASN1 OID:/{flag=0} flag' | ${pkgs.coreutils}/bin/tr -d '[:space:]:' | ${pkgs.gnused}/bin/sed 's/^04//')
+
+          HEX_X=''${HEX_PUBKEY:0:64}
+          HEX_Y=''${HEX_PUBKEY:64:128}
+
+          # Function to convert hex to base64url
+          hex_to_base64url() {
+            # Use xxd for hex to binary, then base64 for encoding
+            # The tr commands make it URL-safe
+            ${pkgs.coreutils}/bin/echo -n "$1" | ${pkgs.xxd-standalone}/bin/xxd -r -p | ${pkgs.coreutils}/bin/base64 | ${pkgs.coreutils}/bin/tr -d '=' | ${pkgs.coreutils}/bin/tr '/+' '_-'
+          }
+
+          B64_X=$(hex_to_base64url "$HEX_X")
+          B64_Y=$(hex_to_base64url "$HEX_Y")
+
+          ${pkgs.jq}/bin/jq -n \
+            --arg kty "EC" \
+            --arg crv "secp256k1" \
+            --arg x "$B64_X" \
+            --arg y "$B64_Y" \
+            '{kty: $kty, crv: $crv, x: $x, y: $y}' > "${cfg.jwkPath}"
+
+          ${pkgs.coreutils}/bin/chown "${cfg.user}:${cfg.group}" "${cfg.jwkPath}"
+          ${pkgs.coreutils}/bin/chmod 644 "${cfg.jwkPath}"
+        fi
+      '';
+
+      serviceConfig = {
+        Type = "simple";
+        User = cfg.user;
+        Group = cfg.group;
+        WorkingDirectory = cfg.dataDir;
+        ExecStart = "${cfg.package}/bin/cocoon run";
         Restart = "on-failure";
         RestartSec = "10s";
-
+        EnvironmentFile = cfg.environmentFile;
 
         # Security hardening
         NoNewPrivileges = true;
@@ -301,7 +347,6 @@ in
       } // optionalAttrs (cfg.settings.smtp.email != null) {
         COCOON_SMTP_EMAIL = cfg.settings.smtp.email;
       } // optionalAttrs (cfg.settings.smtp.name != null) {
-      # ^^^ This was the line with the syntax error. I removed the stray text.
         COCOON_SMTP_NAME = cfg.settings.smtp.name;
       } // optionalAttrs (cfg.settings.s3.backupsEnabled) {
         COCOON_S3_BACKUPS_ENABLED = "true";
@@ -320,61 +365,6 @@ in
       } // optionalAttrs (cfg.settings.fallbackProxy != null) {
         COCOON_FALLBACK_PROXY = cfg.settings.fallbackProxy;
       };
-
-      script = ''
-        set -x
-        rm -rf "${cfg.keysDir}"/*
-        export COCOON_ADMIN_PASSWORD=$(cat /run/secrets/cocoon-admin-password)
-        export COCOON_SESSION_SECRET=$(cat /run/secrets/cocoon-session-secret)
-
-        # Ensure keys exist or create them
-        if [ ! -f "${cfg.rotationKeyPath}" ]; then
-          echo "Generating rotation key at ${cfg.rotationKeyPath}..."
-          # Generate a temporary PEM private key
-          TEMP_PEM_KEY=$(mktemp)
-          ${pkgs.openssl}/bin/openssl ecparam -name secp256k1 -genkey -noout -outform PEM -out "$TEMP_PEM_KEY"
-          # Extract the raw 32-byte private key from the temporary PEM file
-          ${pkgs.openssl}/bin/openssl ec -in "$TEMP_PEM_KEY" -outform DER | tail -c 32 > "${cfg.rotationKeyPath}"
-          chmod 600 "${cfg.rotationKeyPath}"
-          echo "--- Content of rotation.key after generation (raw bytes) ---"
-          ${pkgs.hexdump}/bin/hexdump -C "${cfg.rotationKeyPath}"
-          echo "------------------------------------------------"
-
-          # Generate JWK key from the temporary PEM private key
-          echo "Generating JWK key at ${cfg.jwkPath} from temporary PEM private key..."
-          # Use the dedicated python env to convert PEM to JWK
-          ${keygenPython}/bin/python -c '
-import sys
-from jwkest import jwk
-import json
-
-pem_data = sys.stdin.read()
-key = jwk.JWK.from_pem(pem_data.encode("utf-8"))
-print(json.dumps(json.loads(key.export_public()), indent=2))
-          ' < "$TEMP_PEM_KEY" > /var/lib/cocoon/keys/jwk.key
-          chmod 664 "${cfg.jwkPath}"
-          rm "$TEMP_PEM_KEY" # Clean up temporary file
-        fi
-
-        # If rotationKeyPath exists but jwkPath doesn't, generate jwkPath from rotationKeyPath (assuming rotationKeyPath is PEM for this case)
-        # This block is for backward compatibility if rotationKeyPath was previously generated as PEM
-        if [ -f "${cfg.rotationKeyPath}" ] && [ ! -f "${cfg.jwkPath}" ]; then
-          echo "JWK key not found, attempting to generate from existing rotation key (assuming PEM format)..."
-          # Attempt to generate JWK from rotationKeyPath, assuming it might be PEM from a previous run
-          # If rotationKeyPath is raw bytes, this command will fail, but the primary generation block above handles the correct flow.
-          ${pkgs.openssl}/bin/openssl ec -in "${cfg.rotationKeyVPath}" -inform PEM -pubout -outform PEM -out "${cfg.jwkPath}" || true
-          chmod 664 "${cfg.jwkPath}"
-        fi
-
-        # Ensure jwkPath exists after all attempts, if not, it means rotationKeyPath was raw and jwkPath wasn't generated.
-        # In this case, we need to regenerate both. This scenario should ideally not happen with the new logic.
-        if [ ! -f "${cfg.jwkPath}" ]; then
-          echo "JWK key still not found after all attempts. This indicates an issue with key generation. Please check logs."
-          exit 1
-        fi
-
-        exec ${cfg.package}/bin/cocoon run
-      '';
     };
   };
 }
