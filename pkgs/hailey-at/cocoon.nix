@@ -46,8 +46,8 @@ buildGoModule rec {
     };
 
     organization = {
-      name = "hailey.at";
-      displayName = "Hailey (hailey.at)";
+      name = "hailey-at";
+      displayName = "Hailey (hailey-at)";
       website = "https://tangled.sh/@hailey.at/cocoon";
       contact = "@hailey.at";
       maintainer = "Hailey";
@@ -79,8 +79,8 @@ buildGoModule rec {
     maintainers = [ ];
 
     organizationalContext = {
-      organization = "hailey.at";
-      displayName = "Hailey (hailey.at)";
+      organization = "hailey-at";
+      displayName = "Hailey (hailey-at)";
       needsMigration = false;
       migrationPriority = "n/a";
     };

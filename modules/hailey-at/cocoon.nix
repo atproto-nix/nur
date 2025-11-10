@@ -239,11 +239,12 @@ in
       after = [ "network.target" ];
       wants = [ "network.target" ];
 
-      serviceConfig = {
-        Type = "exec";
-        User = cfg.user;
-        Group = cfg.group;
-        WorkingDirectory = cfg.dataDir;
+    serviceConfig = {
+      Type = "exec";
+      User = "cocoon";
+      Group = "cocoon";
+      WorkingDirectory = "/var/lib/cocoon";
+      Path = lib.makeBinPath [ pkgs.python313Packages.python ];
         Restart = "on-failure";
         RestartSec = "10s";
 
@@ -328,7 +329,16 @@ in
 
           # Generate JWK key from the temporary PEM private key
           echo "Generating JWK key at ${cfg.jwkPath} from temporary PEM private key..."
-          ${pkgs.openssl}/bin/openssl ec -in "$TEMP_PEM_KEY" -inform PEM -pubout -outform PEM -out "${cfg.jwkPath}"
+          # Use python and pyjwkest to convert PEM to JWK
+          ${pkgs.python313Packages.python}/bin/python -c '
+import sys
+from jwcrypto import jwk
+import json
+
+pem_data = sys.stdin.read()
+key = jwk.JWK.from_pem(pem_data.encode("utf-8"))
+print(json.dumps(json.loads(key.export_public()), indent=2))
+          ' < "$TEMP_PEM_KEY" > /var/lib/cocoon/keys/jwk.key
           chmod 664 "${cfg.jwkPath}"
           rm "$TEMP_PEM_KEY" # Clean up temporary file
         fi

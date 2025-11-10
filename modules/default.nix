@@ -25,7 +25,7 @@ let
     infrastructure = [
       "tangled"
       "stream-place"
-      "hailey.at"
+      "hailey-at"
       # DISABLED: Supabase code is incomplete
       # "supabase"
     ];
