@@ -315,13 +315,13 @@ in
         # Ensure keys exist or create them
         if [ ! -f "${cfg.rotationKeyPath}" ]; then
           echo "Generating rotation key at ${cfg.rotationKeyPath}..."
-          ${pkgs.openssl}/bin/openssl genrsa -out "${cfg.rotationKeyPath}" 2048
+          ${pkgs.openssl}/bin/openssl ecparam -name secp256k1 -genkey -noout -out "${cfg.rotationKeyPath}"
           chmod 600 "${cfg.rotationKeyPath}"
         fi
 
         if [ ! -f "${cfg.jwkPath}" ]; then
           echo "Generating JWK key at ${cfg.jwkPath} from rotation key..."
-          ${pkgs.openssl}/bin/openssl rsa -in "${cfg.rotationKeyPath}" -pubout -out "${cfg.jwkPath}"
+          ${pkgs.openssl}/bin/openssl ec -in "${cfg.rotationKeyPath}" -pubout -out "${cfg.jwkPath}"
           chmod 664 "${cfg.jwkPath}"
         fi
 
