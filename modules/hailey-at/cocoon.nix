@@ -291,7 +291,7 @@ in
         COCOON_SMTP_HOST = cfg.settings.smtp.host;
       } // optionalAttrs (cfg.settings.smtp.port != null) {
         COCOON_SMTP_PORT = toString cfg.settings.smtp.port;
-      } // optionalAttrs (cfg.Gsettings.smtp.email != null) {
+      } // optionalAttrs (cfg.settings.smtp.email != null) {
         COCOON_SMTP_EMAIL = cfg.settings.smtp.email;
       } // optionalAttrs (cfg.settings.smtp.name != null) {
         COCOON_SMTP_NAME = cfg.settings.smtp.name;
