@@ -309,16 +309,20 @@ in
       };
 
       script = ''
-        export COCOON_ADMIN_PASSWORD=$(cat /run/secrets/cocoon-admin-password)
-        export COCOON_SESSION_SECRET=$(cat /run/secrets/cocoon-session-secret)
+        export COCOON_ADMIN_PASSWORD=$(cat /run/credentials/hailey-at-cocoon.service/admin_password)
+        export COCOON_SESSION_SECRET=$(cat /run/credentials/hailey-at-cocoon.service/session_secret)
+
         # Ensure keys exist or create them
-        if [ ! -f "${cfg.rotationKeyPath}" ] || [ ! -f "${cfg.jwkPath}" ]; then
-          echo "Generating cryptographic keys..."
-          # TODO: Add key generation logic here
-          # For now, fail if keys don't exist
-          echo "ERROR: Keys not found at ${cfg.keysDir}"
-          echo "Please generate keys manually before starting the service"
-          exit 1
+        if [ ! -f "${cfg.rotationKeyPath}" ]; then
+          echo "Generating rotation key at ${cfg.rotationKeyPath}..."
+          ${pkgs.openssl}/bin/openssl genrsa -out "${cfg.rotationKeyPath}" 2048
+          chmod 600 "${cfg.rotationKeyPath}"
+        fi
+
+        if [ ! -f "${cfg.jwkPath}" ]; then
+          echo "Generating JWK key at ${cfg.jwkPath} from rotation key..."
+          ${pkgs.openssl}/bin/openssl rsa -in "${cfg.rotationKeyPath}" -pubout -out "${cfg.jwkPath}"
+          chmod 664 "${cfg.jwkPath}"
         fi
 
         exec ${cfg.package}/bin/cocoon
