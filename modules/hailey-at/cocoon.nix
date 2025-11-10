@@ -7,9 +7,14 @@ let
   cfg = config.services.hailey-at-cocoon;
 
   # Create a Python env just for the keygen script
-  # This automatically includes all dependencies (like requests, and certifi)
+  # We must include all dependencies, as the pyjwkest package in nixpkgs
+  # seems to be missing them.
   keygenPython = pkgs.python312Packages.python.withPackages (ps: [
     ps.pyjwkest
+    ps.six
+    ps.pycryptodomex
+    ps.requests
+    ps.future
   ]);
 in
 {
