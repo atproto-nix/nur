@@ -31,7 +31,7 @@
 #
 # ==============================================================================
 
-{ pkgs, lib, buildGoApplication, buildGoModule ? pkgs.buildGoModule, ... }:
+{ pkgs, lib, buildGoModule, ... }:
 
 let
   # BEST PRACTICE: Define comprehensive organizational metadata
@@ -53,9 +53,9 @@ let
   # This allows flexibility and clarity within organization
   packages = {
     appview-static-files = pkgs.callPackage ./appview-static-files.nix { };
-    appview = pkgs.callPackage ./appview.nix { inherit buildGoApplication; };
-    knot = pkgs.callPackage ./knot.nix { inherit buildGoApplication; };
-    spindle = pkgs.callPackage ./spindle.nix { inherit buildGoApplication; };
+    appview = pkgs.callPackage ./appview.nix { inherit buildGoModule; };
+    knot = pkgs.callPackage ./knot.nix { inherit buildGoModule; };
+    spindle = pkgs.callPackage ./spindle.nix { inherit buildGoModule; };
     avatar = pkgs.callPackage ./avatar.nix { };
     camo = pkgs.callPackage ./camo.nix { };
     genjwks = pkgs.callPackage ./genjwks.nix { };

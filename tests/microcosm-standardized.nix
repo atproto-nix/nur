@@ -1,7 +1,7 @@
 # Test for standardized Microcosm service modules
 { pkgs }:
 
-pkgs.nixosTest {
+pkgs.testers.nixosTest {
   name = "microcosm-standardized";
 
   nodes.machine = { ... }: {

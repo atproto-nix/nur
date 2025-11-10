@@ -6,7 +6,7 @@ let
   plcbundlePkg = pkgs.plcbundle-plcbundle or pkgs.callPackage ../pkgs/plcbundle { inherit lib; };
 in
 
-pkgs.nixosTest {
+pkgs.testers.nixosTest {
   name = "plcbundle-integration";
 
   # Two nodes: one as primary archiver, one as bundle server

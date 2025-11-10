@@ -5,7 +5,7 @@ buildGoModule rec {
   version = "0.1.0";
 
   src = fetchFromTangled {
-    domain = "tangled.sh";
+    domain = "tangled.org";
     owner = "@hailey.at";
     repo = "cocoon";
     rev = "5a6fbfab88f0c811b708c08b334cd56716081963";

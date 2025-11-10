@@ -3,7 +3,7 @@
 
 let
   # Import the test framework
-  nixosTest = import (pkgs.path + "/nixos/tests/make-test-python.nix");
+  nixosTest = import (pkgs.path + "/nixos/tests/testers/make-test-python.nix");
   
   # Test configuration for Indigo services
   testConfig = {

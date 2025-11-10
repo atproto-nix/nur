@@ -1,7 +1,7 @@
 # NixOS ecosystem integration test for ATProto services
 { pkgs }:
 
-pkgs.nixosTest {
+pkgs.testers.nixosTest {
   name = "atproto-nixos-ecosystem-integration";
   
   meta = with pkgs.lib.maintainers; {

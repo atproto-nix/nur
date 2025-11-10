@@ -1,6 +1,6 @@
 { pkgs }:
 
-pkgs.nixosTest {
+pkgs.testers.nixosTest {
   name = "constellation-build-verification";
 
   nodes.machine = { config, pkgs, ... }: {

@@ -3,7 +3,7 @@
 let
   indigo = pkgs.callPackage ../pkgs/bluesky/indigo.nix { inherit (pkgs) buildGoModule; };
 in
-pkgs.nixosTest {
+pkgs.testers.nixosTest {
   name = "bluesky-indigo";
   nodes.machine = { config, pkgs, ... }:
   {

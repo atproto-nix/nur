@@ -3,7 +3,7 @@
 let
   lycan = pkgs.callPackage ../pkgs/mackuba/lycan.nix { };
 in
-pkgs.nixosTest {
+pkgs.testers.nixosTest {
   name = "mackuba-lycan";
   nodes.machine = { config, pkgs, ... }:
   {

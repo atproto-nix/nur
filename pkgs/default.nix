@@ -63,7 +63,7 @@ let
 
     # Development tools and infrastructure
     # Core infrastructure tools, build systems, and development utilities
-    tangled = pkgs.callPackage ./tangled { inherit lib buildGoModule buildGoApplication; fetchFromTangled = pkgs.fetchFromTangled; };
+    tangled = pkgs.callPackage ./tangled { inherit lib buildGoModule; fetchFromTangled = pkgs.fetchFromTangled; };
 
     # JavaScript/Wasm runtime for Cloudflare Workers self-hosting
     # Cloudflare's open-source workerd runtime for self-hosting Worker-based services
@@ -116,7 +116,6 @@ let
   isDerivation = pkg:
     # Standard Nix derivation (has type field)
     (pkg.type or "" == "derivation") ||
-    # Has Nix store path properties (indicates derivation-like)
     (builtins.isAttrs pkg && pkg ? outPath) ||
     (builtins.isAttrs pkg && pkg ? drvPath);
 
@@ -156,7 +155,4 @@ let
 
 in
 
-# BEST PRACTICE: Export only flattened packages to flake
-# Metadata and organizational structure available separately (legacyPackages)
-# This ensures only derivations are exported to packages.SYSTEM
 flattenedPackages

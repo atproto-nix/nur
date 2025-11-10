@@ -184,17 +184,11 @@
             indigo-gosky = selectedPackages.bluesky-indigo-gosky;
           };
 
-          # BEST PRACTICE: Maintain legacyPackages
-          # Provides access via:
-          #   nix eval '.#legacyPackages.x86_64-linux.package-name'
-          # Useful for exploring packages before flakes adoption
-          legacyPackages = nurPackages;
         };
 
     in {
       # Apply package preparation for each system
       packages = forAllSystems (system: (preparePackages system).packages);
-      legacyPackages = forAllSystems (system: (preparePackages system).legacyPackages);
 
       overlays = {
         default = final: prev: {
@@ -212,16 +206,13 @@
             jetstream = self.packages.${final.system}.microcosm-jetstream;
             constellation = self.packages.${final.system}.microcosm-constellation;
             allegedly = self.packages.${final.system}.microcosm-allegedly;
-            default = self.packages.${final.system}.microcosm;
           };
           smokesignal-events = {
             quickdid = self.packages.${final.system}.smokesignal-events-quickdid;
-            default = self.packages.${final.system}.smokesignal-events;
           };
           stream-place = {
             streamplace = self.packages.${final.system}.stream-place-streamplace;
             binary = self.packages.${final.system}.stream-place-binary;
-            default = self.packages.${final.system}.stream-place;
           };
           tangled = {
             spindle = self.packages.${final.system}.tangled-spindle;
@@ -232,7 +223,6 @@
             avatar = self.packages.${final.system}.tangled-avatar;
             appview = self.packages.${final.system}.tangled-appview;
             appview-static-files = self.packages.${final.system}.tangled-appview-static-files;
-            default = self.packages.${final.system}.tangled;
           };
           bluesky = {
             indigo = self.packages.${final.system}.bluesky-indigo;
@@ -254,7 +244,6 @@
             atproto-identity = self.packages.${final.system}.bluesky-atproto-identity;
             atproto-did = self.packages.${final.system}.bluesky-atproto-did;
             atproto-api = self.packages.${final.system}.bluesky-atproto-api;
-            default = self.packages.${final.system}.bluesky;
           };
           blacksky = {
             rsky = self.packages.${final.system}.blacksky-rsky;
@@ -264,64 +253,50 @@
             firehose = self.packages.${final.system}.blacksky-firehose;
             labeler = self.packages.${final.system}.blacksky-labeler;
             satnav = self.packages.${final.system}.blacksky-satnav;
-            default = self.packages.${final.system}.blacksky;
           };
           grain-social = {
             grain = self.packages.${final.system}.grain-social-grain;
             darkroom = self.packages.${final.system}.grain-social-darkroom;
             cli = self.packages.${final.system}.grain-social-cli;
-            default = self.packages.${final.system}.grain-social;
           };
           hyperlink-academy = {
             leaflet = self.packages.${final.system}.hyperlink-academy-leaflet;
-            default = self.packages.${final.system}.hyperlink-academy;
           };
           likeandscribe = {
             frontpage = self.packages.${final.system}.likeandscribe-frontpage;
-            default = self.packages.${final.system}.likeandscribe;
           };
           mackuba = {
             lycan = self.packages.${final.system}.mackuba-lycan;
-            default = self.packages.${final.system}.mackuba;
           };
           parakeet-social = {
             parakeet = self.packages.${final.system}.parakeet-social-parakeet;
-            default = self.packages.${final.system}.parakeet-social;
           };
           plcbundle = {
             plcbundle = self.packages.${final.system}.plcbundle-plcbundle;
-            default = self.packages.${final.system}.plcbundle-all;
           };
           slices-network = {
             packages = self.packages.${final.system}.slices-network-packages;
             frontend = self.packages.${final.system}.slices-network-frontend;
             api = self.packages.${final.system}.slices-network-api;
-            default = self.packages.${final.system}.slices-network;
           };
           teal-fm = {
             teal = self.packages.${final.system}.teal-fm-teal;
-            default = self.packages.${final.system}.teal-fm;
           };
           whey-party = {
             red-dwarf = self.packages.${final.system}.whey-party-red-dwarf;
-            default = self.packages.${final.system}.whey-party;
           };
           whyrusleeping = {
             konbini = self.packages.${final.system}.whyrusleeping-konbini;
-            default = self.packages.${final.system}.whyrusleeping;
           };
           witchcraft-systems = {
             pds-dash = self.packages.${final.system}.witchcraft-systems-pds-dash;
             pds-dash-themed = self.packages.${final.system}.witchcraft-systems-pds-dash-themed;
-            default = self.packages.${final.system}.witchcraft-systems;
           };
           yoten-app = {
             yoten = self.packages.${final.system}.yoten-app-yoten;
-            default = self.packages.${final.system}.yoten-app;
           };
           baileytownsend = {
             pds-gatekeeper = self.packages.${final.system}.baileytownsend-pds-gatekeeper;
-            default = self.packages.${final.system}.baileytownsend;
           };
 
           # Flat names for backward compatibility

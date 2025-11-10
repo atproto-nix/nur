@@ -127,7 +127,7 @@ let
     let
       orgConfig = organizations."${orgName}";
     in
-    pkgs.nixosTest {
+    pkgs.testers.nixosTest {
       name = "${orgName}-${name}";
       nodes.machine = { config, pkgs, ... }:
       {

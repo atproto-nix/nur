@@ -235,7 +235,7 @@ in
 
   # Example test configuration (can be run with nixos-test)
   meta.tests = {
-    example = pkgs.nixosTest {
+    example = pkgs.testers.nixosTest {
       name = "example-secure-app";
       nodes.machine = { config, pkgs, ... }: {
         imports = [ ./. ];

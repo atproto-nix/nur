@@ -25,7 +25,7 @@ let
   ];
 
   makeServiceTest = { name, testPort, extraOptions }:
-    pkgs.nixosTest {
+    pkgs.testers.nixosTest {
       name = "bluesky-${name}";
       nodes.machine = { config, pkgs, ... }:
       {

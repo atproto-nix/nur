@@ -1,6 +1,6 @@
 { pkgs }:
 
-pkgs.nixosTest {
+pkgs.testers.nixosTest {
   name = "constellation-shell";
 
   nodes.machine = { ... }:

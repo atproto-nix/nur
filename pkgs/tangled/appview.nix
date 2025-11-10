@@ -1,5 +1,5 @@
 { lib
-, buildGoApplication
+, buildGoModule
 , fetchFromTangled
 , pkg-config
 , sqlite
@@ -17,16 +17,14 @@ let
     rev = "2e5a4cde904d86825cefe5971e68f1bdfb1dd36f";
     hash = "sha256-qDVJ2sEQL0TJbWer6ByhhQrzHE1bZI3U1mmCk0sPZqo=";
   };
-
-  # Read the gomod2nix.toml file from the source
-  modules = "${src}/nix/gomod2nix.toml";
 in
 
-buildGoApplication rec {
+buildGoModule rec {
   pname = "appview";
   version = "0.1.0";
 
-  inherit src modules;
+  inherit src;
+  vendorHash = "sha256-fM1JAVX94qLCObi7FbgtKjl+pGGmWfbQJc0+IdzO3PQ=";
 
   subPackages = [ "cmd/appview" ];
 
@@ -39,14 +37,7 @@ buildGoApplication rec {
   ];
 
   # CGO settings for sqlite
-  CGO_ENABLED = 1;
   tags = [ "libsqlite3" ];
-
-  # Copy static files before building (needed for Go embed)
-  postUnpack = ''
-    mkdir -p source/appview/pages/static
-    cp -frv ${appview-static-files}/* source/appview/pages/static
-  '';
 
   # Build flags
   ldflags = [

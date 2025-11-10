@@ -4,7 +4,7 @@ let
   rskyPackages = pkgs.callPackage ../pkgs/blacksky/rsky { inherit craneLib; };
   pds = rskyPackages.pds;
 in
-pkgs.nixosTest {
+pkgs.testers.nixosTest {
   name = "blacksky-pds";
   nodes.machine = { config, pkgs, ... }:
   {

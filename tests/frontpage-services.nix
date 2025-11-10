@@ -51,7 +51,7 @@ let
   };
 
 in
-pkgs.nixosTest {
+pkgs.testers.nixosTest {
   name = "frontpage-services";
   
   nodes = {

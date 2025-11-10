@@ -4,7 +4,7 @@ let
   microcosmPackages = pkgs.callPackage ../pkgs/microcosm { inherit craneLib; };
   constellation = microcosmPackages.constellation;
 in
-pkgs.nixosTest {
+pkgs.testers.nixosTest {
   name = "microcosm-constellation";
   nodes.machine = { config, pkgs, ... }:
   {
