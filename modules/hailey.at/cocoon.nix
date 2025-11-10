@@ -314,7 +314,7 @@ in
         # Ensure keys exist or create them
         if [ ! -f "${cfg.rotationKeyPath}" ]; then
           echo "Generating rotation key at ${cfg.rotationKeyPath}..."
-          ${pkgs.openssl}/bin/openssl ecparam -name secp256k1 -genkey -noout -outform DER -out "${cfg.rotationKeyPath}"
+          ${pkgs.openssl}/bin/openssl ecparam -name secp256k1 -genkey -noout -outform PEM -out "${cfg.rotationKeyPath}"
           chmod 600 "${cfg.rotationKeyPath}"
         fi
 
