@@ -320,7 +320,7 @@ in
 
         if [ ! -f "${cfg.jwkPath}" ]; then
           echo "Generating JWK key at ${cfg.jwkPath} from rotation key..."
-          ${pkgs.openssl}/bin/openssl ec -in "${cfg.rotationKeyPath}" -inform DER -pubout -outform PEM -out "${cfg.jwkPath}"
+          ${pkgs.openssl}/bin/openssl ec -in "${cfg.rotationKeyPath}" -inform PEM -pubout -outform PEM -out "${cfg.jwkPath}"
           chmod 664 "${cfg.jwkPath}"
         fi
 
