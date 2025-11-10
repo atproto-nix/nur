@@ -308,6 +308,7 @@ in
       };
 
       script = ''
+        set -x
         export COCOON_ADMIN_PASSWORD=$(cat /run/secrets/cocoon-admin-password)
         export COCOON_SESSION_SECRET=$(cat /run/secrets/cocoon-session-secret)
 
@@ -316,6 +317,9 @@ in
           echo "Generating rotation key at ${cfg.rotationKeyPath}..."
           ${pkgs.openssl}/bin/openssl ecparam -name secp256k1 -genkey -noout -outform PEM -out "${cfg.rotationKeyPath}"
           chmod 600 "${cfg.rotationKeyPath}"
+          echo "--- Content of rotation.key after generation ---"
+          cat "${cfg.rotationKeyPath}"
+          echo "------------------------------------------------"
         fi
 
         if [ ! -f "${cfg.jwkPath}" ]; then
