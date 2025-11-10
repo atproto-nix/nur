@@ -255,16 +255,18 @@ in
         ${pkgs.coreutils}/bin/mkdir -p "${cfg.keysDir}"
         ${pkgs.coreutils}/bin/chown "${cfg.user}:${cfg.group}" "${cfg.keysDir}"
 
-        # Generate rotation key if it doesn't exist
-        if [ ! -f "${cfg.rotationKeyPath}" ]; then
-          ${pkgs.coreutils}/bin/echo "Generating rotation key at ${cfg.rotationKeyPath}..."
+        # Validate existing rotation key, or generate a new one.
+        # This handles cases where an invalid key was created by a previous version of the script.
+        if ! [ -f "${cfg.rotationKeyPath}" ] || ! ${pkgs.openssl}/bin/openssl ec -in "${cfg.rotationKeyPath}" -inform DER -check -noout >/dev/null 2>&1; then
+          ${pkgs.coreutils}/bin/echo "Invalid or missing rotation key. Generating new key..."
+          ${pkgs.coreutils}/bin/rm -f "${cfg.rotationKeyPath}" "${cfg.jwkPath}"
           ${pkgs.openssl}/bin/openssl ecparam -name secp256k1 -genkey -noout -outform DER -out "${cfg.rotationKeyPath}"
           ${pkgs.coreutils}/bin/chown "${cfg.user}:${cfg.group}" "${cfg.rotationKeyPath}"
           ${pkgs.coreutils}/bin/chmod 600 "${cfg.rotationKeyPath}"
         fi
 
         # Generate JWK if it doesn't exist
-        if [ ! -f "${cfg.jwkPath}" ]; then
+        if ! [ -f "${cfg.jwkPath}" ]; then
           ${pkgs.coreutils}/bin/echo "Generating JWK at ${cfg.jwkPath}..."
 
           PUB_KEY_TEXT=$(${pkgs.openssl}/bin/openssl ec -in "${cfg.rotationKeyPath}" -inform DER -pubout | ${pkgs.openssl}/bin/openssl ec -pubin -text -noout 2>/dev/null)
