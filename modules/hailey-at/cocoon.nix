@@ -5,6 +5,12 @@ with lib;
 
 let
   cfg = config.services.hailey-at-cocoon;
+
+  # Create a Python env just for the keygen script
+  # This automatically includes all dependencies (like requests, and certifi)
+  keygenPython = pkgs.python312Packages.python.withPackages (ps: [
+    ps.pyjwkest
+  ]);
 in
 {
   options.services.hailey-at-cocoon = {
@@ -285,7 +291,7 @@ in
         COCOON_SMTP_HOST = cfg.settings.smtp.host;
       } // optionalAttrs (cfg.settings.smtp.port != null) {
         COCOON_SMTP_PORT = toString cfg.settings.smtp.port;
-      } // optionalAttrs (cfg.settings.smtp.email != null) {
+      } // optionalAttrs (cfg.Gsettings.smtp.email != null) {
         COCOON_SMTP_EMAIL = cfg.settings.smtp.email;
       } // optionalAttrs (cfg.settings.smtp.name != null) {
         COCOON_SMTP_NAME = cfg.settings.smtp.name;
@@ -328,8 +334,8 @@ in
 
           # Generate JWK key from the temporary PEM private key
           echo "Generating JWK key at ${cfg.jwkPath} from temporary PEM private key..."
-          # Use python and pyjwkest to convert PEM to JWK
-          PYTHONPATH=${pkgs.python312Packages.pyjwkest}/lib/python3.12/site-packages:${pkgs.python312Packages.six}/lib/python3.12/site-packages:${pkgs.python312Packages.pycryptodomex}/lib/python3.12/site-packages:${pkgs.python312Packages.requests}/lib/python3.12/site-packages:${pkgs.python312Packages.urllib3}/lib/python3.12/site-packages:${pkgs.python312Packages.future}/lib/python3.12/site-packages:${pkgs.python312Packages.idna}/lib/python3.12/site-packages ${pkgs.python312Packages.python}/bin/python -c '
+          # Use the dedicated python env to convert PEM to JWK
+          ${keygenPython}/bin/python -c '
 import sys
 from jwkest import jwk
 import json
