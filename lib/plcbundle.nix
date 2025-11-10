@@ -42,9 +42,9 @@ rec {
   # Standard restart configuration
   standardRestartConfig = {
     Restart = "on-failure";
-    RestartSec = "5s";
+    RestartSec = "5";  # Changed from "5s" to "5"
     StartLimitBurst = 3;
-    StartLimitIntervalSec = "60s";
+    StartLimitInterval = "60";  # Changed from StartLimitIntervalSec to StartLimitInterval
   };
 
   # Helper function to create standard plcbundle service options
@@ -122,14 +122,14 @@ rec {
         WorkingDirectory = cfg.dataDir;
 
         # Standard paths
-        ReadWritePaths = [ cfg.dataDir ] ++ (serviceConfig.extraReadWritePaths or []);
+        ReadWritePaths = [ cfg.dataDir ] ++ (if serviceConfig ? extraReadWritePaths then serviceConfig.extraReadWritePaths else []);
         ReadOnlyPaths = [ "/nix/store" ];
 
         # Environment
         Environment = [
           "LOG_LEVEL=${cfg.logLevel}"
-        ] ++ (serviceConfig.extraEnvironment or []);
-      } // (serviceConfig.serviceConfig or {});
+        ] ++ (if serviceConfig ? extraEnvironment then serviceConfig.extraEnvironment else []);
+      } // (removeAttrs (serviceConfig.serviceConfig or {}) [ "extraReadWritePaths" "extraEnvironment" ]);
     };
   };
 
