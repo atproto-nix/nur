@@ -323,7 +323,7 @@ in
           ${pkgs.openssl}/bin/openssl ec -in "$TEMP_PEM_KEY" -outform DER | tail -c 32 > "${cfg.rotationKeyPath}"
           chmod 600 "${cfg.rotationKeyPath}"
           echo "--- Content of rotation.key after generation (raw bytes) ---"
-          hexdump -C "${cfg.rotationKeyPath}"
+          ${pkgs.hexdump}/bin/hexdump -C "${cfg.rotationKeyPath}"
           echo "------------------------------------------------"
 
           # Generate JWK key from the temporary PEM private key
