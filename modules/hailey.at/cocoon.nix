@@ -316,17 +316,38 @@ in
         # Ensure keys exist or create them
         if [ ! -f "${cfg.rotationKeyPath}" ]; then
           echo "Generating rotation key at ${cfg.rotationKeyPath}..."
-          ${pkgs.openssl}/bin/openssl ecparam -name secp256k1 -genkey -noout -outform PEM -out "${cfg.rotationKeyPath}"
+          # Generate a temporary PEM private key
+          TEMP_PEM_KEY=$(mktemp)
+          ${pkgs.openssl}/bin/openssl ecparam -name secp256k1 -genkey -noout -outform PEM -out "$TEMP_PEM_KEY"
+          # Extract the raw 32-byte private key from the temporary PEM file
+          ${pkgs.openssl}/bin/openssl ec -in "$TEMP_PEM_KEY" -outform DER | tail -c 32 > "${cfg.rotationKeyPath}"
           chmod 600 "${cfg.rotationKeyPath}"
-          echo "--- Content of rotation.key after generation ---"
-          cat "${cfg.rotationKeyPath}"
+          echo "--- Content of rotation.key after generation (raw bytes) ---"
+          hexdump -C "${cfg.rotationKeyPath}"
           echo "------------------------------------------------"
+
+          # Generate JWK key from the temporary PEM private key
+          echo "Generating JWK key at ${cfg.jwkPath} from temporary PEM private key..."
+          ${pkgs.openssl}/bin/openssl ec -in "$TEMP_PEM_KEY" -inform PEM -pubout -outform PEM -out "${cfg.jwkPath}"
+          chmod 664 "${cfg.jwkPath}"
+          rm "$TEMP_PEM_KEY" # Clean up temporary file
         fi
 
-        if [ ! -f "${cfg.jwkPath}" ]; then
-          echo "Generating JWK key at ${cfg.jwkPath} from rotation key..."
-          ${pkgs.openssl}/bin/openssl ec -in "${cfg.rotationKeyPath}" -inform PEM -pubout -outform PEM -out "${cfg.jwkPath}"
+        # If rotationKeyPath exists but jwkPath doesn't, generate jwkPath from rotationKeyPath (assuming rotationKeyPath is PEM for this case)
+        # This block is for backward compatibility if rotationKeyPath was previously generated as PEM
+        if [ -f "${cfg.rotationKeyPath}" ] && [ ! -f "${cfg.jwkPath}" ]; then
+          echo "JWK key not found, attempting to generate from existing rotation key (assuming PEM format)..."
+          # Attempt to generate JWK from rotationKeyPath, assuming it might be PEM from a previous run
+          # If rotationKeyPath is raw bytes, this command will fail, but the primary generation block above handles the correct flow.
+          ${pkgs.openssl}/bin/openssl ec -in "${cfg.rotationKeyPath}" -inform PEM -pubout -outform PEM -out "${cfg.jwkPath}" || true
           chmod 664 "${cfg.jwkPath}"
+        fi
+
+        # Ensure jwkPath exists after all attempts, if not, it means rotationKeyPath was raw and jwkPath wasn't generated.
+        # In this case, we need to regenerate both. This scenario should ideally not happen with the new logic.
+        if [ ! -f "${cfg.jwkPath}" ]; then
+          echo "JWK key still not found after all attempts. This indicates an issue with key generation. Please check logs."
+          exit 1
         fi
 
         exec ${cfg.package}/bin/cocoon run
