@@ -247,7 +247,7 @@ in
         WorkingDirectory = cfg.dataDir;
         Restart = "on-failure";
         RestartSec = "10s";
-        LoadCredential = [ "admin_password" "session_secret" ];
+
 
         # Security hardening
         NoNewPrivileges = true;
@@ -309,8 +309,8 @@ in
       };
 
       script = ''
-        export COCOON_ADMIN_PASSWORD=$(cat /run/credentials/hailey-at-cocoon.service/admin_password)
-        export COCOON_SESSION_SECRET=$(cat /run/credentials/hailey-at-cocoon.service/session_secret)
+        export COCOON_ADMIN_PASSWORD=$(cat /run/secrets/cocoon-admin-password)
+        export COCOON_SESSION_SECRET=$(cat /run/secrets/cocoon-session-secret)
 
         # Ensure keys exist or create them
         if [ ! -f "${cfg.rotationKeyPath}" ]; then
