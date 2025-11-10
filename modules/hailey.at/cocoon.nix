@@ -325,7 +325,7 @@ in
           chmod 664 "${cfg.jwkPath}"
         fi
 
-        exec ${cfg.package}/bin/cocoon
+        exec ${cfg.package}/bin/cocoon serve
       '';
     };
   };
