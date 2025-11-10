@@ -12,12 +12,12 @@ buildGoModule rec {
     domain = "tangled.org";
     owner = "@atscan.net";
     repo = "plcbundle";
-    rev = "bad9bb624a6bc1042bd0c699bf14c58c99015d36";
-    hash = "sha256-Km//ZpdQ2TEgjrcEEMn23qiKzOuNFzSazJiDYI9ARbo=";
+    rev = "12a52286c0734338fceb29ec548f72521f2340c2";
+    hash = "sha256-msSTk797cghWhc1J4If9YwfyMXjapZBIVoMKOD+C6dE=";
   };
 
   # Vendor hash for Go dependencies
-  vendorHash = "sha256-R1ZlbyO09Y5ygali7A25ujdi0kocKEtnNoY5XVzcm+M=";
+  vendorHash = "sha256-IAYFAsFtAfnBz/U56bQqUZQf8CeohW7fMV6BAxW7SkI=";
 
   # Build the CLI tool
   subPackages = [ "cmd/plcbundle" ];
