@@ -329,7 +329,7 @@ in
           # Generate JWK key from the temporary PEM private key
           echo "Generating JWK key at ${cfg.jwkPath} from temporary PEM private key..."
           # Use python and pyjwkest to convert PEM to JWK
-          PYTHONPATH=${pkgs.python312Packages.pyjwkest}/lib/python3.12/site-packages ${pkgs.python312Packages.python}/bin/python -c '
+          PYTHONPATH=${pkgs.python312Packages.pyjwkest}/lib/python3.12/site-packages:${pkgs.python312Packages.six}/lib/python3.12/site-packages ${pkgs.python312Packages.python}/bin/python -c '
 import sys
 from jwkest import jwk
 import json
