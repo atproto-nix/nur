@@ -7,14 +7,16 @@ let
   cfg = config.services.hailey-at-cocoon;
 
   # Create a Python env just for the keygen script
-  # We must include all dependencies, as the pyjwkest package in nixpkgs
-  # seems to be missing them.
+  # We are explicitly adding EVERY dependency from the original PYTHONPATH
+  # to be certain nothing is missed.
   keygenPython = pkgs.python312Packages.python.withPackages (ps: [
     ps.pyjwkest
     ps.six
     ps.pycryptodomex
     ps.requests
+    ps.urllib3
     ps.future
+    ps.idna
   ]);
 in
 {
@@ -298,7 +300,7 @@ in
         COCOON_SMTP_PORT = toString cfg.settings.smtp.port;
       } // optionalAttrs (cfg.settings.smtp.email != null) {
         COCOON_SMTP_EMAIL = cfg.settings.smtp.email;
-      } // optionalAttrs (cfg.settings.smtp.name != null) {
+      all-packages-in-let} // optionalAttrs (cfg.settings.smtp.name != null) {
         COCOON_SMTP_NAME = cfg.settings.smtp.name;
       } // optionalAttrs (cfg.settings.s3.backupsEnabled) {
         COCOON_S3_BACKUPS_ENABLED = "true";
