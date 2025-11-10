@@ -2,7 +2,7 @@
 
 let
   organizationMeta = {
-    name = "hailey.at";
+    name = "hailey-at";
     displayName = "Hailey (hailey.at)";
     description = "ATProto infrastructure tools by Hailey";
     packageCount = 1;

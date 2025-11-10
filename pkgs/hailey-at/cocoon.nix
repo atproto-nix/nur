@@ -9,10 +9,10 @@ buildGoModule rec {
     owner = "@hailey.at";
     repo = "cocoon";
     rev = "5a6fbfab88f0c811b708c08b334cd56716081963";
-    sha256 = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="; # Temporary - will be replaced with actual hash from build error
+    sha256 = "sha256-9gJj+edTGkQsHH72F2f7A6EWDet+k38+8UZ1KN2UGT0=";
   };
 
-  vendorHash = "sha256-1xrrlawk7klfiy0rj04ch1k2191gd2qkvckx3pppgb8mw09wqsg5";
+  vendorHash = "sha256-5WnME+AVrXfvHX2yPbFoL6QgZoCMAJmBj47OM7miOfc=";
 
   # Build the main cocoon binary
   subPackages = [ "cmd/cocoon" ];

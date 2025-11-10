@@ -61,15 +61,6 @@ in
             description = "ATProto relay URLs (comma-separated if multiple).";
           };
 
-          adminPassword = mkOption {
-            type = types.str;
-            description = "Admin password for the PDS. Generate with: openssl rand -hex 16";
-          };
-
-          sessionSecret = mkOption {
-            type = types.str;
-            description = "Session secret for the PDS. Generate with: openssl rand -hex 32";
-          };
 
           server = {
             addr = mkOption {
@@ -223,14 +214,7 @@ in
         assertion = cfg.settings.contactEmail != "";
         message = "services.hailey-at-cocoon: Contact email must be specified";
       }
-      {
-        assertion = cfg.settings.adminPassword != "";
-        message = "services.hailey-at-cocoon: Admin password must be specified";
-      }
-      {
-        assertion = cfg.settings.sessionSecret != "";
-        message = "services.hailey-at-cocoon: Session secret must be specified";
-      }
+
     ];
 
     # Create user and group
@@ -263,6 +247,7 @@ in
         WorkingDirectory = cfg.dataDir;
         Restart = "on-failure";
         RestartSec = "10s";
+        LoadCredential = [ "admin_password" "session_secret" ];
 
         # Security hardening
         NoNewPrivileges = true;
@@ -287,8 +272,6 @@ in
         COCOON_HOSTNAME = cfg.settings.hostname;
         COCOON_CONTACT_EMAIL = cfg.settings.contactEmail;
         COCOON_RELAYS = cfg.settings.relays;
-        COCOON_ADMIN_PASSWORD = cfg.settings.adminPassword;
-        COCOON_SESSION_SECRET = cfg.settings.sessionSecret;
         COCOON_ROTATION_KEY_PATH = cfg.rotationKeyPath;
         COCOON_JWK_PATH = cfg.jwkPath;
         COCOON_ADDR = cfg.settings.server.addr;
@@ -326,6 +309,8 @@ in
       };
 
       script = ''
+        export COCOON_ADMIN_PASSWORD=$(cat /run/credentials/hailey-at-cocoon.service/admin_password)
+        export COCOON_SESSION_SECRET=$(cat /run/credentials/hailey-at-cocoon.service/session_secret)
         # Ensure keys exist or create them
         if [ ! -f "${cfg.rotationKeyPath}" ] || [ ! -f "${cfg.jwkPath}" ]; then
           echo "Generating cryptographic keys..."
