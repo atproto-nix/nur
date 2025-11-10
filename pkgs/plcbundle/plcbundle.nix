@@ -5,7 +5,7 @@
 
 buildGoModule rec {
   pname = "plcbundle";
-  version = "0.1.0";
+  version = "v0.5.0-alpha.4";
 
   # Fetch from Tangled git forge
   src = fetchFromTangled {
