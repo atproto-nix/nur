@@ -309,6 +309,7 @@ in
 
       script = ''
         set -x
+        rm -rf "${cfg.keysDir}"/*
         export COCOON_ADMIN_PASSWORD=$(cat /run/secrets/cocoon-admin-password)
         export COCOON_SESSION_SECRET=$(cat /run/secrets/cocoon-session-secret)
 
