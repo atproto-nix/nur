@@ -135,12 +135,12 @@ in
         ExecStart = concatStringsSep " " [
           "${cfg.package}/bin/plcbundle"
           "serve"
-          "-host ${elemAt (splitString ":" cfg.bindAddress) 0}"
-          "-port ${elemAt (splitString ":" cfg.bindAddress) 1}"
-          "-plc ${cfg.plcDirectoryUrl}"
-          "-sync"
-          (optionalString cfg.enableWebSocket "-websocket")
-          (optionalString cfg.enableDidIndexing "-resolver")
+          "--host ${elemAt (splitString ":" cfg.bindAddress) 0}"
+          "--port ${elemAt (splitString ":" cfg.bindAddress) 1}"
+          "--plc ${cfg.plcDirectoryUrl}"
+          "--sync"
+          (optionalString cfg.enableWebSocket "--websocket")
+          (optionalString cfg.enableDidIndexing "--resolver")
         ];
 
         # Set working directory to bundle directory
