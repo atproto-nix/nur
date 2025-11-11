@@ -281,7 +281,7 @@ in
           hex_to_base64url() {
             # Use xxd for hex to binary, then base64 for encoding
             # The tr commands make it URL-safe
-            ${pkgs.coreutils}/bin/echo -n "$1" | ${pkgs.vim}/bin/xxd -r -p | ${pkgs.coreutils}/bin/base64 | ${pkgs.coreutils}/bin/tr -d '=' | ${pkgs.coreutils}/bin/tr '/+' '_-'
+            ${pkgs.coreutils}/bin/echo -n "$1" | ${pkgs.unixtools.xxd}/bin/xxd -r -p | ${pkgs.coreutils}/bin/base64 | ${pkgs.coreutils}/bin/tr -d '=' | ${pkgs.coreutils}/bin/tr '/+' '_-'
           }
 
           B64_X=$(hex_to_base64url "$HEX_X")
