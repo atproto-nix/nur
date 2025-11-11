@@ -1,5 +1,7 @@
 # Slices.Network NixOS Deployment Guide
 
+⚠️ **Known Issue:** The Slices-network NixOS module is currently excluded from default module imports due to an infinite recursion issue with nested submodules. To use this guide, you must explicitly import the slices-network module or use individual service configurations.
+
 A comprehensive guide to deploying a fully functional Slices.Network instance on NixOS, from development to production multi-tenant deployments.
 
 **Table of Contents**

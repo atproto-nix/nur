@@ -1,5 +1,7 @@
 # Slices.Network Quick Reference
 
+⚠️ **Known Issue:** Slices-network module is currently excluded from default NixOS modules due to an infinite recursion issue with nested submodules. For setup, use individual module imports or work-around below.
+
 Fast lookup guide for common operational tasks.
 
 ## Service Management
