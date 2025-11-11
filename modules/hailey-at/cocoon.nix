@@ -8,23 +8,33 @@ let
 
   # This wrapper script reads secrets from the specified files if not already set,
   # exports them as environment variables, and then starts the main cocoon process.
-  cocoon-wrapper = pkgs.writeShellScriptBin "cocoon-wrapper" ''
-    #!${pkgs.bash}/bin/bash
-    set -eu
-    # Export variables so the cocoon process inherits them
-    set -a
+  cocoon-wrapper =
+    let
+      adminPassFile = cfg.adminPasswordFile;
+      sessionSecretFile = cfg.sessionSecretFile;
+      script = ''
+        #!${pkgs.bash}/bin/bash
+        set -eu
+        # Export variables so the cocoon process inherits them
+        set -a
 
-    if [ -z "''${COCOON_ADMIN_PASSWORD:-}" ] && [ -n "${cfg.adminPasswordFile}" ] && [ -f "${cfg.adminPasswordFile}" ]; then
-      export COCOON_ADMIN_PASSWORD=$(cat "${cfg.adminPasswordFile}")
-    fi
+        ${lib.optionalString (adminPassFile != null) ''
+          if [ -z "''${COCOON_ADMIN_PASSWORD:-}" ] && [ -f "${adminPassFile}" ]; then
+            export COCOON_ADMIN_PASSWORD=$(cat "${adminPassFile}")
+          fi
+        ''}
 
-    if [ -z "''${COCOON_SESSION_SECRET:-}" ] && [ -n "${cfg.sessionSecretFile}" ] && [ -f "${cfg.sessionSecretFile}" ]; then
-      export COCOON_SESSION_SECRET=$(cat "${cfg.sessionSecretFile}")
-    fi
+        ${lib.optionalString (sessionSecretFile != null) ''
+          if [ -z "''${COCOON_SESSION_SECRET:-}" ] && [ -f "${sessionSecretFile}" ]; then
+            export COCOON_SESSION_SECRET=$(cat "${sessionSecretFile}")
+          fi
+        ''}
 
-    set +a
-    exec ${cfg.package}/bin/cocoon run
-  '';
+        set +a
+        exec ${cfg.package}/bin/cocoon run
+      '';
+    in
+    pkgs.writeShellScriptBin "cocoon-wrapper" script;
 
 in
 {
