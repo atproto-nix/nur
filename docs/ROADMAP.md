@@ -1,111 +1,119 @@
 # ATProto NUR - Development Roadmap
 
-**Last Updated:** 2025-10-23
-**Status:** 49 packages, binary cache configured, documentation reorganized
+**Last Updated:** 2025-11-11
+**Status:** 50+ packages, major refactor merged, cocoon fixes in progress
 
 ---
 
 ## Current State
 
 ### Repository Statistics
-- **Total Packages:** 49 (8 Rust, 5 Go, 12 Node.js/TypeScript, 1 Ruby, 23 others)
+- **Total Packages:** 50+ (8 Rust, 5 Go, 12+ Node.js/TypeScript, 1 Ruby, 24+ others)
+- **Package Organizations:** 21 organizations (microcosm, blacksky, bluesky, grain-social, tangled, likeandscribe, etc.)
 - **Module Coverage:** 100% (all services have NixOS modules)
 - **Platforms:** Linux (x86_64, aarch64), macOS (x86_64, aarch64)
-- **Binary Cache:** Cachix configured (awaiting GitHub secret)
+- **Binary Cache:** Cachix fully configured
 - **Repository Health:** 🟢 95% Production Ready
 
-### Recent Build Status
-- **Ongoing Fixes:** The build process has recently experienced instability, particularly with Rust and Deno packages, requiring fixes for hash mismatches, `Cargo.lock` issues, and Deno build task configurations. Work is ongoing to ensure all packages build reliably.
+### Recent Build Status (November 2025)
+- **Major Refactor Merged:** Successful merge of big-refactor branch (#1) with all recent improvements
+- **Ongoing Fixes:** Cocoon package fixes (3 recent commits - df690c3, b6207ca, d11b0b7)
+- **Build Status:** All core packages evaluating correctly
+- **Next Focus:** Complete cocoon fixes and test full build suite
 
-### Recent Completions ✅
+### Recent Completions ✅ (Through November 2025)
 - **Phase 1:** Tangled ecosystem refactoring (tangled-dev → tangled)
 - **Phase 2:** Version pinning (leaflet, slices)
 - **Phase 3:** Module consolidation (frontpage → likeandscribe)
 - **Phase 4:** Grain organization (grain-social)
 - **Phase 5:** Documentation reorganization
+- **Phase 6:** Big refactor branch merge (all major improvements integrated)
 - **New:** Ruby package support (mackuba/lycan)
 - **New:** Multi-language binary caching (Rust/Go/Node.js/Ruby)
+- **New:** Grain Social Deno packages (appview, labeler, notifications)
+- **New:** Deno wrapper script fixes (variable interpolation pattern)
+- **New:** Cocoon package fixes (ongoing)
 
 ---
 
-## Immediate Priorities
+## Immediate Priorities (November 2025)
 
-### 1. Add Cachix GitHub Secret (5 minutes) 🔴
-**Priority:** CRITICAL - Enables binary cache for all users
+### 1. Complete Cocoon Package Fixes (15 minutes) 🟡
+**Priority:** HIGH - In-progress (3 recent commits)
 
-**Action:**
-1. Go to https://app.cachix.org/cache/atproto
-2. Generate auth token
-3. Add to GitHub repository secrets as `CACHIX_AUTH_TOKEN`
+**Status:**
+- 3 commits already applied (df690c3, b6207ca, d11b0b7)
+- Verify fixes are complete
+- Test build: `nix build .#hailey-at-cocoon`
 
-**Impact:** Users can download pre-built binaries (seconds vs minutes/hours)
+**Impact:** Completes last pending package from recent work
 
-### 2. Test Package Builds (30 minutes) 🟡
-**Priority:** HIGH - Validate all packages work
+### 2. Run Full Test Suite (30 minutes) 🟡
+**Priority:** HIGH - Validate all packages after refactor merge
 
 ```bash
-# Build organizational collections
-nix build .#microcosm-all
-nix build .#tangled-all
-nix build .#blacksky-all
+# Verify all packages evaluate
+nix flake check
 
-# Test specific packages
-nix build .#mackuba-lycan
-nix build .#yoten-app-yoten
+# Build key package samples
+nix build .#microcosm-constellation
+nix build .#tangled-spindle
+nix build .#grain-social-appview
+nix build .#hailey-at-cocoon
 ```
 
-### 3. Update GitHub Workflows (15 minutes) 🟡
-**Priority:** HIGH - Add mackuba to CI builds
+### 3. Verify GitHub Actions CI (15 minutes) 🟡
+**Priority:** HIGH - Ensure CI pipeline still works after merge
 
-Update `.github/workflows/build.yml`:
-- Add mackuba organization to build matrix
-- Test lycan package build
+- Check GitHub Actions build status
 - Verify Cachix push works
+- Monitor cache hit rates
 
 ---
 
 ## Short-Term (This Week)
 
-### Documentation
+### Documentation (November 2025)
 
-**Update README** (Done ✅):
-- ✅ Added mackuba/lycan section
-- ✅ Updated package count (49)
-- ✅ Added multi-language caching explanation
+**Current Status:**
+- ✅ README.md fully updated (564 lines, comprehensive)
+- ✅ CLAUDE.md updated with recent fixes and patterns
+- ✅ All 35 docs in docs/ directory maintained
+- 🔄 Documentation update sweep in progress (11/11/2025)
 
-**Create Deployment Guides:**
-- ✅ RED_DWARF.md (moved to docs/guides/)
-- ✅ TANGLED.md (moved to docs/guides/)
-- 💡 LYCAN.md (optional - create if needed)
-
-**Cleanup:**
-- ✅ Merged CACHIX docs → docs/CACHIX.md
-- ✅ Moved MCP_INTEGRATION.md → docs/
-- ✅ Deleted redundant files (agents.md, CACHIX_NEXT_STEPS.md, CACHIX_SETUP.md)
+**Update Strategy:**
+- Sync all docs with current codebase state
+- Update package counts and statistics
+- Verify all code examples are current
+- Link to recent fixes and implementations
 
 ### Testing
 
+**Post-Merge Validation:**
+- ✅ flake.nix evaluates correctly
+- ✅ All packages in pkgs/ directory present (21 organization dirs)
+- ✅ All modules in modules/ directory present (24 module dirs)
+- ✅ 50+ packages across all organizations
+- 🔄 Running full build validation
+
 **Module Tests:**
 ```bash
-# Test mackuba module
-nix build .#checks.x86_64-linux.mackuba-lycan
+# Verify flake structure
+nix flake check
 
-# Test other critical modules
-nix build .#checks.x86_64-linux.constellation-shell
-nix build .#checks.x86_64-linux.nixos-ecosystem-integration
+# Test sample services
+nix build .#microcosm-constellation
+nix build .#bluesky-indigo
+nix build .#grain-social-appview
 ```
-
-**Integration Tests:**
-- Test backward compatibility aliases
-- Verify deprecation warnings
-- Test service interactions
 
 ### Package Maintenance
 
-**Packages needing attention** (from PINNING_NEEDED.md):
-- Most packages now use real hashes ✅
-- Check for any remaining `lib.fakeHash` usage
-- Verify all Git repos use specific commit SHAs
+**Known Status:**
+- ✅ Most packages pinned with real hashes
+- ✅ All 21 organizations structured correctly
+- ⚠️ 2 packages with fakeHash (pds-dash, likeandscribe-frontpage)
+- 📋 See PINNING_NEEDED.md for full status
 
 ---
 
