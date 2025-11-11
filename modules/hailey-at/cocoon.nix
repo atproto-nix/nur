@@ -237,6 +237,12 @@ in
 
     users.groups.${cfg.group} = {};
 
+    systemd.tmpfiles.rules = [
+      "d '${cfg.dataDir}' 0750 ${cfg.user} ${cfg.group} - -"
+      "d '${cfg.keysDir}' 0750 ${cfg.user} ${cfg.group} - -"
+      "d '${cfg.dataDir}/db' 0750 ${cfg.user} ${cfg.group} - -"
+    ];
+
     systemd.services.hailey-at-cocoon = {
       description = "Cocoon Personal Data Server (PDS)";
       wantedBy = [ "multi-user.target" ];
@@ -245,14 +251,13 @@ in
 
       preStart = ''
         set -euo pipefail
-        # Ensure the keys directory exists. StateDirectory below creates the parent.
+        # Ensure the keys directory exists
         ${pkgs.coreutils}/bin/mkdir -p "${cfg.keysDir}"
         ${pkgs.coreutils}/bin/chown "${cfg.user}:${cfg.group}" "${cfg.keysDir}"
 
         # Validate existing rotation key, or generate a new one.
         # This handles cases where an invalid key was created by a previous version of the script.
-        if ! [ -f "${cfg.rotationKeyPath}" ] || ! ${pkgs.openssl}/bin/openssl ec -in "${cfg.rotationKeyPath}" -inform DER -check -noout >/dev/null 2>&1;
-        then
+        if ! [ -f "${cfg.rotationKeyPath}" ] || ! ${pkgs.openssl}/bin/openssl ec -in "${cfg.rotationKeyPath}" -inform DER -check -noout >/dev/null 2>&1; then
           ${pkgs.coreutils}/bin/echo "Invalid or missing rotation key. Generating new key..."
           ${pkgs.coreutils}/bin/rm -f "${cfg.rotationKeyPath}" "${cfg.jwkPath}"
           ${pkgs.openssl}/bin/openssl ecparam -name secp256k1 -genkey -noout -outform DER -out "${cfg.rotationKeyPath}"
@@ -303,10 +308,6 @@ in
         Restart = "on-failure";
         RestartSec = "10s";
         EnvironmentFile = cfg.environmentFile;
-
-        # Let systemd manage the state directory
-        StateDirectory = "cocoon";
-        StateDirectoryMode = "0750";
 
         # Security hardening
         NoNewPrivileges = true;
