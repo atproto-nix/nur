@@ -203,10 +203,14 @@ in
             };
           };
 
-          fallbackProxy = mkOption {
-            type = types.nullOr types.str;
-            default = null;
-            description = "Fallback proxy URL for unimplemented endpoints.";
+      # Logging level
+      logLevel = "debug";
+    };
+  };
+
+  # Open firewall port for Cocoon (if not using a reverse proxy)
+  # networking.fireall.allowedTCPPorts = [ 8080 ];
+}"Fallback proxy URL for unimplemented endpoints.";
           };
 
           logLevel = mkOption {
