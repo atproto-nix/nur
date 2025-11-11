@@ -5,6 +5,27 @@ with lib;
 
 let
   cfg = config.services.hailey-at-cocoon;
+
+  # This wrapper script reads secrets from the specified files if not already set,
+  # exports them as environment variables, and then starts the main cocoon process.
+  cocoon-wrapper = pkgs.writeShellScriptBin "cocoon-wrapper" ''
+    #!${pkgs.bash}/bin/bash
+    set -eu
+    # Export variables so the cocoon process inherits them
+    set -a
+
+    if [ -z "''${COCOON_ADMIN_PASSWORD:-}" ] && [ -n "${cfg.adminPasswordFile}" ] && [ -f "${cfg.adminPasswordFile}" ]; then
+      export COCOON_ADMIN_PASSWORD=$(cat "${cfg.adminPasswordFile}")
+    fi
+
+    if [ -z "''${COCOON_SESSION_SECRET:-}" ] && [ -n "${cfg.sessionSecretFile}" ] && [ -f "${cfg.sessionSecretFile}" ]; then
+      export COCOON_SESSION_SECRET=$(cat "${cfg.sessionSecretFile}")
+    fi
+
+    set +a
+    exec ${cfg.package}/bin/cocoon run
+  '';
+
 in
 {
   options.services.hailey-at-cocoon = {
@@ -37,15 +58,19 @@ in
     environmentFile = mkOption {
       type = types.nullOr types.path;
       default = null;
-      description = ''
-        File to load environment variables from.
+      description = "Path to a file with environment variables to be passed to the service.";
+    };
 
-        Use it to set values of `COCOON_ADMIN_PASSWORD` and `COCOON_SESSION_SECRET`.
-        These can be generated with:
-        ```
-        openssl rand -hex 16
-        ```
-      '';
+    adminPasswordFile = mkOption {
+      type = types.nullOr types.path;
+      default = null;
+      description = "Path to a file containing the admin password.";
+    };
+
+    sessionSecretFile = mkOption {
+      type = types.nullOr types.path;
+      default = null;
+      description = "Path to a file containing the session secret.";
     };
 
     settings = mkOption {
@@ -246,8 +271,10 @@ in
     systemd.services.hailey-at-cocoon = {
       description = "Cocoon Personal Data Server (PDS)";
       wantedBy = [ "multi-user.target" ];
-      after = [ "network.target" ];
+      after = [ "network.target" "sops-nix.service" ];
       wants = [ "network.target" ];
+      requires = [ "sops-nix.service" ];
+
 
       preStart = ''
         set -euo pipefail
@@ -301,13 +328,13 @@ in
 
       serviceConfig = {
         Type = "simple";
+        EnvironmentFile = lib.optional (cfg.environmentFile != null) cfg.environmentFile;
         User = cfg.user;
         Group = cfg.group;
         WorkingDirectory = cfg.dataDir;
-        ExecStart = "${cfg.package}/bin/cocoon run";
+        ExecStart = "${cocoon-wrapper}/bin/cocoon-wrapper";
         Restart = "on-failure";
         RestartSec = "10s";
-        EnvironmentFile = cfg.environmentFile;
 
         # Security hardening
         NoNewPrivileges = true;
