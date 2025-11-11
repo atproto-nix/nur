@@ -366,33 +366,33 @@ in
         COCOON_DB_NAME = "${cfg.dataDir}/db/cocoon.db";
         COCOON_BLOCKSTORE_VARIANT = cfg.settings.blockstoreVariant;
         LOG_LEVEL = cfg.settings.logLevel;
-      } // optionalAttrs (cfg.settings.smtp.user != null) {
+      } // lib.mkIf (cfg.settings.smtp.user != null) {
         COCOON_SMTP_USER = cfg.settings.smtp.user;
-      } // optionalAttrs (cfg.settings.smtp.pass != null) {
+      } // lib.mkIf (cfg.settings.smtp.pass != null) {
         COCOON_SMTP_PASS = cfg.settings.smtp.pass;
-      } // optionalAttrs (cfg.settings.smtp.host != null) {
+      } // lib.mkIf (cfg.settings.smtp.host != null) {
         COCOON_SMTP_HOST = cfg.settings.smtp.host;
       } // lib.mkIf (cfg.settings.smtp.port != null) {
         COCOON_SMTP_PORT = toString cfg.settings.smtp.port;
-      } // optionalAttrs (cfg.settings.smtp.email != null) {
+      } // lib.mkIf (cfg.settings.smtp.email != null) {
         COCOON_SMTP_EMAIL = cfg.settings.smtp.email;
-      } // optionalAttrs (cfg.settings.smtp.name != null) {
+      } // lib.mkIf (cfg.settings.smtp.name != null) {
         COCOON_SMTP_NAME = cfg.settings.smtp.name;
-      } // optionalAttrs (cfg.settings.s3.backupsEnabled) {
+      } // lib.mkIf cfg.settings.s3.backupsEnabled {
         COCOON_S3_BACKUPS_ENABLED = "true";
-      } // optionalAttrs (cfg.settings.s3.blobstoreEnabled) {
+      } // lib.mkIf cfg.settings.s3.blobstoreEnabled {
         COCOON_S3_BLOBSTORE_ENABLED = "true";
-      } // optionalAttrs (cfg.settings.s3.region != null) {
+      } // lib.mkIf (cfg.settings.s3.region != null) {
         COCOON_S3_REGION = cfg.settings.s3.region;
-      } // optionalAttrs (cfg.settings.s3.bucket != null) {
+      } // lib.mkIf (cfg.settings.s3.bucket != null) {
         COCOON_S3_BUCKET = cfg.settings.s3.bucket;
-      } // optionalAttrs (cfg.settings.s3.endpoint != null) {
+      } // lib.mkIf (cfg.settings.s3.endpoint != null) {
         COCOON_S3_ENDPOINT = cfg.settings.s3.endpoint;
-      } // optionalAttrs (cfg.settings.s3.accessKey != null) {
+      } // lib.mkIf (cfg.settings.s3.accessKey != null) {
         COCOON_S3_ACCESS_KEY = cfg.settings.s3.accessKey;
-      } // optionalAttrs (cfg.settings.s3.secretKey != null) {
+      } // lib.mkIf (cfg.settings.s3.secretKey != null) {
         COCOON_S3_SECRET_KEY = cfg.settings.s3.secretKey;
-      } // optionalAttrs (cfg.settings.fallbackProxy != null) {
+      } // lib.mkIf (cfg.settings.fallbackProxy != null) {
         COCOON_FALLBACK_PROXY = cfg.settings.fallbackProxy;
       };
     };
