@@ -2,3 +2,7 @@ result
 result-*
 flake.lock
 
+*.db
+*.db-shm
+*.db-wal
+./pds-dash/

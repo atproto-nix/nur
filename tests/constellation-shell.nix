@@ -1,6 +1,6 @@
 { pkgs }:
 
-pkgs.nixosTest {
+pkgs.testers.nixosTest {
   name = "constellation-shell";
 
   nodes.machine = { ... }:
@@ -9,8 +9,7 @@ pkgs.nixosTest {
 
     services.microcosm-constellation = {
       enable = true;
-      jetstream = "us-east-1";
-      dataDir = "microcosm-constellation";
+      jetstream = "wss://jetstream1.us-east.bsky.network/subscribe";
       backend = "rocks";
     };
   };

@@ -5,68 +5,44 @@ with lib;
 
 let
   cfg = config.services.microcosm-quasar;
+  microcosmLib = import ../../lib/microcosm.nix { inherit lib; };
 in
 {
-  options.services.microcosm-quasar = {
-    enable = mkEnableOption "Quasar server";
-
+  options.services.microcosm-quasar = microcosmLib.mkMicrocosmServiceOptions "Quasar" {
     package = mkOption {
       type = types.package;
-      default = pkgs.nur.quasar;
+      default = pkgs.microcosm.quasar;
       description = "The Quasar package to use.";
     };
-
-    dataDir = mkOption {
-      type = types.str;
-      default = "/var/lib/microcosm-quasar";
-      description = "The absolute path to the directory to store data in.";
-    };
   };
 
-  config = mkIf cfg.enable {
-    users.users.microcosm-quasar = {
-      isSystemUser = true;
-      group = "microcosm-quasar";
-      home = cfg.dataDir;
-    };
-    users.groups.microcosm-quasar = {};
+  config = mkIf cfg.enable (mkMerge [
+    # Configuration validation
+    (microcosmLib.mkConfigValidation cfg "Quasar" [])
 
-    systemd.tmpfiles.rules = [
-      "d ${cfg.dataDir} 0755 microcosm-quasar microcosm-quasar - -"
-    ];
+    # User and group management
+    (microcosmLib.mkUserConfig cfg)
 
-    systemd.services.microcosm-quasar = {
-      description = "Quasar Server";
-      wantedBy = [ "multi-user.target" ];
-      after = [ "network.target" ];
-      wants = [ "network.target" ];
+    # Directory management
+    (microcosmLib.mkDirectoryConfig cfg [])
 
-      serviceConfig = {
-        Restart = "always";
-        RestartSec = "10s";
-
-        User = "microcosm-quasar";
-        Group = "microcosm-quasar";
-
-        WorkingDirectory = cfg.dataDir;
-
-        NoNewPrivileges = true;
-        ProtectSystem = "full";
-        ProtectHome = true;
-        ReadWritePaths = [ cfg.dataDir ];
-        PrivateTmp = true;
-        ProtectKernelTunables = true;
-        ProtectKernelModules = true;
-        ProtectControlGroups = true;
-        RestrictRealtime = true;
-        RestrictSUIDSGID = true;
-        RemoveIPC = true;
-        PrivateMounts = true;
+    # systemd service (placeholder implementation)
+    {
+      systemd.services.microcosm-quasar = {
+        description = "Microcosm Quasar Service (Not Implemented)";
+        wantedBy = [ "multi-user.target" ];
+        after = [ "network.target" ];
+        
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = "${pkgs.coreutils}/bin/false";
+          RemainAfterExit = false;
+        };
       };
 
-      script = ''
-        exec ${cfg.package}/bin/quasar
-      '';
-    };
-  };
+      warnings = [
+        "The Quasar service is not yet implemented - see https://github.com/at-microcosm/microcosm-rs/issues/1"
+      ];
+    }
+  ]);
 }

@@ -22,7 +22,7 @@ with lib;
       enable = true;
       virtualHosts.${config.blacksky.community.hostName} = {
         enable = true;
-        root = "${pkgs.blacksky.community}/share/nginx/html";
+        root = "${pkgs.blacksky-community}/share/nginx/html";
         listen = [{
           addr = "127.0.0.1";
           port = config.blacksky.community.port;

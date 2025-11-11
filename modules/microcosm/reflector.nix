@@ -1,121 +1,82 @@
 # Defines the NixOS module for the Reflector service
-#
-# Reflector serves DID documents and acts as a Slingshot record edge cache.
-# This module configures its DID, type, service endpoint, and optional domain.
-#
 { config, lib, pkgs, ... }:
 
 with lib;
 
 let
   cfg = config.services.microcosm-reflector;
+  microcosmLib = import ../../lib/microcosm.nix { inherit lib; };
 in
 {
-  options.services.microcosm-reflector = {
-    enable = mkEnableOption "Reflector server";
-
+  options.services.microcosm-reflector = microcosmLib.mkMicrocosmServiceOptions "Reflector" {
     package = mkOption {
       type = types.package;
-      default = pkgs.nur.reflector;
+      default = pkgs.microcosm.reflector;
       description = "The Reflector package to use.";
     };
 
-    dataDir = mkOption {
+    serviceId = mkOption {
       type = types.str;
-      default = "/var/lib/microcosm-reflector";
-      description = "The absolute path to the directory to store data in.";
+      description = "The DID document service ID.";
+      example = "atproto_pds";
     };
 
-    id = mkOption {
+    serviceType = mkOption {
       type = types.str;
-      description = "The DID document service ID to serve (e.g., #bsky_appview). This is a required option.";
-      example = "#bsky_appview";
-    };
-
-    type = mkOption {
-      type = types.str;
-      description = "Service type (e.g., BlueskyAppview). This is a required option.";
-      example = "BlueskyAppview";
+      description = "The service type.";
+      example = "AtprotoPersonalDataServer";
     };
 
     serviceEndpoint = mkOption {
       type = types.str;
-      description = "The HTTPS endpoint for the service. This is a required option.";
-      example = "https://reflector.example.com";
+      description = "The HTTPS endpoint for the service.";
+      example = "https://pds.example.com";
     };
 
     domain = mkOption {
-      type = types.nullOr types.str;
-      default = null;
-      description = "The parent domain; requests should come from subdomains of this. Used for DID resolution.";
+      type = types.str;
+      description = "The parent domain.";
+      example = "example.com";
     };
   };
 
-  config = mkIf cfg.enable {
-    # Create a static user and group for the service for security isolation.
-    users.users.microcosm-reflector = {
-      isSystemUser = true;
-      group = "microcosm-reflector";
-      home = cfg.dataDir;
-    };
-    users.groups.microcosm-reflector = {};
+  config = mkIf cfg.enable (mkMerge [
+    # Configuration validation
+    (microcosmLib.mkConfigValidation cfg "Reflector" [
+      {
+        assertion = cfg.serviceId != "";
+        message = "Service ID cannot be empty.";
+      }
+      {
+        assertion = cfg.serviceType != "";
+        message = "Service type cannot be empty.";
+      }
+      {
+        assertion = hasPrefix "https://" cfg.serviceEndpoint;
+        message = "Service endpoint must use HTTPS.";
+      }
+      {
+        assertion = cfg.domain != "";
+        message = "Domain cannot be empty.";
+      }
+      {
+        assertion = builtins.match "^[a-zA-Z0-9.-]+$" cfg.domain != null;
+        message = "Domain must be a valid hostname.";
+      }
+    ])
 
-    # Use tmpfiles to declaratively manage the data directory's existence and ownership.
-    systemd.tmpfiles.rules = [
-      "d ${cfg.dataDir} 0755 microcosm-reflector microcosm-reflector - -"
-    ];
+    # User and group management
+    (microcosmLib.mkUserConfig cfg)
 
-    # Define the systemd service for Reflector.
-    systemd.services.microcosm-reflector = {
-      description = "Reflector Server - Slingshot record edge cache and DID document server";
-      wantedBy = [ "multi-user.target" ];
-      after = [ "network.target" ];
-      wants = [ "network.target" ];
+    # Directory management
+    (microcosmLib.mkDirectoryConfig cfg [])
 
+    # systemd service
+    (microcosmLib.mkSystemdService cfg "Reflector" {
+      description = "DID document reflection service";
       serviceConfig = {
-        Restart = "always";
-        RestartSec = "10s";
-
-        User = "microcosm-reflector";
-        Group = "microcosm-reflector";
-
-        WorkingDirectory = cfg.dataDir;
-
-        # Security hardening settings for the service.
-        NoNewPrivileges = true;
-        ProtectSystem = "full";
-        ProtectHome = true;
-        ReadWritePaths = [ cfg.dataDir ];
-        PrivateTmp = true;
-        ProtectKernelTunables = true;
-        ProtectKernelModules = true;
-        ProtectControlGroups = true;
-        RestrictRealtime = true;
-        RestrictSUIDSGID = true;
-        RemoveIPC = true;
-        PrivateMounts = true;
+        ExecStart = "${cfg.package}/bin/reflector --id ${cfg.serviceId} --type ${cfg.serviceType} --service-endpoint ${cfg.serviceEndpoint} --domain ${cfg.domain}";
       };
-
-      script =
-        let
-          args = flatten [
-            [
-              "--id"
-              (escapeShellArg cfg.id)
-              "--type"
-              (escapeShellArg cfg.type)
-              "--service-endpoint"
-              (escapeShellArg cfg.serviceEndpoint)
-            ]
-            (optional (cfg.domain != null) [
-              "--domain"
-              (escapeShellArg cfg.domain)
-            ])
-          ];
-        in
-        ''
-          exec ${cfg.package}/bin/reflector ${concatStringsSep " " args}
-        '';
-    };
-  };
+    })
+  ]);
 }

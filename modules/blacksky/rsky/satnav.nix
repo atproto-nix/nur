@@ -10,21 +10,60 @@ with lib;
       default = 8002;
       description = "Port for the Blacksky Satnav service.";
     };
-    # Satnav is a web UI, so it might need a web server configuration
-    # For simplicity, we'll just run the binary directly for now.
+    dataDir = mkOption {
+      type = types.str;
+      default = "/var/lib/blacksky-satnav";
+      description = "Data directory for the Blacksky Satnav service.";
+    };
   };
 
   config = mkIf config.blacksky.satnav.enable {
+    # User and group management
+    users.users.blacksky-satnav = {
+      isSystemUser = true;
+      group = "blacksky-satnav";
+      home = config.blacksky.satnav.dataDir;
+    };
+    
+    users.groups.blacksky-satnav = {};
+    
+    # Directory management using systemd tmpfiles
+    systemd.tmpfiles.rules = [
+      "d '${config.blacksky.satnav.dataDir}' 0750 blacksky-satnav blacksky-satnav - -"
+    ];
+    
     systemd.services.blacksky-satnav = {
-      description = "Blacksky Satnav service";
+      description = "Blacksky Satnav service - WASM web app server";
       after = [ "network.target" ];
       wantedBy = [ "multi-user.target" ];
+
       serviceConfig = {
-        ExecStart = "${pkgs.blacksky.satnav}/bin/rsky-satnav";
-        Restart = "always";
-        DynamicUser = true;
-        StateDirectory = "blacksky-satnav";
-        # Add other environment variables or arguments as needed by rsky-satnav
+        Type = "exec";
+        User = "blacksky-satnav";
+        Group = "blacksky-satnav";
+        WorkingDirectory = config.blacksky.satnav.dataDir;
+        # Serve static WASM files with simple-http-server
+        ExecStart = "${pkgs.simple-http-server}/bin/simple-http-server -i -p ${toString config.blacksky.satnav.port} ${pkgs.blacksky.satnav}/share/rsky-satnav";
+        Restart = "on-failure";
+        RestartSec = "5s";
+
+        # Security hardening
+        NoNewPrivileges = true;
+        ProtectSystem = "strict";
+        ProtectHome = true;
+        PrivateTmp = true;
+        ProtectKernelTunables = true;
+        ProtectKernelModules = true;
+        ProtectControlGroups = true;
+        RestrictSUIDSGID = true;
+        RestrictRealtime = true;
+        RestrictNamespaces = true;
+        LockPersonality = true;
+        # Note: MemoryDenyWriteExecute removed - simple-http-server needs exec permissions
+
+        # File system access
+        ReadWritePaths = [ config.blacksky.satnav.dataDir ];
+        ReadOnlyPaths = [ "/nix/store" ];
       };
     };
   };

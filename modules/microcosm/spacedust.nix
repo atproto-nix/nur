@@ -1,104 +1,86 @@
 # Defines the NixOS module for the Spacedust service
-#
-# Spacedust aggregates links in the AT Protocol. This module configures
-# its connection to a Jetstream server and optional zstd compression.
-#
 { config, lib, pkgs, ... }:
 
 with lib;
 
 let
   cfg = config.services.microcosm-spacedust;
+  microcosmLib = import ../../lib/microcosm.nix { inherit lib; };
 in
 {
-  options.services.microcosm-spacedust = {
-    enable = mkEnableOption "Spacedust server";
-
+  options.services.microcosm-spacedust = microcosmLib.mkMicrocosmServiceOptions "Spacedust" {
     package = mkOption {
       type = types.package;
-      default = pkgs.nur.spacedust;
+      default = pkgs.microcosm.spacedust;
       description = "The Spacedust package to use.";
-    };
-
-    dataDir = mkOption {
-      type = types.str;
-      default = "/var/lib/microcosm-spacedust";
-      description = "The absolute path to the directory to store data in.";
     };
 
     jetstream = mkOption {
       type = types.str;
-      description = "Jetstream server to connect to. This is a required option.";
-      example = "wss://jetstream.example.com";
+      description = "The Jetstream server to connect to.";
+      example = "wss://jetstream1.us-east.bsky.network/subscribe";
     };
 
     jetstreamNoZstd = mkOption {
       type = types.bool;
       default = false;
-      description = "If true, don't request zstd-compressed Jetstream events, reducing CPU at the expense of more ingress bandwidth.";
+      description = "Don't request zstd-compressed jetstream events.";
+    };
+
+    # Note: spacedust binary doesn't currently support --bind or --bind-metrics options
+    # These options are retained for backwards compatibility but are not used
+    bind = mkOption {
+      type = types.str;
+      default = "0.0.0.0:9998";
+      description = "Spacedust server's listen address (currently unused - spacedust binary doesn't support this option)";
+    };
+
+    metrics = mkOption {
+      type = types.submodule {
+        options = {
+          enable = mkEnableOption "Prometheus metrics endpoint";
+          port = mkOption {
+            type = types.port;
+            default = 9091;
+            description = "Metrics endpoint port (currently unused - spacedust binary doesn't support this option)";
+          };
+        };
+      };
+      default = {};
+      description = "Metrics configuration (currently unused - spacedust binary doesn't support this option)";
     };
   };
 
-  config = mkIf cfg.enable {
-    # Create a static user and group for the service for security isolation.
-    users.users.microcosm-spacedust = {
-      isSystemUser = true;
-      group = "microcosm-spacedust";
-      home = cfg.dataDir;
-    };
-    users.groups.microcosm-spacedust = {};
+  config = mkIf cfg.enable (mkMerge [
+    # Configuration validation
+    (microcosmLib.mkConfigValidation cfg "Spacedust" (
+      microcosmLib.mkJetstreamValidation cfg.jetstream
+    ))
 
-    # Use tmpfiles to declaratively manage the data directory's existence and ownership.
-    systemd.tmpfiles.rules = [
-      "d ${cfg.dataDir} 0755 microcosm-spacedust microcosm-spacedust - -"
-    ];
+    # User and group management
+    (microcosmLib.mkUserConfig cfg)
 
-    # Define the systemd service for Spacedust.
-    systemd.services.microcosm-spacedust = {
-      description = "Spacedust Server - Aggregate links in the AT Protocol";
-      wantedBy = [ "multi-user.target" ];
-      after = [ "network.target" ];
-      wants = [ "network.target" ];
+    # Directory management
+    (microcosmLib.mkDirectoryConfig cfg [])
 
+    # systemd service
+    (microcosmLib.mkSystemdService cfg "Spacedust" {
+      description = "ATProto service component";
       serviceConfig = {
-        Restart = "always";
-        RestartSec = "10s";
-
-        User = "microcosm-spacedust";
-        Group = "microcosm-spacedust";
-
-        WorkingDirectory = cfg.dataDir;
-
-        # Security hardening settings for the service.
-        NoNewPrivileges = true;
-        ProtectSystem = "full";
-        ProtectHome = true;
-        ReadWritePaths = [ cfg.dataDir ];
-        PrivateTmp = true;
-        ProtectKernelTunables = true;
-        ProtectKernelModules = true;
-        ProtectControlGroups = true;
-        RestrictRealtime = true;
-        RestrictSUIDSGID = true;
-        RemoveIPC = true;
-        PrivateMounts = true;
-      };
-
-      script =
-        let
+        ExecStart = let
+          # Only pass arguments that spacedust binary actually supports
           args = flatten [
             [
               "--jetstream"
               (escapeShellArg cfg.jetstream)
             ]
-            (optional cfg.jetstreamNoZstd [
-              "--jetstream-no-zstd"
-            ])
+            (optional cfg.jetstreamNoZstd [ "--jetstream-no-zstd" ])
+            # Note: --bind and --bind-metrics are not supported by spacedust binary
+            # See: spacedust --help for supported options
           ];
         in
-        ''
-          exec ${cfg.package}/bin/spacedust ${concatStringsSep " " args}
-        '';
-    };
-  };
+        "${cfg.package}/bin/spacedust ${concatStringsSep " " args}";
+      };
+    })
+  ]);
 }
