@@ -1,149 +1,142 @@
 # Defines the NixOS module for the Who-Am-I service
-#
-# Who-Am-I is an authentication service that handles app secrets, OAuth private keys,
-# JWT private keys, base URLs, bind addresses, dev mode, and allowed hosts.
-#
 { config, lib, pkgs, ... }:
 
 with lib;
 
 let
   cfg = config.services.microcosm-who-am-i;
+  microcosmLib = import ../../lib/microcosm.nix { inherit lib; };
 in
 {
-  options.services.microcosm-who-am-i = {
-    enable = mkEnableOption "Who-Am-I server";
-
+  options.services.microcosm-who-am-i = microcosmLib.mkMicrocosmServiceOptions "Who-Am-I" {
     package = mkOption {
       type = types.package;
-      default = pkgs.nur.who-am-i;
+      default = pkgs.microcosm."who-am-i";
       description = "The Who-Am-I package to use.";
-    };
-
-    dataDir = mkOption {
-      type = types.str;
-      default = "/var/lib/microcosm-who-am-i";
-      description = "The absolute path to the directory to store data in.";
     };
 
     appSecret = mkOption {
       type = types.str;
-      description = "Secret key from which the cookie-signing key is derived. Must be at least 512 bits (64 bytes) of randomness.";
-      example = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==";
+      description = "The secret key for cookie-signing.";
     };
 
     oauthPrivateKey = mkOption {
-      type = types.nullOr types.str;
+      type = types.nullOr types.path;
       default = null;
-      description = "Path to at-oauth private key (PEM pk8 format). Required for OAuth functionality.";
+      description = "The path to the at-oauth private key.";
     };
 
     jwtPrivateKey = mkOption {
-      type = types.str;
-      description = "Path to JWT private key (PEM pk8 format). This is a required option.";
-      example = "/path/to/jwt-private-key.pem";
+      type = types.path;
+      description = "The path to the jwt private key.";
     };
 
     baseUrl = mkOption {
-      type = types.nullOr types.str;
-      default = null;
-      description = "This server's client-reachable base URL, used for OAuth redirect and JWT checks. Required unless running in localhost mode with --dev.";
+      type = types.str;
+      description = "The client-reachable base url.";
+      example = "https://who-am-i.example.com";
     };
 
     bind = mkOption {
       type = types.str;
       default = "127.0.0.1:9997";
-      description = "Host:port to bind to on startup.";
+      description = "The host:port to bind to.";
     };
 
     dev = mkOption {
       type = types.bool;
       default = false;
-      description = "Enable development mode, which enables automatic template reloading and uses localhost OAuth config.";
+      description = "Enable dev mode.";
     };
 
     allowedHosts = mkOption {
       type = types.listOf types.str;
       default = [];
-      description = "List of hosts who are allowed to one-click authentication.";
+      description = "The hosts who are allowed to one-click auth.";
     };
-  };
 
-  config = mkIf cfg.enable {
-    # Create a static user and group for the service for security isolation.
-    users.users.microcosm-who-am-i = {
-      isSystemUser = true;
-      group = "microcosm-who-am-i";
-      home = cfg.dataDir;
-    };
-    users.groups.microcosm-who-am-i = {};
-
-    # Use tmpfiles to declaratively manage the data directory's existence and ownership.
-    systemd.tmpfiles.rules = [
-      "d ${cfg.dataDir} 0755 microcosm-who-am-i microcosm-who-am-i - -"
-    ];
-
-    # Define the systemd service for Who-Am-I.
-    systemd.services.microcosm-who-am-i = {
-      description = "Who-Am-I Server - Authentication service";
-      wantedBy = [ "multi-user.target" ];
-      after = [ "network.target" ];
-      wants = [ "network.target" ];
-
-      serviceConfig = {
-        Restart = "always";
-        RestartSec = "10s";
-
-        User = "microcosm-who-am-i";
-        Group = "microcosm-who-am-i";
-
-        WorkingDirectory = cfg.dataDir;
-
-        # Security hardening settings for the service.
-        NoNewPrivileges = true;
-        ProtectSystem = "full";
-        ProtectHome = true;
-        ReadWritePaths = [ cfg.dataDir ] ++ lib.optional (cfg.oauthPrivateKey != null) (builtins.dirOf cfg.oauthPrivateKey) ++ [ (builtins.dirOf cfg.jwtPrivateKey) ];
-        PrivateTmp = true;
-        ProtectKernelTunables = true;
-        ProtectKernelModules = true;
-        ProtectControlGroups = true;
-        RestrictRealtime = true;
-        RestrictSUIDSGID = true;
-        RemoveIPC = true;
-        PrivateMounts = true;
+    metrics = mkOption {
+      type = types.submodule {
+        options = {
+          enable = mkEnableOption "Prometheus metrics endpoint";
+          port = mkOption {
+            type = types.port;
+            default = 9094;
+            description = "Metrics endpoint port";
+          };
+        };
       };
-
-      script =
-        let
-          args = flatten [
-            [
-              "--app-secret"
-              (escapeShellArg cfg.appSecret)
-              "--jwt-private-key"
-              (escapeShellArg cfg.jwtPrivateKey)
-            ]
-            (optional (cfg.oauthPrivateKey != null) [
-              "--oauth-private-key"
-              (escapeShellArg cfg.oauthPrivateKey)
-            ])
-            (optional (cfg.baseUrl != null) [
-              "--base-url"
-              (escapeShellArg cfg.baseUrl)
-            ])
-            [
-              "--bind"
-              (escapeShellArg cfg.bind)
-            ]
-            (optional cfg.dev [
-              "--dev"
-            ])
-            (map (host: [ "--allow_host" (escapeShellArg host) ]) cfg.allowedHosts)
-          ];
-        in
-        ''
-          exec ${cfg.package}/bin/who-am-i ${concatStringsSep " " args}
-        '';
+      default = {};
+      description = "Metrics configuration";
     };
   };
+
+  config = mkIf cfg.enable (mkMerge [
+    # Configuration validation
+    (microcosmLib.mkConfigValidation cfg "Who-Am-I" (
+      let
+        bindPort = microcosmLib.extractPortFromBind cfg.bind;
+      in
+      microcosmLib.mkPortValidation bindPort "bind port" ++
+      [
+        {
+          assertion = cfg.appSecret != "";
+          message = "App secret cannot be empty.";
+        }
+        {
+          assertion = pathExists cfg.jwtPrivateKey;
+          message = "JWT private key file must exist at ${cfg.jwtPrivateKey}.";
+        }
+        {
+          assertion = cfg.oauthPrivateKey != null -> pathExists cfg.oauthPrivateKey;
+          message = "OAuth private key file must exist when specified.";
+        }
+        {
+          assertion = hasPrefix "http://" cfg.baseUrl || hasPrefix "https://" cfg.baseUrl;
+          message = "Base URL must start with http:// or https://.";
+        }
+        {
+          assertion = length cfg.allowedHosts > 0;
+          message = "At least one allowed host must be specified for security.";
+        }
+      ]
+    ))
+
+    # User and group management
+    (microcosmLib.mkUserConfig cfg)
+
+    # Directory management
+    (microcosmLib.mkDirectoryConfig cfg [])
+
+    # systemd service
+    (microcosmLib.mkSystemdService cfg "Who-Am-I" {
+      description = "Identity service for ATProto (deprecated)";
+      serviceConfig = {
+        ExecStart = ''
+          ${cfg.package}/bin/who-am-i \
+            --app-secret ${escapeShellArg cfg.appSecret} \
+            ${optionalString (cfg.oauthPrivateKey != null) "--oauth-private-key ${escapeShellArg cfg.oauthPrivateKey}"} \
+            --jwt-private-key ${escapeShellArg cfg.jwtPrivateKey} \
+            --base-url ${escapeShellArg cfg.baseUrl} \
+            --bind ${escapeShellArg cfg.bind} \
+            ${optionalString cfg.dev "--dev"} \
+            ${concatStringsSep " " (map (host: "--allow-host ${escapeShellArg host}") cfg.allowedHosts)} \
+            ${optionalString cfg.metrics.enable "--bind-metrics 0.0.0.0:${toString cfg.metrics.port}"}
+        '';      };
+    })
+
+    # Firewall configuration
+    (microcosmLib.mkFirewallConfig cfg [ (microcosmLib.extractPortFromBind cfg.bind) ])
+
+    # Deprecation and security warnings
+    {
+      warnings = [
+        "The Who-Am-I service is deprecated and should not be used in production environments"
+      ] ++ lib.optionals cfg.dev [
+        "Who-Am-I development mode is enabled - this should not be used in production"
+      ] ++ lib.optionals (cfg.oauthPrivateKey == null) [
+        "OAuth private key is not configured - some functionality may be limited"
+      ];
+    }
+  ]);
 }

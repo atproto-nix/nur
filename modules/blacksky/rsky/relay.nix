@@ -7,23 +7,58 @@ with lib;
     enable = mkEnableOption "Blacksky Relay service";
     port = mkOption {
       type = types.port;
-      default = 8000;
-      description = "Port for the Blacksky Relay service.";
+      default = 9000;
+      description = "Port for the Blacksky Relay service (hard-coded in binary, option exists for documentation).";
     };
-    # Add other options specific to the relay service, e.g., certs, private_key
+    dataDir = mkOption {
+      type = types.str;
+      default = "/var/lib/blacksky-relay";
+      description = "Data directory for the Blacksky Relay service.";
+    };
   };
 
   config = mkIf config.blacksky.relay.enable {
+    # User and group management
+    users.users.blacksky-relay = {
+      isSystemUser = true;
+      group = "blacksky-relay";
+      home = config.blacksky.relay.dataDir;
+    };
+    
+    users.groups.blacksky-relay = {};
+    
+    # Directory management using systemd tmpfiles
+    systemd.tmpfiles.rules = [
+      "d '${config.blacksky.relay.dataDir}' 0750 blacksky-relay blacksky-relay - -"
+    ];
+    
     systemd.services.blacksky-relay = {
-      description = "Blacksky Relay service";
-      after = [ "network.target" ];
       wantedBy = [ "multi-user.target" ];
+      
       serviceConfig = {
-        ExecStart = "${pkgs.blacksky.relay}/bin/rsky-relay";
-        Restart = "always";
-        DynamicUser = true;
-        StateDirectory = "blacksky-relay";
-        # Add other environment variables or arguments as needed by rsky-relay
+        Type = "exec";
+        User = "blacksky-relay";
+        Group = "blacksky-relay";
+        WorkingDirectory = config.blacksky.relay.dataDir;
+        ExecStart = "${pkgs.blacksky.relay}/bin/rsky-relay --no-plc-export";
+        Restart = "on-failure";
+        RestartSec = "5s";
+        
+        # Security hardening (relaxed for SQLite and Rust compatibility)
+        NoNewPrivileges = true;
+        ProtectSystem = "strict";
+        ProtectHome = true;
+        PrivateTmp = true;
+        ProtectKernelTunables = true;
+        ProtectKernelModules = true;
+        ProtectControlGroups = true;
+        RestrictSUIDSGID = true;
+        RestrictRealtime = true;
+        LockPersonality = true;
+        # MemoryDenyWriteExecute and RestrictNamespaces disabled for SQLite/Rust compatibility
+
+        # File system access
+        ReadWritePaths = [ config.blacksky.relay.dataDir ];
       };
     };
   };

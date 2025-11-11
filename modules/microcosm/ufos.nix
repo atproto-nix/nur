@@ -1,169 +1,140 @@
 # Defines the NixOS module for the UFOs service
-#
-# UFOs (Unidentified Flying Objects) aggregates links in the AT Protocol.
-# This module configures its connection to a Jetstream server, data storage,
-# and various debugging and backfill options.
-#
 { config, lib, pkgs, ... }:
 
 with lib;
 
 let
   cfg = config.services.microcosm-ufos;
+  microcosmLib = import ../../lib/microcosm.nix { inherit lib; };
+  nixosIntegration = import ../../lib/nixos-integration.nix { inherit lib config; };
 in
 {
-  options.services.microcosm-ufos = {
-    enable = mkEnableOption "Ufos server";
-
+  options.services.microcosm-ufos = microcosmLib.mkMicrocosmServiceOptions "UFOs" {
     package = mkOption {
       type = types.package;
-      default = pkgs.nur.ufos;
-      description = "The Ufos package to use.";
-    };
-
-    dataDir = mkOption {
-      type = types.str;
-      default = "/var/lib/microcosm-ufos";
-      description = "The absolute path to the directory to store data in.";
+      default = pkgs.microcosm.ufos;
+      description = "The UFOs package to use.";
     };
 
     jetstream = mkOption {
       type = types.str;
-      description = "Jetstream server to connect to. This is a required option.";
-      example = "wss://jetstream.example.com";
+      description = "The Jetstream server to connect to.";
+      example = "wss://jetstream1.us-east.bsky.network/subscribe";
     };
 
     jetstreamForce = mkOption {
       type = types.bool;
       default = false;
-      description = "If true, allow changing Jetstream endpoints.";
+      description = "Allow changing jetstream endpoints.";
     };
 
     jetstreamNoZstd = mkOption {
       type = types.bool;
       default = false;
-      description = "If true, don't request zstd-compressed Jetstream events, reducing CPU at the expense of more ingress bandwidth.";
-    };
-
-    data = mkOption {
-      type = types.str;
-      default = "${cfg.dataDir}/data";
-      description = "Location to store persistent data to disk.";
-    };
-
-    pauseWriter = mkOption {
-      type = types.bool;
-      default = false;
-      description = "DEBUG: If true, don't start the Jetstream consumer or its write loop.";
+      description = "Don't request zstd-compressed jetstream events.";
     };
 
     backfill = mkOption {
       type = types.bool;
       default = false;
-      description = "If true, adjust runtime settings like background task intervals for efficient backfill.";
-    };
-
-    pauseRw = mkOption {
-      type = types.bool;
-      default = false;
-      description = "DEBUG: If true, force the read/write loop to fall behind by pausing it.";
+      description = "Adjust runtime settings for efficient backfill.";
     };
 
     reroll = mkOption {
       type = types.bool;
       default = false;
-      description = "If true, reset the rollup cursor and scrape through missed things in the past (backfill).";
+      description = "Reset the rollup cursor and backfill.";
     };
 
-    jetstreamFixture = mkOption {
-      type = types.bool;
-      default = false;
-      description = "DEBUG: If true, interpret the Jetstream argument as a file fixture.";
-    };
-  };
+    # bind = mkOption {
+    #   type = types.str;
+    #   default = "0.0.0.0:9999";
+    #   description = "UFOs server's listen address";
+    # }; # Not supported yet
 
-  config = mkIf cfg.enable {
-    # Create a static user and group for the service for security isolation.
-    users.users.microcosm-ufos = {
-      isSystemUser = true;
-      group = "microcosm-ufos";
-      home = cfg.dataDir;
-    };
-    users.groups.microcosm-ufos = {};
-
-    # Use tmpfiles to declaratively manage the data directory's existence and ownership.
-    systemd.tmpfiles.rules = [
-      "d ${cfg.dataDir} 0755 microcosm-ufos microcosm-ufos - -"
-    ] ++ lib.optional (cfg.data != null) [
-      "d ${cfg.data} 0755 microcosm-ufos microcosm-ufos - -"
-    ];
-
-    # Define the systemd service for UFOs.
-    systemd.services.microcosm-ufos = {
-      description = "UFOs Server - Aggregate links in the AT Protocol";
-      wantedBy = [ "multi-user.target" ];
-      after = [ "network.target" ];
-      wants = [ "network.target" ];
-
-      serviceConfig = {
-        Restart = "always";
-        RestartSec = "10s";
-
-        User = "microcosm-ufos";
-        Group = "microcosm-ufos";
-
-        WorkingDirectory = cfg.dataDir;
-
-        # Security hardening settings for the service.
-        NoNewPrivileges = true;
-        ProtectSystem = "full";
-        ProtectHome = true;
-        ReadWritePaths = [ cfg.dataDir ] ++ lib.optional (cfg.data != null) cfg.data;
-        PrivateTmp = true;
-        ProtectKernelTunables = true;
-        ProtectKernelModules = true;
-        ProtectControlGroups = true;
-        RestrictRealtime = true;
-        RestrictSUIDSGID = true;
-        RemoveIPC = true;
-        PrivateMounts = true;
+    metrics = mkOption {
+      type = types.submodule {
+        options = {
+          enable = mkEnableOption "Prometheus metrics endpoint";
+          port = mkOption {
+            type = types.port;
+            default = 9093;
+            description = "Metrics endpoint port";
+          };
+        };
       };
-
-      script =
-        let
-          args = flatten [
-            [
-              "--jetstream"
-              (escapeShellArg cfg.jetstream)
-              "--data"
-              (escapeShellArg cfg.data)
-            ]
-            (optional cfg.jetstreamForce [
-              "--jetstream-force"
-            ])
-            (optional cfg.jetstreamNoZstd [
-              "--jetstream-no-zstd"
-            ])
-            (optional cfg.pauseWriter [
-              "--pause-writer"
-            ])
-            (optional cfg.backfill [
-              "--backfill"
-            ])
-            (optional cfg.pauseRw [
-              "--pause-rw"
-            ])
-            (optional cfg.reroll [
-              "--reroll"
-            ])
-            (optional cfg.jetstreamFixture [
-              "--jetstream-fixture"
-            ])
-          ];
-        in
-        ''
-          exec ${cfg.package}/bin/ufos ${concatStringsSep " " args}
-        '';
+      default = {};
+      description = "Metrics configuration";
     };
   };
+
+  config = mkIf cfg.enable (mkMerge [
+    # Configuration validation
+    (microcosmLib.mkConfigValidation cfg "UFOs" (
+      microcosmLib.mkJetstreamValidation cfg.jetstream
+    ))
+
+    # User and group management
+    (microcosmLib.mkUserConfig cfg)
+
+    # Directory management
+    (microcosmLib.mkDirectoryConfig cfg [])
+
+    # Prometheus metrics integration
+    (nixosIntegration.mkPrometheusIntegration "microcosm-ufos" cfg {
+      enable = cfg.metrics.enable;
+      port = cfg.metrics.port;
+    })
+
+    # systemd service
+    (microcosmLib.mkSystemdService cfg "UFOs" {
+      description = "ATProto service component";
+      serviceConfig = {
+        ExecStart = let
+  args = flatten [
+    [
+      "--jetstream"
+      (escapeShellArg cfg.jetstream)
+    ]
+    (optional cfg.jetstreamForce [ "--jetstream-force" ])
+    (optional cfg.jetstreamNoZstd [ "--jetstream-no-zstd" ])
+    [
+      "--data"
+      (escapeShellArg cfg.dataDir)
+    ]
+    (optional cfg.backfill [ "--backfill" ])
+    (optional cfg.reroll [ "--reroll" ])
+    # [
+    #   "--bind"
+    #   (escapeShellArg cfg.bind)
+    # ] # Not supported yet
+    (optional cfg.metrics.enable [
+      "--bind-metrics"
+      (escapeShellArg "0.0.0.0:${toString cfg.metrics.port}")
+    ])
+  ];
+in
+"${cfg.package}/bin/ufos ${concatStringsSep " " args}";
+      };
+    })
+
+    # Enable global integration features based on service configuration
+    {
+      atproto.integration.monitoring.prometheus.enable = mkIf cfg.metrics.enable true;
+    }
+
+    # Firewall rules
+    {
+      networking.firewall.allowedTCPPorts = mkIf cfg.metrics.enable [ cfg.metrics.port ];
+    }
+
+    # Warnings for potentially destructive operations
+    {
+      warnings = lib.optionals cfg.reroll [
+        "UFOs reroll option is enabled - this will reset the rollup cursor and may cause data loss"
+      ] ++ lib.optionals cfg.backfill [
+        "UFOs backfill mode is enabled - this may impact performance during initial sync"
+      ];
+    }
+  ]);
 }

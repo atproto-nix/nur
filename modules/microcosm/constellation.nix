@@ -1,156 +1,361 @@
-# Defines the NixOS module for the Constellation service
-#
-# Constellation is a global backlink index for the AT Protocol.
-# This module provides options to configure its behavior, including
-# the Jetstream server to connect to, storage backend, data directory,
-# and backup settings.
-#
+# Enhanced Constellation service with NixOS ecosystem integration
 { config, lib, pkgs, ... }:
 
 with lib;
 
 let
   cfg = config.services.microcosm-constellation;
+  microcosmLib = import ../../lib/microcosm.nix { inherit lib; };
+  nixosIntegration = import ../../lib/nixos-integration.nix { inherit lib config; };
 in
 {
-  options.services.microcosm-constellation = {
-    enable = mkEnableOption "Constellation server";
+  imports = [
+    ../common/nixos-integration.nix
+  ];
 
+  options.services.microcosm-constellation = microcosmLib.mkMicrocosmServiceOptions "Constellation" {
     package = mkOption {
       type = types.package;
-      default = pkgs.nur.constellation;
+      default = pkgs.microcosm.constellation;
       description = "The Constellation package to use.";
     };
 
-    dataDir = mkOption {
-      type = types.str;
-      default = "/var/lib/microcosm-constellation";
-      description = "The absolute path to the directory to store data in.";
-    };
-
     backend = mkOption {
-      type = types.enum [ "memory" "rocks" ];
+      type = types.enum [ "memory" "rocks" "postgres" ];
       default = "rocks";
-      description = "The storage backend to use. 'memory' for in-memory storage, 'rocks' for RocksDB persistent storage.";
+      description = "The storage backend to use.";
     };
 
     jetstream = mkOption {
       type = types.str;
-      description = "The Jetstream server to connect to. This is a required option.";
+      description = "The Jetstream server to connect to.";
       example = "wss://jetstream1.us-east.bsky.network/subscribe";
     };
 
-    fixture = mkOption {
-      type = types.nullOr types.str;
-      default = null;
-      description = "Saved jsonl from jetstream to use instead of a live subscription. Useful for testing.";
-      example = "/path/to/fixture.jsonl";
+    bind = mkOption {
+      type = types.str;
+      default = "0.0.0.0:6789";
+      description = "Constellation server's listen address.";
     };
 
+    bindMetrics = mkOption {
+      type = types.str;
+      default = "0.0.0.0:8765";
+      description = "Metrics server's listen address.";
+    };
+
+    # Database configuration for postgres backend
+    database = mkOption {
+      type = types.submodule {
+        options = {
+          type = mkOption {
+            type = types.enum [ "postgres" "sqlite" ];
+            default = "sqlite";
+            description = "Database type to use";
+          };
+
+          url = mkOption {
+            type = types.str;
+            default = "sqlite://${cfg.dataDir}/constellation.db";
+            description = "Database connection URL";
+            example = "postgresql://constellation:password@localhost/constellation";
+          };
+
+          createDatabase = mkOption {
+            type = types.bool;
+            default = true;
+            description = "Automatically create database and user for local PostgreSQL";
+          };
+
+          passwordFile = mkOption {
+            type = types.nullOr types.path;
+            default = null;
+            description = "File containing database password";
+          };
+        };
+      };
+      default = {};
+      description = "Database configuration";
+    };
+
+    # Metrics and monitoring
+    metrics = mkOption {
+      type = types.submodule {
+        options = {
+          enable = mkEnableOption "Prometheus metrics endpoint";
+
+          port = mkOption {
+            type = types.port;
+            default = 8760;
+            description = "Port for Prometheus metrics endpoint";
+          };
+        };
+      };
+      default = {};
+      description = "Metrics configuration";
+    };
+
+    # Nginx reverse proxy configuration
+    nginx = mkOption {
+      type = types.submodule {
+        options = {
+          enable = mkEnableOption "Nginx reverse proxy";
+
+          serverName = mkOption {
+            type = types.str;
+            description = "Server name for nginx virtual host";
+            example = "constellation.example.com";
+          };
+
+          port = mkOption {
+            type = types.port;
+            default = cfg.port;
+            description = "Upstream port for nginx proxy";
+          };
+
+          ssl = {
+            enable = mkEnableOption "SSL/TLS via ACME";
+            force = mkOption {
+              type = types.bool;
+              default = true;
+              description = "Force HTTPS redirects";
+            };
+          };
+        };
+      };
+      default = {};
+      description = "Nginx reverse proxy configuration";
+    };
+
+    # Backup configuration
     backup = {
       enable = mkEnableOption "database backups";
 
       directory = mkOption {
         type = types.path;
         default = "${cfg.dataDir}/backups";
-        description = "Directory to store database backups.";
+        description = "Directory to store backups.";
       };
 
       interval = mkOption {
         type = types.nullOr types.int;
         default = null;
-        description = "Take backups every N hours. If null, no automatic backups are performed.";
+        description = "Take backups every N hours. If null, no automatic backups.";
         example = 24;
       };
 
       maxOldBackups = mkOption {
         type = types.nullOr types.int;
         default = 7;
-        description = "Keep at most this many backups, purging oldest first. Only used when 'interval' is set.";
+        description = "Keep at most this many backups, purging oldest first. Only used with interval.";
       };
+
+      # Enhanced backup options using NixOS ecosystem
+      restic = {
+        enable = mkEnableOption "Restic backup integration";
+
+        repository = mkOption {
+          type = types.str;
+          description = "Restic repository URL";
+          example = "s3:s3.amazonaws.com/my-backup-bucket/constellation";
+        };
+
+        passwordFile = mkOption {
+          type = types.path;
+          description = "File containing restic repository password";
+        };
+      };
+    };
+
+    # Security configuration
+    security = mkOption {
+      type = types.submodule {
+        options = {
+          apparmor = {
+            enable = mkEnableOption "AppArmor profile";
+            enforce = mkOption {
+              type = types.bool;
+              default = true;
+              description = "Enforce AppArmor profile (vs complain mode)";
+            };
+          };
+
+          firewall = {
+            enable = mkEnableOption "automatic firewall rules";
+            allowedPorts = mkOption {
+              type = types.listOf types.port;
+              default = [];
+              description = "Additional ports to allow through firewall";
+            };
+          };
+        };
+      };
+      default = {};
+      description = "Security configuration";
     };
   };
 
-  config = mkIf cfg.enable {
-    # Create a static user and group for the service for security isolation.
-    users.users.microcosm-constellation = {
-      isSystemUser = true;
-      group = "microcosm-constellation";
-      home = cfg.dataDir;
-    };
-    users.groups.microcosm-constellation = {};
+  config = mkIf cfg.enable (mkMerge [
+    # Configuration validation
+    (microcosmLib.mkConfigValidation cfg "Constellation" (
+      microcosmLib.mkJetstreamValidation cfg.jetstream ++
+      [
+        {
+          assertion = cfg.backup.enable -> cfg.backup.directory != "";
+          message = "Backup directory cannot be empty when backups are enabled.";
+        }
+        {
+          assertion = cfg.backup.enable && cfg.backup.interval != null -> cfg.backup.interval > 0;
+          message = "Backup interval must be greater than 0 when specified.";
+        }
+        {
+          assertion = cfg.backup.enable && cfg.backup.maxOldBackups != null -> cfg.backup.maxOldBackups > 0;
+          message = "Maximum old backups must be greater than 0 when specified.";
+        }
+        {
+          assertion = cfg.nginx.enable -> cfg.nginx.serverName != "";
+          message = "Nginx server name must be specified when nginx is enabled.";
+        }
+        {
+          assertion = cfg.database.type == "postgres" -> (hasInfix "postgresql://" cfg.database.url);
+          message = "PostgreSQL URL must start with 'postgresql://' when using postgres database type";
+        }
+      ]
+    ))
 
-    # Use tmpfiles to declaratively manage the data directory's existence and ownership.
-    systemd.tmpfiles.rules = [
-      "d ${cfg.dataDir} 0755 microcosm-constellation microcosm-constellation - -"
-    ] ++ optional cfg.backup.enable
-      "d ${cfg.backup.directory} 0755 microcosm-constellation microcosm-constellation - -";
+    # User and group management
+    (microcosmLib.mkUserConfig cfg)
 
-    # Define the systemd service for Constellation.
-    systemd.services.microcosm-constellation = {
-      description = "Constellation Server - Global backlink index for AT Protocol";
-      wantedBy = [ "multi-user.target" ];
-      after = [ "network.target" ];
-      wants = [ "network.target" ];
+    # Directory management
+    (microcosmLib.mkDirectoryConfig cfg (optional cfg.backup.enable cfg.backup.directory))
+
+    # Database integration
+    (nixosIntegration.mkDatabaseIntegration "microcosm-constellation" cfg {
+      type = cfg.database.type;
+      url = cfg.database.url;
+      createDatabase = cfg.database.createDatabase;
+      database = "constellation";
+      user = "constellation";
+    })
+
+    # Nginx integration
+    (nixosIntegration.mkNginxIntegration "microcosm-constellation" cfg cfg.nginx)
+
+    # Prometheus metrics integration
+    (nixosIntegration.mkPrometheusIntegration "microcosm-constellation" cfg cfg.metrics)
+
+    # Logging integration
+    (nixosIntegration.mkLoggingIntegration "microcosm-constellation" cfg {
+      level = cfg.logLevel;
+      format = "json";
+      files = optional cfg.backup.enable [ "${cfg.backup.directory}/*.log" ];
+    })
+
+    # Security integration
+    (nixosIntegration.mkSecurityIntegration "microcosm-constellation" cfg cfg.security)
+
+    # Backup integration
+    (nixosIntegration.mkBackupIntegration "microcosm-constellation" cfg (cfg.backup // {
+      extraPaths = optional (cfg.backend == "rocks") [ "${cfg.dataDir}/db" ];
+    }))
+
+    # Service dependencies
+    (nixosIntegration.mkServiceDependencies "microcosm-constellation"
+      nixosIntegration.atprotoServiceDependencies.indexer)
+
+    # systemd service with enhanced configuration
+    (microcosmLib.mkSystemdService cfg "Constellation" {
+      description = "Global backlink index for AT Protocol";
+      extraReadWritePaths = optional cfg.backup.enable cfg.backup.directory;
+
+      # Enhanced service dependencies
+      after = [ "network.target" ]
+        ++ optional (cfg.database.type == "postgres") [ "postgresql.service" ]
+        ++ optional cfg.nginx.enable [ "nginx.service" ];
+
+      wants = [ "network.target" ]
+        ++ optional (cfg.database.type == "postgres") [ "postgresql.service" ];
 
       serviceConfig = {
-        Restart = "always";
-        RestartSec = "10s";
+        ExecStart =
+          let
+            args = flatten [
+              [
+                "--jetstream"
+                (escapeShellArg cfg.jetstream)
+                "--backend"
+                (escapeShellArg cfg.backend)
+                "--bind"
+                (escapeShellArg cfg.bind)
+              ]
+              (optional (cfg.backend == "rocks") [
+                "--data"
+                (escapeShellArg "${cfg.dataDir}/db")
+              ])
+              (optional (cfg.backend == "postgres") [
+                "--database-url"
+                (escapeShellArg cfg.database.url)
+              ])
+              (optional cfg.metrics.enable [
+                "--bind-metrics"
+                (escapeShellArg cfg.bindMetrics)
+              ])
+              (optional cfg.backup.enable [
+                "--backup"
+                (escapeShellArg cfg.backup.directory)
+              ])
+              (optional (cfg.backup.enable && cfg.backup.interval != null) [
+                "--backup-interval"
+                (escapeShellArg (toString cfg.backup.interval))
+              ])
+              (optional (cfg.backup.enable && cfg.backup.interval != null && cfg.backup.maxOldBackups != null) [
+                "--max-old-backups"
+                (escapeShellArg (toString cfg.backup.maxOldBackups))
+              ])
+            ];
+          in
+          "${cfg.package}/bin/main ${concatStringsSep " " args}";
 
-        User = "microcosm-constellation";
-        Group = "microcosm-constellation";
+        # Enhanced environment variables
+        Environment = [
+          "RUST_LOG=${cfg.logLevel}"
+          "LOG_FORMAT=json"
+        ] ++ optional (cfg.database.passwordFile != null)
+          "DATABASE_PASSWORD_FILE=${cfg.database.passwordFile}";
 
-        WorkingDirectory = cfg.dataDir;
+        # Health check configuration
+        ExecStartPre = mkIf (cfg.database.type == "postgres")
+          "${pkgs.postgresql}/bin/pg_isready -h localhost -p 5432";
 
-        # Security hardening settings for the service.
-        NoNewPrivileges = true;
-        ProtectSystem = "full";
-        ProtectHome = true;
-        ReadWritePaths = [ cfg.dataDir ] ++ optional cfg.backup.enable cfg.backup.directory;
-        PrivateTmp = true;
-        ProtectKernelTunables = true;
-        ProtectKernelModules = true;
-        ProtectControlGroups = true;
-        RestrictRealtime = true;
-        RestrictSUIDSGID = true;
-        RemoveIPC = true;
-        PrivateMounts = true;
+        # Restart policy for better reliability
+        Restart = "on-failure";
+        RestartSec = "5s";
       };
 
-      script =
-        let
-          args = flatten [
-            [
-              "--jetstream"
-              (escapeShellArg cfg.jetstream)
-              "--backend"
-              (escapeShellArg cfg.backend)
-            ]
-            (optional (cfg.backend == "rocks") [
-              "--data"
-              (escapeShellArg "${cfg.dataDir}/db")
-            ])
-            (optional cfg.backup.enable [
-              "--backup"
-              (escapeShellArg cfg.backup.directory)
-            ])
-            (optional (cfg.backup.enable && cfg.backup.interval != null) [
-              "--backup-interval"
-              (escapeShellArg (toString cfg.backup.interval))
-            ])
-            (optional (cfg.backup.enable && cfg.backup.interval != null && cfg.backup.maxOldBackups != null) [
-              "--max-old-backups"
-              (escapeShellArg (toString cfg.backup.maxOldBackups))
-            ])
-            (optional (cfg.fixture != null) [
-              "--fixture"
-              (escapeShellArg cfg.fixture)
-            ])
-          ];
-        in
-        ''
-          exec "${cfg.package}/bin/main" ${concatStringsSep " " args}
-        '';
-    };
-  };
+      # Rate limiting for service restarts (goes in [Unit] section)
+      startLimitIntervalSec = 60;
+      startLimitBurst = 3;
+    })
+
+    # Enable global integration features based on service configuration
+    {
+      atproto.integration = {
+        database.postgresql.enable = mkIf (cfg.database.type == "postgres") true;
+        nginx.enable = mkIf cfg.nginx.enable true;
+        monitoring.prometheus.enable = mkIf cfg.metrics.enable true;
+        logging.enable = true;
+        security.enable = mkIf (cfg.security.apparmor.enable || cfg.security.firewall.enable) true;
+        backup.enable = mkIf cfg.backup.enable true;
+      };
+    }
+
+    # Firewall rules
+    {
+      networking.firewall.allowedTCPPorts = mkIf cfg.security.firewall.enable (
+        [ (microcosmLib.extractPortFromBind cfg.bind) ]
+        ++ optional cfg.metrics.enable (microcosmLib.extractPortFromBind cfg.bindMetrics)
+        ++ cfg.security.firewall.allowedPorts
+      );
+    }
+  ]);
 }
