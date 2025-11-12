@@ -534,6 +534,21 @@ Each package has its own license. See individual package definitions for details
 
 Most packages are MIT or Apache-2.0 licensed.
 
+## Documentation
+
+Complete documentation hub with guides, examples, and architecture details:
+
+- **[Documentation Index](./docs/INDEX.md)** - Main hub for all documentation
+  - **[PDS Dashboard Index](./docs/PDS_DASHBOARD_INDEX.md)** - Quick navigation for PDS Dashboard
+  - **[Indigo Services Index](./docs/INDIGO_INDEX.md)** - Quick navigation for Indigo relay
+  - **[Modules Index](./docs/MODULES_INDEX.md)** - Quick navigation for NixOS modules
+- **[CLAUDE.md](./docs/CLAUDE.md)** - Technical guide with build patterns and troubleshooting
+- **[NUR Best Practices](./docs/NUR_BEST_PRACTICES.md)** - Architecture and design patterns
+- **[Modules Architecture](./docs/MODULES_ARCHITECTURE.md)** - Complete module system analysis
+- **[Secrets Integration](./docs/SECRETS_INTEGRATION.md)** - Secrets management patterns
+- **[JavaScript/Deno Builds](./docs/JAVASCRIPT_DENO_BUILDS.md)** - Deterministic build patterns
+- **[Roadmap](./docs/ROADMAP.md)** - Development roadmap and recent work
+
 ## Resources
 
 - [AT Protocol Docs](https://atproto.com)
