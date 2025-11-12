@@ -124,6 +124,7 @@ Planning, roadmaps, and status:
 |------|---------|
 | **[CLAUDE.md](./CLAUDE.md)** | AI assistant guide, technical details, build patterns, troubleshooting |
 | **[NUR_BEST_PRACTICES.md](./NUR_BEST_PRACTICES.md)** | Architecture patterns, packaging guidelines, design principles |
+| **[NIXOS_FLAKES_GUIDE.md](./NIXOS_FLAKES_GUIDE.md)** | Flakes schema, repository structure, Home Manager, secrets management, CI/CD |
 | **[JAVASCRIPT_DENO_BUILDS.md](./JAVASCRIPT_DENO_BUILDS.md)** | Deterministic JavaScript/Deno builds, FOD patterns |
 | **[TANGLED.md](./TANGLED.md)** | Tangled.org infrastructure details |
 

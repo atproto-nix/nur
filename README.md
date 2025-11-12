@@ -544,6 +544,7 @@ Complete documentation hub with guides, examples, and architecture details:
   - **[Modules Index](./docs/MODULES_INDEX.md)** - Quick navigation for NixOS modules
 - **[CLAUDE.md](./docs/CLAUDE.md)** - Technical guide with build patterns and troubleshooting
 - **[NUR Best Practices](./docs/NUR_BEST_PRACTICES.md)** - Architecture and design patterns
+- **[NixOS Flakes Guide](./docs/NIXOS_FLAKES_GUIDE.md)** - Flakes, repository structure, Home Manager, secrets, CI/CD
 - **[Modules Architecture](./docs/MODULES_ARCHITECTURE.md)** - Complete module system analysis
 - **[Secrets Integration](./docs/SECRETS_INTEGRATION.md)** - Secrets management patterns
 - **[JavaScript/Deno Builds](./docs/JAVASCRIPT_DENO_BUILDS.md)** - Deterministic build patterns
