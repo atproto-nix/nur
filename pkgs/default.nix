@@ -149,10 +149,6 @@ let
       ) organizationalPackages;
 
     in
-    # BEST PRACTICE: Merge all collections into single namespace
-    # Use foldl' for efficiency, starts with empty set, merges each collection
     lib.foldl' (acc: collection: acc // collection) {} orgCollections;
-
 in
-
 flattenedPackages

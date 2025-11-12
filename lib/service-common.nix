@@ -409,6 +409,8 @@ rec {
     };
 
   # Helper functions for common validation patterns
+  # These are shared across all service types (ATproto, Microcosm, PLCBundle)
+
   mkJetstreamValidation = jetstreamUrl: [
     {
       assertion = jetstreamUrl != "";
@@ -439,13 +441,61 @@ rec {
   ];
 
   # Extract port from bind address helper
-  extractPortFromBind = bindAddr: 
+  extractPortFromBind = bindAddr:
     let
       parts = splitString ":" bindAddr;
     in
-    if length parts >= 2 
+    if length parts >= 2
     then toInt (last parts)
     else throw "Invalid bind address format: ${bindAddr}";
+
+  # Firewall configuration helper (used by all service types)
+  mkFirewallConfig = cfg: ports: {
+    networking.firewall = mkIf cfg.openFirewall {
+      allowedTCPPorts = ports;
+    };
+  };
+
+  # Standard service options builder (generic, for any service type)
+  mkStandardServiceOptions = serviceName: extraOptions: {
+    enable = mkEnableOption "${serviceName} service";
+
+    package = mkOption {
+      type = types.package;
+      default = null;
+      description = "The ${serviceName} package to use.";
+    };
+
+    user = mkOption {
+      type = types.str;
+      default = "service-${toLower serviceName}";
+      description = "User account for ${serviceName} service.";
+    };
+
+    group = mkOption {
+      type = types.str;
+      default = "service-${toLower serviceName}";
+      description = "Group for ${serviceName} service.";
+    };
+
+    dataDir = mkOption {
+      type = types.path;
+      default = "/var/lib/service-${toLower serviceName}";
+      description = "Data directory for ${serviceName} service.";
+    };
+
+    logLevel = mkOption {
+      type = types.enum [ "trace" "debug" "info" "warn" "error" ];
+      default = "info";
+      description = "Logging level for ${serviceName} service.";
+    };
+
+    openFirewall = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Whether to open the firewall for ${serviceName} service ports.";
+    };
+  } // extraOptions;
 
   # Service coordination helpers (enhanced with new discovery system)
   mkServiceCoordination = { services ? [], discoveryBackend ? "consul", ... }@args:

@@ -1,51 +1,20 @@
 # Shared utilities and patterns for plcbundle service modules
+# Imports and re-exports common patterns from service-common for backward compatibility
 { lib, ... }:
 
 with lib;
 
+let
+  # Import shared patterns from service-common
+  commonLib = import ./service-common.nix { inherit lib; };
+in
+
 rec {
-  # Standard security hardening configuration for plcbundle services
-  standardSecurityConfig = {
-    # Basic security restrictions
-    NoNewPrivileges = true;
-    ProtectSystem = "strict";
-    ProtectHome = true;
-    PrivateTmp = true;
+  # Re-export common security and restart configs
+  inherit (commonLib) standardSecurityConfig standardRestartConfig;
 
-    # Kernel and system protection
-    ProtectKernelTunables = true;
-    ProtectKernelModules = true;
-    ProtectKernelLogs = true;
-    ProtectControlGroups = true;
-    ProtectClock = true;
-
-    # Process restrictions
-    RestrictRealtime = true;
-    RestrictSUIDSGID = true;
-    RestrictNamespaces = true;
-    LockPersonality = true;
-    MemoryDenyWriteExecute = true;
-
-    # IPC and mount restrictions
-    RemoveIPC = true;
-    PrivateMounts = true;
-    PrivateDevices = true;
-
-    # Network restrictions (allow HTTP/HTTPS and WebSocket)
-    RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
-
-    # Additional hardening
-    SystemCallArchitectures = "native";
-    UMask = "0077";
-  };
-
-  # Standard restart configuration
-  standardRestartConfig = {
-    Restart = "on-failure";
-    RestartSec = "5";  # Changed from "5s" to "5"
-    StartLimitBurst = 3;
-    StartLimitInterval = "60";  # Changed from StartLimitIntervalSec to StartLimitInterval
-  };
+  # Re-export common validation and helper functions
+  inherit (commonLib) mkJetstreamValidation mkPortValidation mkUrlValidation extractPortFromBind mkFirewallConfig;
 
   # Helper function to create standard plcbundle service options
   mkPlcbundleServiceOptions = serviceName: extraOptions: {
@@ -127,7 +96,7 @@ rec {
 
         # Environment
         Environment = [
-          "LOG_LEVEL=${cfg.logLevel}"
+          "RUST_LOG=${cfg.logLevel}"
         ] ++ (if serviceConfig ? extraEnvironment then serviceConfig.extraEnvironment else []);
       } // (removeAttrs (serviceConfig.serviceConfig or {}) [ "extraReadWritePaths" "extraEnvironment" ]);
     };
@@ -157,39 +126,4 @@ rec {
     ];
   };
 
-  # Helper function for URL validation
-  mkUrlValidation = url: urlName: [
-    {
-      assertion = url != "";
-      message = "${urlName} cannot be empty.";
-    }
-    {
-      assertion = hasPrefix "http://" url || hasPrefix "https://" url;
-      message = "${urlName} must start with http:// or https://.";
-    }
-  ];
-
-  # Helper function for network port validation
-  mkPortValidation = port: portName: [
-    {
-      assertion = port > 0 && port < 65536;
-      message = "${portName} must be a valid port number (1-65535).";
-    }
-  ];
-
-  # Helper function to extract port from bind address
-  extractPortFromBind = bindAddr:
-    let
-      parts = splitString ":" bindAddr;
-    in
-    if length parts >= 2
-    then toInt (last parts)
-    else throw "Invalid bind address format: ${bindAddr}";
-
-  # Helper function for firewall configuration
-  mkFirewallConfig = cfg: ports: {
-    networking.firewall = mkIf cfg.openFirewall {
-      allowedTCPPorts = ports;
-    };
-  };
 }

@@ -1,51 +1,20 @@
 # Shared utilities and patterns for Microcosm service modules
+# Imports and re-exports common patterns from service-common for backward compatibility
 { lib, ... }:
 
 with lib;
 
+let
+  # Import shared patterns from service-common
+  commonLib = import ./service-common.nix { inherit lib; };
+in
+
 rec {
-  # Standard security hardening configuration for all Microcosm services
-  standardSecurityConfig = {
-    # Basic security restrictions
-    NoNewPrivileges = true;
-    ProtectSystem = "strict";
-    ProtectHome = true;
-    PrivateTmp = true;
+  # Re-export common security and restart configs
+  inherit (commonLib) standardSecurityConfig standardRestartConfig;
 
-    # Kernel and system protection
-    ProtectKernelTunables = true;
-    ProtectKernelModules = true;
-    ProtectKernelLogs = true;
-    ProtectControlGroups = true;
-    ProtectClock = true;
-
-    # Process restrictions
-    RestrictRealtime = true;
-    RestrictSUIDSGID = true;
-    RestrictNamespaces = true;
-    LockPersonality = true;
-    MemoryDenyWriteExecute = true;
-
-    # IPC and mount restrictions
-    RemoveIPC = true;
-    PrivateMounts = true;
-    PrivateDevices = true;
-
-    # Network restrictions (can be overridden per service)
-    RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
-
-    # Additional hardening
-    SystemCallArchitectures = "native";
-    UMask = "0077";
-  };
-
-  # Standard restart configuration
-  standardRestartConfig = {
-    Restart = "on-failure";
-    RestartSec = "5s";
-    # Note: StartLimitBurst and StartLimitIntervalSec belong in systemd service's
-    # unit section, not serviceConfig. They should be set directly on the service.
-  };
+  # Re-export common validation and helper functions
+  inherit (commonLib) mkJetstreamValidation mkPortValidation mkUrlValidation extractPortFromBind mkFirewallConfig;
 
   # Helper function to create standard Microcosm service options
   mkMicrocosmServiceOptions = serviceName: extraOptions: {
@@ -157,39 +126,4 @@ rec {
     ];
   };
 
-  # Helper function for jetstream configuration validation
-  mkJetstreamValidation = jetstreamUrl: [
-    {
-      assertion = jetstreamUrl != "";
-      message = "Jetstream URL cannot be empty.";
-    }
-    {
-      assertion = hasPrefix "ws://" jetstreamUrl || hasPrefix "wss://" jetstreamUrl;
-      message = "Jetstream URL must start with ws:// or wss://.";
-    }
-  ];
-
-  # Helper function for network port validation
-  mkPortValidation = port: portName: [
-    {
-      assertion = port > 0 && port < 65536;
-      message = "${portName} must be a valid port number (1-65535).";
-    }
-  ];
-
-  # Helper function to extract port from bind address
-  extractPortFromBind = bindAddr:
-    let
-      parts = splitString ":" bindAddr;
-    in
-    if length parts >= 2
-    then toInt (last parts)
-    else throw "Invalid bind address format: ${bindAddr}";
-
-  # Helper function for firewall configuration
-  mkFirewallConfig = cfg: ports: {
-    networking.firewall = mkIf cfg.openFirewall {
-      allowedTCPPorts = ports;
-    };
-  };
 }

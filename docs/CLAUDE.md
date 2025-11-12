@@ -393,7 +393,7 @@ Fetcher for Tangled.org repositories (fork of `fetchFromGitHub`):
 ### Known Issues (October 2025 Review)
 
 **Critical - Unpinned Versions:**
-- `pkgs/witchcraft-systems/pds-dash.nix:7` - Uses `rev = "main"` (needs specific commit)
+
 - `pkgs/blacksky/rsky/default.nix:196-222` - Commented code with unpinned version
 
 **Critical - Missing Hashes:**

@@ -66,7 +66,13 @@
       "Bash(git mv:*)",
       "Bash(test:*)",
       "Bash(mv:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(for org in /Users/jack/Software/nur/pkgs/*/)",
+      "Bash(done)",
+      "Bash(for org in /Users/jack/Software/nur/modules/*/)",
+      "Bash(for dir in */)",
+      "Bash(find:*)",
+      "Bash(git rm:*)"
     ],
     "deny": [],
     "ask": []

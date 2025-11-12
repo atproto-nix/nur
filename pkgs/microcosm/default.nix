@@ -9,7 +9,7 @@ let
   organizationMeta = {
     name = "microcosm-blue";
     displayName = "Microcosm";
-    website = null;
+    website = "https://microcosm.blue";
     contact = null;
     maintainer = "Microcosm";
     description = "PLC tools and utilities for ATProto ecosystem";
