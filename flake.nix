@@ -115,9 +115,10 @@
             rust-overlay.overlays.default
             deno.overlays.default
             (final: prev: {
-              # Custom overlay: Add fetchFromTangled to pkgs
-              # This makes it available as pkgs.fetchFromTangled everywhere
-              fetchFromTangled = final.callPackage ./lib/fetch-tangled.nix { };
+              # Custom overlay: Load fetchers module with dependency injection
+              # This makes all custom fetchers available as pkgs.fetchFromTangled, etc.
+              # The fetchers module handles proper scoping of helper functions
+              inherit (final.callPackage ./lib/fetchers/default.nix { }) fetchFromTangled;
             })
           ];
 
@@ -442,19 +443,23 @@
       };
 
       # Development Shells
-      devShells = forAllSystems (system:
-        let pkgs = import nixpkgs { inherit system; }; in {
-          default = pkgs.mkShell {
-            packages = with pkgs; [
-              deadnix
-              nixpkgs-fmt
-              crane.cli
-              rust-bin.stable.latest.default
-              rust-analyzer
-            ];
-          };
-        }
-      );
+            devShells = forAllSystems (system:
+              let
+                pkgs = import nixpkgs {
+                  inherit system;
+                  overlays = [ rust-overlay.overlays.default ];
+                };
+              in {
+                default = pkgs.mkShell {
+                  packages = with pkgs; [
+                    deadnix
+                    nixpkgs-fmt
+                    rust-bin.stable.latest.default
+                    rust-analyzer
+                  ];
+                };
+              }
+            );
 
       # Test Checks
       checks = forAllSystems (system:
