@@ -1,5 +1,5 @@
 # Common service configuration patterns for NixOS ATproto modules
-{ lib, ... }:
+{ lib, pkgs, ... }:
 
 with lib;
 
@@ -11,29 +11,29 @@ rec {
     ProtectSystem = "strict";
     ProtectHome = true;
     PrivateTmp = true;
-    
+
     # Kernel and system protection
     ProtectKernelTunables = true;
     ProtectKernelModules = true;
     ProtectKernelLogs = true;
     ProtectControlGroups = true;
     ProtectClock = true;
-    
+
     # Process restrictions
     RestrictRealtime = true;
     RestrictSUIDSGID = true;
     RestrictNamespaces = true;
     LockPersonality = true;
     MemoryDenyWriteExecute = true;
-    
+
     # IPC and mount restrictions
     RemoveIPC = true;
     PrivateMounts = true;
     PrivateDevices = true;
-    
+
     # Network restrictions (can be overridden per service)
     RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
-    
+
     # Additional hardening
     SystemCallArchitectures = "native";
     UMask = "0077";
@@ -113,16 +113,16 @@ rec {
         mkMerge [
           # User and group configuration
           (mkUserConfig cfg)
-          
+
           # Directory management
           (mkDirectoryConfig cfg (args.extraDirectories or []))
-          
+
           # systemd service
           (mkSystemdService cfg name (args.serviceConfig or {}))
-          
+
           # Firewall configuration
           (mkFirewallConfig cfg (args.ports or []))
-          
+
           # Configuration validation
           (mkConfigValidation cfg name (args.extraAssertions or []))
         ]
@@ -144,7 +144,7 @@ rec {
   # Helper function to create standard directory management
   mkDirectoryConfig = cfg: extraDirs: {
     systemd.tmpfiles.rules = [
-      "d '${cfg.dataDir}' 0750 ${cfg.user} ${cfg.group} - -"
+      "d '${cfg.dataDira}' 0750 ${cfg.user} ${cfg.group} - -"
     ] ++ (map (dir: "d '${dir}' 0750 ${cfg.user} ${cfg.group} - -") extraDirs);
   };
 
@@ -162,26 +162,26 @@ rec {
         User = cfg.user;
         Group = cfg.group;
         WorkingDirectory = cfg.dataDir;
-        
+
         # Standard paths
         ReadWritePaths = [ cfg.dataDir ] ++ (serviceConfig.extraReadWritePaths or []);
         ReadOnlyPaths = [ "/nix/store" ] ++ (serviceConfig.extraReadOnlyPaths or []);
-        
+
         # Environment
         Environment = [
           "RUST_LOG=${cfg.logLevel}"
         ] ++ (serviceConfig.extraEnvironment or []);
-        
+
         # Service-specific configuration
         ExecStart = serviceConfig.execStart or "${cfg.package}/bin/${toLower serviceName}";
         ExecReload = serviceConfig.execReload or null;
-        
+
         # Resource limits
         MemoryMax = serviceConfig.memoryMax or null;
         CPUQuota = serviceConfig.cpuQuota or null;
         TasksMax = serviceConfig.tasksMax or null;
       } // (serviceConfig.serviceConfig or {});
-      
+
       # Service-specific overrides
       preStart = serviceConfig.preStart or "";
       postStart = serviceConfig.postStart or "";
@@ -238,18 +238,18 @@ rec {
             default = dbType;
             description = "Database type to use.";
           };
-          
+
           url = mkOption {
             type = types.str;
             description = "Database connection URL.";
           };
-          
+
           passwordFile = mkOption {
             type = types.nullOr types.path;
             default = null;
             description = "File containing database password.";
           };
-          
+
           autoMigrate = mkOption {
             type = types.bool;
             default = false;
@@ -257,7 +257,7 @@ rec {
           };
         };
       };
-      
+
       config = cfg: {
         # Database-specific service dependencies and migration service
         systemd.services = (mkIf (cfg.database.type == "postgresql") {
@@ -268,12 +268,12 @@ rec {
             description = "Database migrations for ${cfg.serviceName}";
             wantedBy = [ "atproto-${cfg.serviceName}.service" ];
             before = [ "atproto-${cfg.serviceName}.service" ];
-            
+
             serviceConfig = {
               Type = "oneshot";
               User = cfg.user;
               Group = cfg.group;
-              
+
               # Run migrations
               ExecStart = "${cfg.package}/bin/${cfg.serviceName}-migrate";
             };
@@ -286,14 +286,14 @@ rec {
   mkServiceSecurity = { networkAccess ? true, fileSystem ? "strict", ... }@args:
     let
       baseConfig = standardSecurityConfig;
-      
+
       networkConfig = if networkAccess then {
         RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" ];
       } else {
         RestrictAddressFamilies = [ "AF_UNIX" ];
         PrivateNetwork = true;
       };
-      
+
       fileSystemConfig = if fileSystem == "strict" then {
         ProtectSystem = "strict";
         ReadOnlyPaths = [ "/nix/store" ];
@@ -313,7 +313,7 @@ rec {
         wants = optionalDependencies;
         requires = dependencies;
       };
-      
+
       # Health check dependencies
       healthChecks = lib.mapAttrs (dep: config: {
         enabled = true;
@@ -325,14 +325,14 @@ rec {
   # Configuration file management
   mkConfigFile = { name, content, format ? "json", ... }@args:
     let
-      formatContent = 
+      formatContent =
         if format == "json" then
           builtins.toJSON content
         else if format == "yaml" then
           # TODO: Implement YAML formatting
           throw "YAML format not yet implemented"
         else if format == "toml" then
-          # TODO: Implement TOML formatting  
+          # TODO: Implement TOML formatting
           throw "TOML format not yet implemented"
         else
           toString content;
@@ -351,11 +351,11 @@ rec {
             OnUnitActiveSec = "${toString interval}s";
           };
         };
-        
+
         # Health check service
         systemd.services."atproto-${args.serviceName}-healthcheck" = {
           description = "Health check for ${args.serviceName}";
-          
+
           serviceConfig = {
             Type = "oneshot";
             ExecStart = "${pkgs.curl}/bin/curl -f -m ${toString timeout} http://localhost:${toString port}${endpoint}";
@@ -371,7 +371,7 @@ rec {
         "RUST_LOG=${logLevel}"
         "LOG_FORMAT=${logFormat}"
       ] ++ (if logFile != null then [ "LOG_FILE=${logFile}" ] else []);
-      
+
       # Log rotation if file logging is enabled
       logrotateConfig = mkIf (logFile != null) {
         services.logrotate.settings."${args.serviceName}" = {
@@ -394,11 +394,11 @@ rec {
         "BIND_ADDRESS=${bindAddress}"
         "PORT=${toString port}"
       ];
-      
+
       firewall = mkIf openFirewall {
         networking.firewall.allowedTCPPorts = [ port ];
       };
-      
+
       # Port validation
       assertions = [
         {
@@ -449,13 +449,6 @@ rec {
     then toInt (last parts)
     else throw "Invalid bind address format: ${bindAddr}";
 
-  # Firewall configuration helper (used by all service types)
-  mkFirewallConfig = cfg: ports: {
-    networking.firewall = mkIf cfg.openFirewall {
-      allowedTCPPorts = ports;
-    };
-  };
-
   # Standard service options builder (generic, for any service type)
   mkStandardServiceOptions = serviceName: extraOptions: {
     enable = mkEnableOption "${serviceName} service";
@@ -500,8 +493,8 @@ rec {
   # Service coordination helpers (enhanced with new discovery system)
   mkServiceCoordination = { services ? [], discoveryBackend ? "consul", ... }@args:
     let
-      serviceDiscovery = import ./service-discovery.nix { inherit lib; pkgs = {}; };
-      dependencyManagement = import ./dependency-management.nix { inherit lib; pkgs = {}; };
+      serviceDiscovery = import ./service-discovery.nix { inherit lib pkgs; };
+      dependencyManagement = import ./dependency-management.nix { inherit lib pkgs; };
     in
     {
       # Service discovery configuration
@@ -513,13 +506,13 @@ rec {
           tags = config.tags or [];
         }) (args.serviceConfigs or {});
       };
-      
+
       # Dependency management
       dependencies = dependencyManagement.mkDependencyManagement {
         services = args.serviceConfigs or {};
         startupStrategy = args.startupStrategy or "sequential";
       };
-      
+
       # Load balancing configuration
       loadBalancer = {
         strategy = args.lbStrategy or "round-robin";
