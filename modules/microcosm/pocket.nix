@@ -5,7 +5,7 @@ with lib;
 
 let
   cfg = config.services.microcosm-pocket;
-  microcosmLib = import ../../lib/microcosm.nix { inherit lib; };
+  microcosmLib = import ../../lib/microcosm.nix { inherit lib pkgs; };
 in
 {
   options.services.microcosm-pocket = microcosmLib.mkMicrocosmServiceOptions "Pocket" {

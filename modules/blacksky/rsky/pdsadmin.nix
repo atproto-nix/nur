@@ -4,9 +4,9 @@ with lib;
 
 let
   cfg = config.services.blacksky.pdsadmin;
-  
+
   # Import service configuration utilities
-  serviceLib = import ../../../lib/service-common.nix { inherit lib; };
+  serviceLib = import ../../../lib/service-common.nix { inherit lib pkgs; };
 in
 {
   options.services.blacksky.pdsadmin = {

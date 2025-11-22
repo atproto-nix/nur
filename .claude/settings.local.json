@@ -72,7 +72,14 @@
       "Bash(for org in /Users/jack/Software/nur/modules/*/)",
       "Bash(for dir in */)",
       "Bash(find:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(curl -sL \"https://tangled.org/@tangled.org/core/tree/v1.11.0-alpha\")",
+      "Bash(nix-hash --type sha256 --to-base64 \"0sn6dj4n71ba15qp6hx0sbf6n92mygcxq2m6c4d1cqcdiy261lsi\")",
+      "Bash(for file in /Users/jack/Software/nur/modules/microcosm/*.nix /Users/jack/Software/nur/modules/plcbundle/plcbundle.nix)",
+      "Bash(do)",
+      "Bash(if [ -f \"$file\" ])",
+      "Bash(then)",
+      "Bash(fi)"
     ],
     "deny": [],
     "ask": []

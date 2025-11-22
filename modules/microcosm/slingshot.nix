@@ -5,7 +5,7 @@ with lib;
 
 let
   cfg = config.services.microcosm-slingshot;
-  microcosmLib = import ../../lib/microcosm.nix { inherit lib; };
+  microcosmLib = import ../../lib/microcosm.nix { inherit lib pkgs; };
 in
 {
   options.services.microcosm-slingshot = microcosmLib.mkMicrocosmServiceOptions "Slingshot" {

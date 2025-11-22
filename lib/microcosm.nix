@@ -1,12 +1,12 @@
 # Shared utilities and patterns for Microcosm service modules
 # Imports and re-exports common patterns from service-common for backward compatibility
-{ lib, ... }:
+{ lib, pkgs, ... }:
 
 with lib;
 
 let
   # Import shared patterns from service-common
-  commonLib = import ./service-common.nix { inherit lib; };
+  commonLib = import ./service-common.nix { inherit lib pkgs; };
 in
 
 rec {

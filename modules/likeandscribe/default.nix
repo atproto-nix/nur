@@ -3,7 +3,7 @@
 
 let
   # Import service common utilities
-  serviceCommon = import ../../lib/service-common.nix { inherit lib; };
+  serviceCommon = import ../../lib/service-common.nix { inherit lib pkgs; };
   atprotoCore = import ../../lib/atproto-core.nix { inherit lib pkgs; };
 
 in

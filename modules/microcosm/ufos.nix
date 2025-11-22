@@ -5,7 +5,7 @@ with lib;
 
 let
   cfg = config.services.microcosm-ufos;
-  microcosmLib = import ../../lib/microcosm.nix { inherit lib; };
+  microcosmLib = import ../../lib/microcosm.nix { inherit lib pkgs; };
   nixosIntegration = import ../../lib/nixos-integration.nix { inherit lib config; };
 in
 {

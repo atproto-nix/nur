@@ -5,7 +5,7 @@ with lib;
 
 let
   cfg = config.services.microcosm-who-am-i;
-  microcosmLib = import ../../lib/microcosm.nix { inherit lib; };
+  microcosmLib = import ../../lib/microcosm.nix { inherit lib pkgs; };
 in
 {
   options.services.microcosm-who-am-i = microcosmLib.mkMicrocosmServiceOptions "Who-Am-I" {

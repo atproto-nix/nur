@@ -5,7 +5,7 @@ with lib;
 
 let
   cfg = config.services.microcosm-reflector;
-  microcosmLib = import ../../lib/microcosm.nix { inherit lib; };
+  microcosmLib = import ../../lib/microcosm.nix { inherit lib pkgs; };
 in
 {
   options.services.microcosm-reflector = microcosmLib.mkMicrocosmServiceOptions "Reflector" {

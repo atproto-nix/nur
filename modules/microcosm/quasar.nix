@@ -5,7 +5,7 @@ with lib;
 
 let
   cfg = config.services.microcosm-quasar;
-  microcosmLib = import ../../lib/microcosm.nix { inherit lib; };
+  microcosmLib = import ../../lib/microcosm.nix { inherit lib pkgs; };
 in
 {
   options.services.microcosm-quasar = microcosmLib.mkMicrocosmServiceOptions "Quasar" {

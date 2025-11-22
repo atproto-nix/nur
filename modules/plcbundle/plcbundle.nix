@@ -18,7 +18,7 @@ with lib;
 
 let
   cfg = config.services.plcbundle-archive;
-  plcbundleLib = import ../../lib/plcbundle.nix { inherit lib; };
+  plcbundleLib = import ../../lib/plcbundle.nix { inherit lib pkgs; };
   plcbundlePkg = pkgs.plcbundle-plcbundle or pkgs.callPackage ../../pkgs/plcbundle { inherit lib; };
 in
 {
