@@ -13,17 +13,18 @@ let
     domain = "tangled.org";
     owner = "@tangled.org";
     repo = "core";
-    rev = "2e5a4cde904d86825cefe5971e68f1bdfb1dd36f";
-    hash = "sha256-qDVJ2sEQL0TJbWer6ByhhQrzHE1bZI3U1mmCk0sPZqo=";
+    tag = "v1.11.0-alpha";
+    hash = "sha256-t8UQ85/bPXrbFs3V/paFtQvv4lSrr2lszrdcgspuAaA=";
+    forceFetchGit = true;
   };
 in
 
 buildGoModule rec {
   pname = "knot";
-  version = "0.1.0";
+  version = "1.11.0-alpha";
 
   inherit src;
-  vendorHash = "sha256-fM1JAVX94qLCObi7FbgtKjl+pGGmWfbQJc0+IdzO3PQ=";
+  vendorHash = "sha256-yPLS7JCTqHvWYMp3opn3aqm7ImGQTLYK0qIOmQU9YLk=";
 
   subPackages = [ "cmd/knot" ];
 
